@@ -27,6 +27,9 @@ const app = document.getElementById("app");
 /* ---- Inline icons --------------------------------------------------------- */
 const ICON = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+  // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
+  sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
 };
 
 /* ---- Small helpers -------------------------------------------------------- */
@@ -66,19 +69,24 @@ function applyTheme() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", state.theme === "dark" ? "#06070c" : "#e9ecf3");
 }
+// Show the destination theme's icon: a sun while in dark mode, a moon in light.
+function themeIcon() { return state.theme === "dark" ? ICON.sun : ICON.moon; }
+
 function toggleTheme() {
   state.theme = state.theme === "dark" ? "light" : "dark";
   localStorage.setItem(THEME.storageKey, state.theme);
   applyTheme();
-  document.querySelectorAll(".theme-toggle").forEach((b) =>
-    (b.textContent = state.theme === "dark" ? "☾" : "☀"));
+  document.querySelectorAll(".theme-toggle").forEach((b) => {
+    b.innerHTML = themeIcon();
+    b.title = `Switch to ${state.theme === "dark" ? "light" : "dark"} mode`;
+  });
 }
 
 /* =====================================================================
  * SHARED HEADER: wordmark (home link), theme toggle, slide-out search
  * ===================================================================== */
 function themeBtn() {
-  return `<button class="theme-toggle" title="Toggle light / dark">${state.theme === "dark" ? "☾" : "☀"}</button>`;
+  return `<button class="theme-toggle" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>`;
 }
 function headSearch() {
   return `
