@@ -44,7 +44,6 @@ export const CATEGORIES = [
   { id: "movie", label: "Movies",   icon: "🎬" },
   { id: "tv",    label: "TV Shows", icon: "📺" },
   { id: "game",  label: "Games",    icon: "🎮" },
-  { id: "anime", label: "Anime",    icon: "🌸" },
   { id: "book",  label: "Books",    icon: "📚" },
 ];
 

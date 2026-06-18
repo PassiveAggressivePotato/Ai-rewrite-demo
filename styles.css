@@ -226,6 +226,31 @@ body::before {
 
 .empty { color: var(--text-faint); font-size: 13px; text-align: center; padding: 30px 0; }
 
+/* Search takeover — full-width results feed */
+.section-title .count {
+  font-size: 12px; font-weight: 700; color: var(--text-faint);
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 1px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
+}
+.results-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 18px; }
+.result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  transition: background .2s, transform .15s;
+  animation: rise .3s var(--ease) both;
+}
+.result-item:hover { background: var(--surface-2); transform: translateX(2px); }
+.thumb.big { width: 44px; height: 62px; font-size: 18px; }
+.result-item .meta { flex: 1; min-width: 0; }
+.result-item .name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.result-item .name .yr { color: var(--text-faint); font-weight: 500; }
+.result-item .genres { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.result-item .result-score {
+  font-family: var(--font-display); font-weight: 800; font-size: 20px;
+  color: var(--gold); flex: none; padding-right: 6px;
+}
+
 /* =====================================================================
  * DETAIL PAGE
  * ===================================================================== */

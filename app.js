@@ -111,37 +111,43 @@ function listColumn(title, rows) {
   return `<div class="list-col"><h3>${title}</h3>${body}</div>`;
 }
 
-function renderListsRegion() {
-  const region = document.getElementById("lists-region");
-  if (!region) return;
+function renderResultsArea() {
+  const area = document.getElementById("results-area");
+  if (!area) return;
   const q = state.query.trim().toLowerCase();
 
   if (q) {
+    // Search instantly takes over the page: the lists are replaced by a single
+    // full-width results feed scoped to the active category.
     const matches = itemsByCategory(state.category)
       .filter((it) => it.title.toLowerCase().includes(q) || it.genres.join(" ").toLowerCase().includes(q))
       .map((it) => ({ it, s: scoreItem(it) }));
-    region.innerHTML = `
-      <div class="section-title">Results</div>
-      <div class="list-col" style="grid-column:1/-1">
-        ${matches.length ? matches.map(({ it, s }, i) => `
-          <div class="list-item" data-slug="${it.slug}">
-            <span class="rank">${i + 1}</span>${posterBox(it)}
-            <div class="meta"><div class="name">${it.title} <span style="color:var(--text-faint)">(${it.year})</span></div>
-            <div class="sc">${s.synth ?? "—"} · ${it.genres.join(", ")}</div></div>
-          </div>`).join("") : `<div class="empty">No matches in ${catLabel()}.</div>`}
+    area.innerHTML = `
+      <div class="section-title">Results in ${catLabel()} <span class="count">${matches.length}</span></div>
+      <div class="results-list">
+        ${matches.length ? matches.map(({ it, s }) => `
+          <div class="result-item" data-slug="${it.slug}">
+            ${posterBox(it, "thumb big")}
+            <div class="meta">
+              <div class="name">${it.title} <span class="yr">(${it.year})</span></div>
+              <div class="genres">${it.genres.join(" · ")}</div>
+            </div>
+            <div class="result-score">${s.synth ?? "—"}</div>
+          </div>`).join("")
+        : `<div class="empty">No ${catLabel().toLowerCase()} match “${state.query.trim()}”.</div>`}
       </div>`;
-    region.style.gridTemplateColumns = "1fr";
   } else {
-    const cat = state.category;
-    const inCat = itemsByCategory(cat);
+    const inCat = itemsByCategory(state.category);
     const games = itemsByCategory("game");
-    region.style.gridTemplateColumns = "";
-    region.innerHTML =
-      listColumn("Top This Month", rankedList(inCat, "synth")) +
-      listColumn("Trending This Week", rankedList(inCat.filter((i) => i.trending), "synth")) +
-      listColumn("Games · Acclaim", rankedList(games, "critic"));
+    area.innerHTML = `
+      <div class="section-title">Top Lists</div>
+      <div class="lists">
+        ${listColumn("Top This Month", rankedList(inCat, "synth"))}
+        ${listColumn("Trending This Week", rankedList(inCat.filter((i) => i.trending), "synth"))}
+        ${listColumn("Games · Acclaim", rankedList(games, "critic"))}
+      </div>`;
   }
-  wireCardClicks(region);
+  wireCardClicks(area);
 }
 
 function catLabel() {
@@ -174,14 +180,13 @@ function renderLanding() {
             </div>
           </div>
 
-          <div class="section-title rise d2">Top Lists</div>
-          <div class="lists rise d2" id="lists-region"></div>
+          <div class="rise d2" id="results-area"></div>
         </div>
       </div>
       ${bottomNav("search")}
     </div>`;
 
-  renderListsRegion();
+  renderResultsArea();
 
   // Tabs
   app.querySelectorAll(".tab").forEach((t) =>
@@ -196,7 +201,7 @@ function renderLanding() {
   const input = document.getElementById("search-input");
   input.addEventListener("input", (e) => {
     state.query = e.target.value;
-    renderListsRegion();
+    renderResultsArea();
   });
 
   app.querySelector(".theme-toggle").addEventListener("click", toggleTheme);

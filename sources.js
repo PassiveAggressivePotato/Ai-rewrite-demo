@@ -78,18 +78,6 @@ export const SOURCES = {
     toHundred: (v) => v,
   },
 
-  /* ---- Anime ------------------------------------------------------------- */
-  mal: {
-    id: "mal", label: "MyAnimeList", kind: "user",
-    scale: "0–10", max: 10,
-    toHundred: (v) => v * 10,
-  },
-  anilist: {
-    id: "anilist", label: "AniList", kind: "user",
-    scale: "0–100", max: 100,
-    toHundred: (v) => v,
-  },
-
   /* ---- Books ------------------------------------------------------------- */
   goodreads: {
     id: "goodreads", label: "Goodreads", kind: "user",
@@ -117,8 +105,6 @@ export const SOURCE_BADGES = {
   opencritic:       { text: "OC", bg: "#ff6b35", fg: "#fff" },
   steam:            { text: "S",  bg: "#1b2838", fg: "#66c0f4" },
   igdb:             { text: "IG", bg: "#9147ff", fg: "#fff" },
-  mal:              { text: "MAL", bg: "#2e51a2", fg: "#fff" },
-  anilist:          { text: "AL", bg: "#02a9ff", fg: "#fff" },
   goodreads:        { text: "GR", bg: "#553b08", fg: "#f4f1ea" },
   storygraph:       { text: "SG", bg: "#1b2a4a", fg: "#f9a03f" },
 };

@@ -261,68 +261,6 @@ export const CATALOG = [
     },
   },
 
-  /* ===== ANIME ============================================================ */
-  {
-    id: "anime-fma-brotherhood", slug: "fullmetal-alchemist-brotherhood", category: "anime",
-    title: "Fullmetal Alchemist: Brotherhood", year: 2009, certification: "R",
-    genres: ["Action", "Fantasy"], runtime: "64 episodes",
-    colors: ["#b8902a", "#0d0a06"], poster: "",
-    synopsis: "After a failed attempt to bring their mother back through alchemy leaves them maimed, brothers Edward and Alphonse Elric set out on a perilous journey to find the Philosopher's Stone and restore their bodies.",
-    credits: { Studio: "Bones", Director: "Yasuhiro Irie" },
-    ratings: [
-      { sourceId: "mal", value: 9.1, reviewCount: 2100000 },
-      { sourceId: "anilist", value: 90, reviewCount: 600000 },
-    ],
-    watch: {
-      US: { stream: [{ name: "Crunchyroll", color: "#f47521", url: "#" }, { name: "Netflix", color: "#e50914", url: "#" }], rentbuy: [] },
-    },
-  },
-  {
-    id: "anime-frieren", slug: "frieren", category: "anime",
-    title: "Frieren: Beyond Journey's End", year: 2023, certification: "PG-13",
-    genres: ["Adventure", "Fantasy"], runtime: "28 episodes",
-    colors: ["#3a9c7a", "#0a1110"], poster: "", trending: true,
-    synopsis: "After the demon king is defeated, the elf mage Frieren outlives her human companions and embarks on a journey to understand the people she once travelled with — and the meaning of the bonds she took for granted.",
-    credits: { Studio: "Madhouse", Director: "Keiichirō Saitō" },
-    ratings: [
-      { sourceId: "mal", value: 9.3, reviewCount: 600000 },
-      { sourceId: "anilist", value: 88, reviewCount: 200000 },
-    ],
-    watch: {
-      US: { stream: [{ name: "Crunchyroll", color: "#f47521", url: "#" }], rentbuy: [] },
-    },
-  },
-  {
-    id: "anime-aot", slug: "attack-on-titan", category: "anime",
-    title: "Attack on Titan", year: 2013, certification: "R",
-    genres: ["Action", "Drama"], runtime: "4 seasons",
-    colors: ["#8a4a2a", "#0c0907"], poster: "", trending: true,
-    synopsis: "When man-eating Titans first appeared 100 years ago, humanity found safety behind massive walls. But the security vanishes when a colossal Titan smashes through, and young Eren vows to take back the world.",
-    credits: { Studio: "Wit Studio / MAPPA", Director: "Tetsurō Araki" },
-    ratings: [
-      { sourceId: "mal", value: 8.9, reviewCount: 2600000 },
-      { sourceId: "anilist", value: 86, reviewCount: 700000 },
-    ],
-    watch: {
-      US: { stream: [{ name: "Crunchyroll", color: "#f47521", url: "#" }, { name: "Hulu", color: "#1ce783", url: "#" }], rentbuy: [] },
-    },
-  },
-  {
-    id: "anime-jjk", slug: "jujutsu-kaisen", category: "anime",
-    title: "Jujutsu Kaisen", year: 2020, certification: "R",
-    genres: ["Action", "Supernatural"], runtime: "2 seasons",
-    colors: ["#5a3a8a", "#0b0a14"], poster: "",
-    synopsis: "A boy swallows a cursed talisman — the finger of a demon — and becomes cursed himself. He enters a shaman's school to be able to locate the demon's other body parts and exorcise himself.",
-    credits: { Studio: "MAPPA", Director: "Sunghoo Park" },
-    ratings: [
-      { sourceId: "mal", value: 8.6, reviewCount: 1900000 },
-      { sourceId: "anilist", value: 84, reviewCount: 500000 },
-    ],
-    watch: {
-      US: { stream: [{ name: "Crunchyroll", color: "#f47521", url: "#" }], rentbuy: [] },
-    },
-  },
-
   /* ===== BOOKS ============================================================ */
   {
     id: "book-project-hail-mary", slug: "project-hail-mary", category: "book",
