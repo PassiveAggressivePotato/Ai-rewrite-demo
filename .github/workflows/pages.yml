@@ -25,10 +25,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Assemble site (only the web assets)
+      - name: Assemble site (web assets for both apps)
         run: |
           mkdir -p _site
-          cp index.html styles.css app.js data.js _site/
+          # Flagship app at the site root
+          cp index.html styles.css app.js config.js sources.js normalize.js data.js \
+             manifest.webmanifest sw.js robots.txt _site/
+          cp -r icons _site/
+          # Orrery preserved at /orrery/
+          mkdir -p _site/orrery
+          cp orrery/index.html orrery/styles.css orrery/app.js orrery/data.js _site/orrery/
 
       - name: Configure Pages (self-enable if needed)
         uses: actions/configure-pages@v5

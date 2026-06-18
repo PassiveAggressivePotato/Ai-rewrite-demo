@@ -1,117 +1,340 @@
-/* ===================================================================
-   data.js — physical parameters + curated facts/fallbacks
-   Units: a in AU, period in Julian years, radius in km, mass in Earths,
-   tilt in degrees, day = sidereal rotation period in Earth days.
-   =================================================================== */
-window.SUN = {
-  id: "sun", name: "The Sun", kind: "G-type star",
-  radiusKm: 696340, day: 27, tilt: 7.25, wiki: "Sun",
-  color: 0xffcc55, emissive: 0xff9a2a,
-};
+/* =============================================================================
+ * data.js — mock catalog across all five categories.
+ *
+ * This stands in for real APIs (TMDB + OMDb for film/TV, IGDB/OpenCritic/Steam
+ * for games, MAL/AniList for anime, Goodreads/StoryGraph for books). The shape
+ * is intentionally close to what those APIs return so the data layer can be
+ * swapped without touching the UI or the engine.
+ *
+ * Posters render as designed duotone gradient cards (the `colors` pair) so the
+ * prototype is fully self-contained and works offline. Each item also has an
+ * optional `poster` URL slot: when populated with real artwork later, the UI
+ * uses it and falls back to the gradient if the image fails to load.
+ *
+ * `ratings` hold RAW per-source values on each source's native scale — the
+ * engine normalizes them. `watch` is keyed by ISO country code and adapts per
+ * category (streaming for film/TV, stores for games, retailers for books).
+ * ========================================================================== */
 
-window.BODIES = [
-  { id:"mercury", name:"Mercury", kind:"Terrestrial planet", a:0.387, period:0.2408, radiusKm:2439.7, mass:0.055, tilt:0.03,  day:58.65,  eccentricity:0.206, color:0x9c8b7a, wiki:"Mercury" },
-  { id:"venus",   name:"Venus",   kind:"Terrestrial planet", a:0.723, period:0.6152, radiusKm:6051.8, mass:0.815, tilt:177.4, day:-243.0, eccentricity:0.007, color:0xd9b27a, wiki:"Venus" },
-  { id:"earth",   name:"Earth",   kind:"Our home world",     a:1.000, period:1.0000, radiusKm:6371.0, mass:1.000, tilt:23.44, day:0.997,  eccentricity:0.017, color:0x4f7fff, wiki:"Earth",
-    moons:[ { id:"moon", name:"The Moon", kind:"Natural satellite", a:0.00257, period:0.0748, radiusKm:1737.4, mass:0.0123, tilt:6.68, day:27.32, color:0xbfbfbf, wiki:"Moon" } ] },
-  { id:"mars",    name:"Mars",    kind:"Terrestrial planet", a:1.524, period:1.8808, radiusKm:3389.5, mass:0.107, tilt:25.19, day:1.026,  eccentricity:0.093, color:0xc1502e, wiki:"Mars" },
-  { id:"jupiter", name:"Jupiter", kind:"Gas giant",          a:5.203, period:11.862, radiusKm:69911,  mass:317.8, tilt:3.13,  day:0.414,  eccentricity:0.048, color:0xd8b48c, wiki:"Jupiter", bands:true },
-  { id:"saturn",  name:"Saturn",  kind:"Gas giant",          a:9.537, period:29.457, radiusKm:58232,  mass:95.16, tilt:26.73, day:0.444,  eccentricity:0.056, color:0xe3c98b, rings:true, wiki:"Saturn", bands:true },
-  { id:"uranus",  name:"Uranus",  kind:"Ice giant",          a:19.19, period:84.011, radiusKm:25362,  mass:14.54, tilt:97.77, day:-0.718, eccentricity:0.046, color:0x9fe3e8, wiki:"Uranus", rings:true },
-  { id:"neptune", name:"Neptune", kind:"Ice giant",          a:30.07, period:164.79, radiusKm:24622,  mass:17.15, tilt:28.32, day:0.671,  eccentricity:0.010, color:0x3b5bff, wiki:"Neptune" },
+export const CATALOG = [
+  /* ===== MOVIES =========================================================== */
+  {
+    id: "movie-dune-2", slug: "dune-part-two", category: "movie",
+    title: "Dune: Part Two", year: 2024, certification: "PG-13",
+    genres: ["Sci-Fi", "Adventure"], runtime: "2h 46m",
+    colors: ["#c9892f", "#1a0f06"], poster: "", trending: true,
+    synopsis: "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family, facing a choice between the love of his life and the fate of the universe.",
+    credits: { Director: "Denis Villeneuve", Cast: "Timothée Chalamet, Zendaya, Rebecca Ferguson" },
+    ratings: [
+      { sourceId: "rt_critic", value: 92, reviewCount: 480 },
+      { sourceId: "metacritic_critic", value: 79, reviewCount: 62 },
+      { sourceId: "imdb", value: 8.5, reviewCount: 540000 },
+      { sourceId: "letterboxd", value: 4.3, reviewCount: 990000 },
+      { sourceId: "tmdb", value: 83, reviewCount: 6200 },
+      { sourceId: "google", value: 95, reviewCount: 50000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Max", color: "#5b2bd6", url: "#" }], rentbuy: ["Apple TV", "Prime Video", "Netflix"] },
+      GB: { stream: [{ name: "NOW", color: "#00807d", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      AU: { stream: [{ name: "Binge", color: "#e0234e", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
+  {
+    id: "movie-oppenheimer", slug: "oppenheimer", category: "movie",
+    title: "Oppenheimer", year: 2023, certification: "R",
+    genres: ["Drama", "History"], runtime: "3h 0m",
+    colors: ["#c64a2a", "#0a0a0d"], poster: "",
+    synopsis: "The story of J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, and the fallout that defined the rest of his life.",
+    credits: { Director: "Christopher Nolan", Cast: "Cillian Murphy, Emily Blunt, Robert Downey Jr." },
+    ratings: [
+      { sourceId: "rt_critic", value: 93, reviewCount: 510 },
+      { sourceId: "metacritic_critic", value: 90, reviewCount: 67 },
+      { sourceId: "imdb", value: 8.3, reviewCount: 820000 },
+      { sourceId: "letterboxd", value: 4.2, reviewCount: 1100000 },
+      { sourceId: "google", value: 93, reviewCount: 70000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Peacock", color: "#000", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      GB: { stream: [], rentbuy: ["Apple TV", "Prime Video", "Sky Store"] },
+    },
+  },
+  {
+    id: "movie-poor-things", slug: "poor-things", category: "movie",
+    title: "Poor Things", year: 2023, certification: "R",
+    genres: ["Sci-Fi", "Comedy"], runtime: "2h 21m",
+    colors: ["#3aa0a0", "#10141f"], poster: "", trending: true,
+    synopsis: "Brought back to life by an unorthodox scientist, a young woman runs off with a lawyer on a whirlwind adventure across the continents, growing steadfast in her purpose to stand for equality and liberation.",
+    credits: { Director: "Yorgos Lanthimos", Cast: "Emma Stone, Mark Ruffalo, Willem Dafoe" },
+    ratings: [
+      { sourceId: "rt_critic", value: 92, reviewCount: 400 },
+      { sourceId: "metacritic_critic", value: 87, reviewCount: 61 },
+      { sourceId: "imdb", value: 7.8, reviewCount: 320000 },
+      { sourceId: "letterboxd", value: 4.1, reviewCount: 720000 },
+      { sourceId: "google", value: 86, reviewCount: 30000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Hulu", color: "#1ce783", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      GB: { stream: [{ name: "Disney+", color: "#0a2a6b", url: "#" }], rentbuy: ["Apple TV"] },
+    },
+  },
+  {
+    id: "movie-spiderverse-2", slug: "across-the-spider-verse", category: "movie",
+    title: "Spider-Man: Across the Spider-Verse", year: 2023, certification: "PG",
+    genres: ["Animation", "Action"], runtime: "2h 20m",
+    colors: ["#d6336c", "#13123a"], poster: "",
+    synopsis: "Miles Morales catapults across the multiverse, where he encounters a team of Spider-People charged with protecting its very existence — and clashes with them over how to handle a new threat.",
+    credits: { Director: "Joaquim Dos Santos", Cast: "Shameik Moore, Hailee Steinfeld, Oscar Isaac" },
+    ratings: [
+      { sourceId: "rt_critic", value: 95, reviewCount: 380 },
+      { sourceId: "metacritic_critic", value: 86, reviewCount: 60 },
+      { sourceId: "imdb", value: 8.5, reviewCount: 430000 },
+      { sourceId: "letterboxd", value: 4.4, reviewCount: 880000 },
+      { sourceId: "google", value: 97, reviewCount: 60000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Netflix", color: "#e50914", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
+  {
+    id: "movie-everything", slug: "everything-everywhere-all-at-once", category: "movie",
+    title: "Everything Everywhere All at Once", year: 2022, certification: "R",
+    genres: ["Sci-Fi", "Comedy"], runtime: "2h 19m",
+    colors: ["#e8a13a", "#1b1030"], poster: "",
+    synopsis: "An aging Chinese immigrant is swept up in an insane adventure in which she alone can save existence by exploring other universes and connecting with the lives she could have led.",
+    credits: { Director: "Daniels", Cast: "Michelle Yeoh, Ke Huy Quan, Jamie Lee Curtis" },
+    ratings: [
+      { sourceId: "rt_critic", value: 93, reviewCount: 430 },
+      { sourceId: "metacritic_critic", value: 81, reviewCount: 63 },
+      { sourceId: "imdb", value: 7.8, reviewCount: 560000 },
+      { sourceId: "letterboxd", value: 4.3, reviewCount: 1300000 },
+      { sourceId: "google", value: 94, reviewCount: 80000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Paramount+", color: "#0064ff", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
+
+  /* ===== TV SHOWS ========================================================= */
+  {
+    id: "tv-shogun", slug: "shogun", category: "tv",
+    title: "Shōgun", year: 2024, certification: "TV-MA",
+    genres: ["Drama", "History"], runtime: "10 episodes",
+    colors: ["#9c2a2a", "#0c0a08"], poster: "", trending: true,
+    synopsis: "In Japan in the year 1600, at the dawn of a century-defining civil war, Lord Toranaga fights for his life as his enemies on the Council of Regents unite against him, while a mysterious English ship is found marooned in a nearby fishing village.",
+    credits: { Creator: "Justin Marks, Rachel Kondo", Cast: "Hiroyuki Sanada, Cosmo Jarvis, Anna Sawai" },
+    ratings: [
+      { sourceId: "rt_critic", value: 99, reviewCount: 130 },
+      { sourceId: "metacritic_critic", value: 89, reviewCount: 38 },
+      { sourceId: "imdb", value: 8.7, reviewCount: 180000 },
+      { sourceId: "tmdb", value: 86, reviewCount: 1500 },
+      { sourceId: "google", value: 96, reviewCount: 20000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Hulu", color: "#1ce783", url: "#" }, { name: "Disney+", color: "#0a2a6b", url: "#" }], rentbuy: [] },
+      GB: { stream: [{ name: "Disney+", color: "#0a2a6b", url: "#" }], rentbuy: [] },
+    },
+  },
+  {
+    id: "tv-the-bear", slug: "the-bear", category: "tv",
+    title: "The Bear", year: 2022, certification: "TV-MA",
+    genres: ["Drama", "Comedy"], runtime: "3 seasons",
+    colors: ["#2f6f4f", "#0a0d0b"], poster: "",
+    synopsis: "A young, award-winning chef from the fine-dining world returns to Chicago to run his late brother's chaotic Italian beef sandwich shop, clashing with the unruly kitchen crew as he fights to transform both the restaurant and himself.",
+    credits: { Creator: "Christopher Storer", Cast: "Jeremy Allen White, Ayo Edebiri, Ebon Moss-Bachrach" },
+    ratings: [
+      { sourceId: "rt_critic", value: 99, reviewCount: 150 },
+      { sourceId: "metacritic_critic", value: 90, reviewCount: 40 },
+      { sourceId: "imdb", value: 8.6, reviewCount: 210000 },
+      { sourceId: "tmdb", value: 82, reviewCount: 1800 },
+      { sourceId: "google", value: 95, reviewCount: 25000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Hulu", color: "#1ce783", url: "#" }], rentbuy: [] },
+      GB: { stream: [{ name: "Disney+", color: "#0a2a6b", url: "#" }], rentbuy: [] },
+    },
+  },
+  {
+    id: "tv-fallout", slug: "fallout", category: "tv",
+    title: "Fallout", year: 2024, certification: "TV-MA",
+    genres: ["Sci-Fi", "Adventure"], runtime: "8 episodes",
+    colors: ["#3a8f3a", "#0d0f08"], poster: "", trending: true,
+    synopsis: "200 years after the apocalypse, the gentle denizens of luxury fallout shelters are forced to return to the irradiated hellscape their ancestors left behind — and are shocked to discover an incredibly complex, gleefully weird, and highly violent universe waiting for them.",
+    credits: { Creator: "Geneva Robertson-Dworet, Graham Wagner", Cast: "Ella Purnell, Aaron Moten, Walton Goggins" },
+    ratings: [
+      { sourceId: "rt_critic", value: 93, reviewCount: 120 },
+      { sourceId: "metacritic_critic", value: 81, reviewCount: 34 },
+      { sourceId: "imdb", value: 8.4, reviewCount: 230000 },
+      { sourceId: "tmdb", value: 82, reviewCount: 2100 },
+      { sourceId: "google", value: 94, reviewCount: 30000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Prime Video", color: "#00a8e1", url: "#" }], rentbuy: [] },
+      GB: { stream: [{ name: "Prime Video", color: "#00a8e1", url: "#" }], rentbuy: [] },
+    },
+  },
+  {
+    id: "tv-succession", slug: "succession", category: "tv",
+    title: "Succession", year: 2018, certification: "TV-MA",
+    genres: ["Drama"], runtime: "4 seasons",
+    colors: ["#6b5b3a", "#0c0b08"], poster: "",
+    synopsis: "The Roy family controls one of the biggest media and entertainment conglomerates in the world. As their ageing patriarch's health declines, each of his children jockeys for control of the empire.",
+    credits: { Creator: "Jesse Armstrong", Cast: "Brian Cox, Jeremy Strong, Sarah Snook" },
+    ratings: [
+      { sourceId: "rt_critic", value: 94, reviewCount: 200 },
+      { sourceId: "metacritic_critic", value: 89, reviewCount: 45 },
+      { sourceId: "imdb", value: 8.9, reviewCount: 250000 },
+      { sourceId: "tmdb", value: 82, reviewCount: 3000 },
+      { sourceId: "google", value: 93, reviewCount: 28000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Max", color: "#5b2bd6", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      GB: { stream: [{ name: "NOW", color: "#00807d", url: "#" }], rentbuy: ["Apple TV"] },
+    },
+  },
+
+  /* ===== GAMES ============================================================ */
+  {
+    id: "game-bg3", slug: "baldurs-gate-3", category: "game",
+    title: "Baldur's Gate 3", year: 2023, certification: "M",
+    genres: ["RPG", "Strategy"], runtime: "PC, PS5, Xbox",
+    colors: ["#b03a2e", "#0d0a14"], poster: "", trending: true,
+    synopsis: "Gather your party and return to the Forgotten Realms in a tale of fellowship and betrayal, sacrifice and survival, and the lure of absolute power. Mysterious abilities are awakening inside you as you fight to resist a corruption that threatens to remake you.",
+    credits: { Developer: "Larian Studios", Platforms: "PC, PlayStation 5, Xbox Series X/S" },
+    ratings: [
+      { sourceId: "opencritic", value: 96, reviewCount: 180 },
+      { sourceId: "metacritic_critic", value: 96, reviewCount: 120 },
+      { sourceId: "steam", value: 96, reviewCount: 720000 },
+      { sourceId: "igdb", value: 93, reviewCount: 1400 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Steam", color: "#1b2838", url: "#" }], rentbuy: ["PS Store", "Xbox", "GOG"] },
+      GB: { stream: [{ name: "Steam", color: "#1b2838", url: "#" }], rentbuy: ["PS Store", "Xbox", "GOG"] },
+    },
+  },
+  {
+    id: "game-elden-ring", slug: "elden-ring", category: "game",
+    title: "Elden Ring", year: 2022, certification: "M",
+    genres: ["Action RPG"], runtime: "PC, PS5, Xbox",
+    colors: ["#c79a3a", "#0c0a08"], poster: "", trending: true,
+    synopsis: "Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between — a vast world where open fields and huge dungeons are seamlessly connected.",
+    credits: { Developer: "FromSoftware", Platforms: "PC, PlayStation 5, Xbox Series X/S" },
+    ratings: [
+      { sourceId: "opencritic", value: 95, reviewCount: 200 },
+      { sourceId: "metacritic_critic", value: 96, reviewCount: 130 },
+      { sourceId: "steam", value: 92, reviewCount: 720000 },
+      { sourceId: "igdb", value: 92, reviewCount: 2200 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Steam", color: "#1b2838", url: "#" }], rentbuy: ["PS Store", "Xbox"] },
+    },
+  },
+  {
+    id: "game-zelda-totk", slug: "tears-of-the-kingdom", category: "game",
+    title: "The Legend of Zelda: Tears of the Kingdom", year: 2023, certification: "E10+",
+    genres: ["Adventure"], runtime: "Nintendo Switch",
+    colors: ["#3a8fa0", "#0a1014"], poster: "",
+    synopsis: "An epic adventure across the land and skies of Hyrule awaits. Explore floating islands and battle threatening foes with powerful new abilities to craft, build, and fuse your way through the kingdom.",
+    credits: { Developer: "Nintendo EPD", Platforms: "Nintendo Switch" },
+    ratings: [
+      { sourceId: "opencritic", value: 96, reviewCount: 170 },
+      { sourceId: "metacritic_critic", value: 96, reviewCount: 130 },
+      { sourceId: "igdb", value: 91, reviewCount: 1200 },
+    ],
+    watch: {
+      US: { stream: [{ name: "eShop", color: "#e60012", url: "#" }], rentbuy: ["Nintendo eShop"] },
+    },
+  },
+  {
+    id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game",
+    title: "Marvel's Spider-Man 2", year: 2023, certification: "T",
+    genres: ["Action Adventure"], runtime: "PlayStation 5",
+    colors: ["#c0392b", "#0b0d1a"], poster: "",
+    synopsis: "Spider-Men Peter Parker and Miles Morales return for an exhilarating new adventure, swinging across Marvel's New York while facing the ultimate test of strength against the symbiote and the menace of Venom.",
+    credits: { Developer: "Insomniac Games", Platforms: "PlayStation 5" },
+    ratings: [
+      { sourceId: "opencritic", value: 90, reviewCount: 160 },
+      { sourceId: "metacritic_critic", value: 90, reviewCount: 130 },
+      { sourceId: "igdb", value: 88, reviewCount: 900 },
+    ],
+    watch: {
+      US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store"] },
+    },
+  },
+
+  /* ===== BOOKS ============================================================ */
+  {
+    id: "book-project-hail-mary", slug: "project-hail-mary", category: "book",
+    title: "Project Hail Mary", year: 2021, certification: "",
+    genres: ["Sci-Fi"], runtime: "496 pages",
+    colors: ["#2a6f9c", "#08101a"], poster: "", trending: true,
+    synopsis: "Ryland Grace is the sole survivor on a desperate, last-chance mission — and if he fails, humanity and the Earth itself will perish. Except he can't remember that, or even his own name. Slowly, he pieces together the truth: he's been asleep for a very, very long time.",
+    credits: { Author: "Andy Weir", Publisher: "Ballantine Books" },
+    ratings: [
+      { sourceId: "goodreads", value: 4.5, reviewCount: 1100000 },
+      { sourceId: "storygraph", value: 4.5, reviewCount: 90000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },
+    },
+  },
+  {
+    id: "book-the-midnight-library", slug: "the-midnight-library", category: "book",
+    title: "The Midnight Library", year: 2020, certification: "",
+    genres: ["Fiction", "Fantasy"], runtime: "304 pages",
+    colors: ["#2a6f5f", "#0a1311"], poster: "",
+    synopsis: "Between life and death there is a library, and within it the shelves go on forever. Every book provides a chance to try another life you could have lived — to see how things would be if you had made other choices.",
+    credits: { Author: "Matt Haig", Publisher: "Canongate Books" },
+    ratings: [
+      { sourceId: "goodreads", value: 4.0, reviewCount: 1500000 },
+      { sourceId: "storygraph", value: 3.9, reviewCount: 110000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },
+    },
+  },
+  {
+    id: "book-fourth-wing", slug: "fourth-wing", category: "book",
+    title: "Fourth Wing", year: 2023, certification: "",
+    genres: ["Fantasy", "Romance"], runtime: "528 pages",
+    colors: ["#8a2e4a", "#0e0a0c"], poster: "", trending: true,
+    synopsis: "Twenty-year-old Violet Sorrengail is forced to join the deadly riders quadrant of an elite war college for dragon riders, where the friends she makes are few and the death toll is high. With fewer dragons than candidates, most cadets won't survive.",
+    credits: { Author: "Rebecca Yarros", Publisher: "Entangled: Red Tower" },
+    ratings: [
+      { sourceId: "goodreads", value: 4.6, reviewCount: 980000 },
+      { sourceId: "storygraph", value: 4.3, reviewCount: 120000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },
+    },
+  },
+  {
+    id: "book-tomorrow", slug: "tomorrow-and-tomorrow", category: "book",
+    title: "Tomorrow, and Tomorrow, and Tomorrow", year: 2022, certification: "",
+    genres: ["Fiction"], runtime: "416 pages",
+    colors: ["#3a5a9c", "#080c16"], poster: "",
+    synopsis: "Two friends — often in love, but never lovers — come together as creative partners in the world of video game design, where success brings them fame, joy, tragedy, duplicity, and, ultimately, a kind of immortality.",
+    credits: { Author: "Gabrielle Zevin", Publisher: "Knopf" },
+    ratings: [
+      { sourceId: "goodreads", value: 4.2, reviewCount: 800000 },
+      { sourceId: "storygraph", value: 4.2, reviewCount: 95000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },
+    },
+  },
 ];
 
-/* Curated fallback facts. Wikipedia summaries are appended live when online,
-   but these guarantee an endless, always-available stream. */
-window.FACTS = {
-  sun: [
-    "The Sun holds 99.86% of all the mass in the Solar System.",
-    "About 1.3 million Earths could fit inside the Sun.",
-    "Light from the Sun's surface takes ~8 minutes 20 seconds to reach Earth.",
-    "The Sun's core is roughly 15 million °C and fuses ~600 million tonnes of hydrogen every second.",
-    "The Sun is a near-perfect sphere — its poles and equator differ by only ~10 km.",
-    "It's about 4.6 billion years old, roughly halfway through its life as a stable star.",
-    "The Sun travels around the Milky Way once every ~225 million years.",
-    "Its surface (photosphere) is ~5,500 °C, far cooler than the million-degree corona above it.",
-    "In ~5 billion years the Sun will swell into a red giant and likely engulf Mercury and Venus.",
-    "The Sun is mostly hydrogen (~73%) and helium (~25%) by mass.",
-  ],
-  mercury: [
-    "A year on Mercury lasts just 88 Earth days — the fastest orbit in the Solar System.",
-    "Mercury's day is longer than its year: one solar day lasts about 176 Earth days.",
-    "Despite being closest to the Sun, Mercury isn't the hottest planet — Venus is.",
-    "Temperatures swing from about 430 °C in daylight to -180 °C at night.",
-    "Mercury has a giant iron core making up ~60% of its mass.",
-    "It has a faint, ancient magnetic field — about 1% the strength of Earth's.",
-    "Frozen water hides in permanently shadowed craters at Mercury's poles.",
-    "Mercury is shrinking — its core cooled and the surface wrinkled into huge cliffs.",
-  ],
-  venus: [
-    "Venus spins backwards — the Sun there rises in the west and sets in the east.",
-    "Its thick CO₂ atmosphere makes Venus the hottest planet at about 465 °C.",
-    "Surface pressure on Venus is ~92× Earth's — like being 900 m underwater.",
-    "A day on Venus is longer than its year.",
-    "Venus is the brightest natural object in our night sky after the Moon.",
-    "It rains sulfuric acid in the upper clouds, though it evaporates before landing.",
-    "Venus is often called Earth's 'twin' for its similar size and mass.",
-  ],
-  earth: [
-    "Earth is the only known place in the universe confirmed to host life.",
-    "It's the densest planet in the Solar System.",
-    "Earth isn't a perfect sphere — it bulges at the equator.",
-    "Roughly 71% of Earth's surface is covered by water.",
-    "Earth's rotation is gradually slowing — days grow ~1.7 ms longer per century.",
-    "Our magnetic field deflects the solar wind and shields life from radiation.",
-    "Earth is the only planet not named after a Greek or Roman deity.",
-  ],
-  moon: [
-    "The Moon is drifting away from Earth at about 3.8 cm per year.",
-    "It always shows us the same face — its rotation is tidally locked to Earth.",
-    "The Moon likely formed when a Mars-sized body struck the early Earth.",
-    "Moonquakes are real and can last for many minutes.",
-    "The Moon's gravity is the main driver of Earth's ocean tides.",
-    "Footprints left by Apollo astronauts could last millions of years.",
-  ],
-  mars: [
-    "Mars hosts Olympus Mons, the tallest volcano in the Solar System at ~22 km.",
-    "Its red color comes from iron oxide — literally rust — on the surface.",
-    "Mars has the largest dust storms in the Solar System, sometimes global.",
-    "A day on Mars (a 'sol') is just 37 minutes longer than Earth's.",
-    "Mars has two tiny moons, Phobos and Deimos, likely captured asteroids.",
-    "Valles Marineris is a canyon system over 4,000 km long.",
-    "Ancient river valleys suggest Mars once had liquid water on its surface.",
-  ],
-  jupiter: [
-    "Jupiter is so massive that all other planets could fit inside it twice over.",
-    "Its Great Red Spot is a storm wider than Earth that's raged for centuries.",
-    "Jupiter has the shortest day of any planet — under 10 hours.",
-    "It has at least 95 known moons, including Ganymede, the largest in the system.",
-    "Jupiter's magnetic field is the strongest of any planet.",
-    "It acts as a cosmic shield, deflecting many comets away from the inner planets.",
-    "Jupiter radiates more heat than it receives from the Sun.",
-  ],
-  saturn: [
-    "Saturn's rings are made mostly of ice and span ~280,000 km, yet are only ~10 m thick in places.",
-    "Saturn is the least dense planet — it would float in a big enough bathtub of water.",
-    "Its moon Titan has lakes and rivers of liquid methane.",
-    "Saturn has a hexagon-shaped jet stream at its north pole.",
-    "It has over 140 confirmed moons, the most of any planet.",
-    "Winds in Saturn's atmosphere can reach 1,800 km/h.",
-  ],
-  uranus: [
-    "Uranus is tipped on its side, rolling around the Sun at a ~98° tilt.",
-    "Because of that tilt, each pole gets ~42 years of continuous sunlight, then darkness.",
-    "Uranus is the coldest planet, with temperatures down to about -224 °C.",
-    "It was the first planet discovered with a telescope, in 1781.",
-    "Its blue-green color comes from methane in the atmosphere.",
-    "Uranus has faint rings and 27 known moons named after literary characters.",
-  ],
-  neptune: [
-    "Neptune was found through math before it was ever seen, in 1846.",
-    "It has the fastest winds in the Solar System — up to 2,100 km/h.",
-    "One Neptune year lasts about 165 Earth years.",
-    "Its moon Triton orbits backwards and is likely a captured dwarf planet.",
-    "Neptune radiates ~2.6× more energy than it gets from the Sun.",
-    "Its vivid blue comes from methane plus an unknown additional compound.",
-  ],
+/* Country metadata for the Where-to-Watch selector (flag + label). */
+export const COUNTRIES = {
+  US: { flag: "🇺🇸", label: "United States" },
+  GB: { flag: "🇬🇧", label: "United Kingdom" },
+  AU: { flag: "🇦🇺", label: "Australia" },
 };
+
+export function getItem(slug) {
+  return CATALOG.find((i) => i.slug === slug) || null;
+}
+
+export function itemsByCategory(category) {
+  return CATALOG.filter((i) => i.category === category);
+}
