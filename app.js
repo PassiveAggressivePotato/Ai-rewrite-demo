@@ -91,10 +91,8 @@ function themeBtn() {
 function headSearch() {
   return `
     <div class="head-search">
-      <div class="head-search-field">
-        <input class="head-search-input" type="search" autocomplete="off" placeholder="Search everything…" />
-        <button class="head-search-btn" aria-label="Search">${ICON.search}</button>
-      </div>
+      <input class="head-search-input" type="search" autocomplete="off" placeholder="Search everything…" />
+      <button class="head-search-btn" aria-label="Search">${ICON.search}</button>
       <div class="head-search-dropdown hidden"></div>
     </div>`;
 }
@@ -106,22 +104,47 @@ function searchAll(q) {
     it.title.toLowerCase().includes(t) || it.genres.join(" ").toLowerCase().includes(t));
 }
 
+/* Dropdown = a solid panel with a sectioned category switcher (icons) on top
+ * and the matching results below. The active category section is filled and
+ * grows; the others recede. */
 function renderHeadDropdown(dd, q) {
-  const items = searchAll(q).slice(0, 6);
-  if (!q.trim()) { dd.classList.add("hidden"); return; }
-  dd.innerHTML = items.length
-    ? items.map((it) => {
+  if (!q.trim()) { dd.classList.add("hidden"); dd.innerHTML = ""; return; }
+
+  const all = searchAll(q);
+  const byCat = {};
+  CATEGORIES.forEach((c) => (byCat[c.id] = []));
+  all.forEach((it) => byCat[it.category]?.push(it));
+
+  let active = dd.dataset.cat;
+  if (!active || !byCat[active]?.length) {
+    active = (CATEGORIES.find((c) => byCat[c.id].length) || CATEGORIES[0]).id;
+  }
+  dd.dataset.cat = active;
+
+  const tabs = CATEGORIES.map((c) => `
+    <button class="hsd-tab ${c.id === active ? "active" : ""} ${byCat[c.id].length ? "" : "empty"}"
+      data-hcat="${c.id}" title="${c.plural}">${c.icon}</button>`).join("");
+
+  const list = byCat[active] || [];
+  const listHtml = list.length
+    ? list.slice(0, 6).map((it) => {
         const s = scoreItem(it);
-        const c = CATEGORIES.find((x) => x.id === it.category) || {};
         return `<button class="hs-item" data-slug="${it.slug}">
           ${posterBox(it, "thumb sm")}
-          <span class="hs-meta"><span class="hs-name">${it.title}</span>
-            <span class="hs-cat">${c.short || ""} · ${it.year}</span></span>
+          <span class="hs-meta"><span class="hs-name">${it.title}</span><span class="hs-cat">${it.year}</span></span>
           <span class="hs-score">${s.synth ?? "—"}</span>
         </button>`;
       }).join("")
-    : `<div class="hs-empty">No matches</div>`;
+    : `<div class="hs-empty">No matches here</div>`;
+
+  dd.innerHTML = `<div class="hsd-tabs">${tabs}</div><div class="hsd-list">${listHtml}</div>`;
   dd.classList.remove("hidden");
+  dd.querySelectorAll("[data-hcat]").forEach((b) =>
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dd.dataset.cat = b.dataset.hcat;
+      renderHeadDropdown(dd, q);
+    }));
   dd.querySelectorAll("[data-slug]").forEach((b) =>
     b.addEventListener("click", () => { location.hash = `#/item/${b.dataset.slug}`; }));
 }
@@ -269,7 +292,7 @@ function renderLanding() {
   const tabs = CATEGORIES.map((c) => `
     <button class="tab ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
       <span class="tab-icon">${c.icon}</span>
-      <span class="tab-label">${c.short}</span>
+      <span class="tab-label">${c.plural}</span>
     </button>`).join("");
 
   app.innerHTML = `
@@ -278,7 +301,6 @@ function renderLanding() {
         <div class="landing">
           <div class="landing-head rise">
             ${themeBtn()}
-            ${headSearch()}
             <div class="wordmark home-link" data-home>${BRAND.name}</div>
             <div class="tagline">${BRAND.tagline}</div>
           </div>
@@ -402,8 +424,8 @@ function renderDetail(item) {
         <div class="detail-head">
           <div class="wordmark home-link" data-home>${BRAND.name}</div>
           <div class="head-actions">
-            ${themeBtn()}
             ${headSearch()}
+            ${themeBtn()}
           </div>
         </div>
 
