@@ -4,7 +4,7 @@
  * network fallback for navigations. Bump CACHE when assets change. Remote
  * fonts/artwork are fetched best-effort and simply skipped when offline (the
  * UI falls back to gradients and system fonts). */
-const CACHE = "scores-shell-v1";
+const CACHE = "scores-shell-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -34,17 +34,16 @@ self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
 
-  // App-shell assets: cache-first.
+  // App-shell assets: network-first so updates always show when online, with a
+  // cache fallback for offline. (Cache-first would pin stale builds on repeat
+  // visits during active development.)
   if (new URL(request.url).origin === location.origin) {
     e.respondWith(
-      caches.match(request).then((hit) =>
-        hit ||
-        fetch(request).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
-          return res;
-        }).catch(() => caches.match("./index.html"))
-      )
+      fetch(request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(request).then((hit) => hit || caches.match("./index.html")))
     );
   }
   // Cross-origin (fonts/art): just let the network handle it; ignore failures.

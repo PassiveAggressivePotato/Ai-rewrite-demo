@@ -39,12 +39,13 @@ export const THEME = {
   storageKey: "ui.theme",
 };
 
-/* Content categories shown as tabs on the landing page (order matters). */
+/* Content categories shown as tabs on the landing page (order matters).
+ * `short` = tab label, `plural` = used in section headings ("Top Movies"). */
 export const CATEGORIES = [
-  { id: "movie", label: "Movies",   icon: "🎬" },
-  { id: "tv",    label: "TV Shows", icon: "📺" },
-  { id: "game",  label: "Games",    icon: "🎮" },
-  { id: "book",  label: "Books",    icon: "📚" },
+  { id: "movie", label: "Movies",   short: "Movie", plural: "Movies", icon: "🎬" },
+  { id: "tv",    label: "TV Shows", short: "Show",  plural: "Shows",  icon: "📺" },
+  { id: "game",  label: "Games",    short: "Game",  plural: "Games",  icon: "🎮" },
+  { id: "book",  label: "Books",    short: "Book",  plural: "Books",  icon: "📚" },
 ];
 
 /* Default country for the "Where to Watch / Get it" panel. */
