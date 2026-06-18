@@ -1,8 +1,8 @@
 /* =============================================================================
  * app.js — router + rendering + interactions. Vanilla ES modules, no build.
  *
- * Two routes via the hash:
- *   #/                -> landing / search
+ * Routes (hash):
+ *   #/                -> landing / browse + search
  *   #/item/<slug>     -> detail page
  *
  * Reads branding/config from config.js, data from data.js, and uses the pure
@@ -17,7 +17,7 @@ import { SOURCE_BADGES } from "./sources.js";
 /* ---- App state ------------------------------------------------------------ */
 const state = {
   theme: localStorage.getItem(THEME.storageKey) || THEME.default,
-  category: CATEGORIES[0].id,
+  category: null,          // null until the user picks a tab for the first time
   query: "",
   country: DEFAULT_COUNTRY,
 };
@@ -27,19 +27,17 @@ const app = document.getElementById("app");
 /* ---- Inline icons --------------------------------------------------------- */
 const ICON = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
-  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg>`,
-  list: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`,
-  profile: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>`,
 };
 
 /* ---- Small helpers -------------------------------------------------------- */
 const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.colors[1]})`;
+const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
+const cat = () => CATEGORIES.find((c) => c.id === state.category) || {};
 
 function posterBox(item, cls = "thumb") {
-  // Gradient card with the category glyph; swaps to real art if a URL exists.
-  const cat = CATEGORIES.find((c) => c.id === item.category);
+  const c = CATEGORIES.find((x) => x.id === item.category);
   const bg = item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
-  return `<div class="${cls}" style="background:${bg}">${item.poster ? "" : (cat?.icon || "")}</div>`;
+  return `<div class="${cls}" style="background:${bg}">${item.poster ? "" : (c?.icon || "")}</div>`;
 }
 
 function nativeText(row) {
@@ -53,21 +51,11 @@ function dial(value, kind, size) {
   if (value == null) return `<div class="dial ${size} ${kind}"><span class="na">—</span></div>`;
   return `<div class="dial ${size} ${kind}" data-val="${value}" style="--val:0"><span class="num">${value}</span></div>`;
 }
-
 function animateDials(root) {
   requestAnimationFrame(() => {
-    root.querySelectorAll(".dial[data-val]").forEach((d) => {
-      d.style.setProperty("--val", d.getAttribute("data-val"));
-    });
+    root.querySelectorAll(".dial[data-val]").forEach((d) =>
+      d.style.setProperty("--val", d.getAttribute("data-val")));
   });
-}
-
-function bottomNav(active) {
-  const item = (key, icon) =>
-    `<button class="nav-btn ${active === key ? "active" : ""}" data-nav="${key}" aria-label="${key}">${icon}</button>`;
-  return `<nav class="bottom-nav">
-    ${item("search", ICON.search)}${item("home", ICON.home)}${item("list", ICON.list)}${item("profile", ICON.profile)}
-  </nav>`;
 }
 
 /* =====================================================================
@@ -82,18 +70,116 @@ function toggleTheme() {
   state.theme = state.theme === "dark" ? "light" : "dark";
   localStorage.setItem(THEME.storageKey, state.theme);
   applyTheme();
-  const btn = document.querySelector(".theme-toggle");
-  if (btn) btn.textContent = state.theme === "dark" ? "☾" : "☀";
+  document.querySelectorAll(".theme-toggle").forEach((b) =>
+    (b.textContent = state.theme === "dark" ? "☾" : "☀"));
+}
+
+/* =====================================================================
+ * SHARED HEADER: wordmark (home link), theme toggle, slide-out search
+ * ===================================================================== */
+function themeBtn() {
+  return `<button class="theme-toggle" title="Toggle light / dark">${state.theme === "dark" ? "☾" : "☀"}</button>`;
+}
+function headSearch() {
+  return `
+    <div class="head-search">
+      <div class="head-search-field">
+        <input class="head-search-input" type="search" autocomplete="off" placeholder="Search everything…" />
+        <button class="head-search-btn" aria-label="Search">${ICON.search}</button>
+      </div>
+      <div class="head-search-dropdown hidden"></div>
+    </div>`;
+}
+
+function searchAll(q) {
+  const t = q.trim().toLowerCase();
+  if (!t) return [];
+  return CATALOG.filter((it) =>
+    it.title.toLowerCase().includes(t) || it.genres.join(" ").toLowerCase().includes(t));
+}
+
+function renderHeadDropdown(dd, q) {
+  const items = searchAll(q).slice(0, 6);
+  if (!q.trim()) { dd.classList.add("hidden"); return; }
+  dd.innerHTML = items.length
+    ? items.map((it) => {
+        const s = scoreItem(it);
+        const c = CATEGORIES.find((x) => x.id === it.category) || {};
+        return `<button class="hs-item" data-slug="${it.slug}">
+          ${posterBox(it, "thumb sm")}
+          <span class="hs-meta"><span class="hs-name">${it.title}</span>
+            <span class="hs-cat">${c.short || ""} · ${it.year}</span></span>
+          <span class="hs-score">${s.synth ?? "—"}</span>
+        </button>`;
+      }).join("")
+    : `<div class="hs-empty">No matches</div>`;
+  dd.classList.remove("hidden");
+  dd.querySelectorAll("[data-slug]").forEach((b) =>
+    b.addEventListener("click", () => { location.hash = `#/item/${b.dataset.slug}`; }));
+}
+
+/* Submit a header search → go to the landing and show the results there. */
+function goHomeWithQuery(q) {
+  const matches = searchAll(q);
+  state.query = q;
+  if (matches.length) state.category = matches[0].category;
+  else if (state.category === null) state.category = CATEGORIES[0].id;
+  if ((location.hash || "#/") === "#/" || location.hash === "") renderLanding();
+  else location.hash = "#/";
+}
+
+let _docClick = null;
+function wireHeadSearch(root) {
+  const wrap = root.querySelector(".head-search");
+  if (!wrap) return;
+  const input = wrap.querySelector(".head-search-input");
+  const btn = wrap.querySelector(".head-search-btn");
+  const dd = wrap.querySelector(".head-search-dropdown");
+  const open = () => { wrap.classList.add("open"); setTimeout(() => input.focus(), 20); };
+  const close = () => { wrap.classList.remove("open"); dd.classList.add("hidden"); };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!wrap.classList.contains("open")) open();
+    else if (input.value.trim()) goHomeWithQuery(input.value);
+    else close();
+  });
+  input.addEventListener("input", () => renderHeadDropdown(dd, input.value));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && input.value.trim()) goHomeWithQuery(input.value);
+    else if (e.key === "Escape") close();
+  });
+  // One document-level outside-click handler at a time.
+  if (_docClick) document.removeEventListener("click", _docClick);
+  _docClick = (e) => { if (!wrap.contains(e.target)) close(); };
+  document.addEventListener("click", _docClick);
+}
+
+function wireHeader(root) {
+  const tb = root.querySelector(".theme-toggle");
+  if (tb) tb.addEventListener("click", toggleTheme);
+  root.querySelectorAll("[data-home]").forEach((el) =>
+    el.addEventListener("click", () => {
+      if ((location.hash || "#/") !== "#/" && location.hash !== "") location.hash = "#/";
+      else app.querySelector(".scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+    }));
+  wireHeadSearch(root);
 }
 
 /* =====================================================================
  * LANDING
  * ===================================================================== */
-function rankedList(items, sortKey) {
-  return [...items]
-    .map((it) => ({ it, s: scoreItem(it) }))
-    .sort((a, b) => (b.s[sortKey] ?? 0) - (a.s[sortKey] ?? 0))
-    .slice(0, 6);
+function rankBy(items, key) {
+  return [...items].map((it) => ({ it, s: scoreItem(it) }))
+    .sort((a, b) => (b.s[key] ?? 0) - (a.s[key] ?? 0)).slice(0, 5);
+}
+function rankThisMonth(items) {
+  return [...items].map((it) => ({ it, s: scoreItem(it) }))
+    .sort((a, b) => (b.it.year - a.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0))).slice(0, 5);
+}
+function rankTrending(items) {
+  const t = items.filter((i) => i.trending);
+  return rankBy(t.length ? t : items, "synth");
 }
 
 function listColumn(title, rows) {
@@ -102,10 +188,7 @@ function listColumn(title, rows) {
       <div class="list-item" data-slug="${it.slug}">
         <span class="rank">${i + 1}</span>
         ${posterBox(it)}
-        <div class="meta">
-          <div class="name">${it.title}</div>
-          <div class="sc">${s.synth ?? "—"}</div>
-        </div>
+        <div class="meta"><div class="name">${it.title}</div><div class="sc">${s.synth ?? "—"}</div></div>
       </div>`).join("")
     : `<div class="empty">Nothing here yet</div>`;
   return `<div class="list-col"><h3>${title}</h3>${body}</div>`;
@@ -116,14 +199,25 @@ function renderResultsArea() {
   if (!area) return;
   const q = state.query.trim().toLowerCase();
 
+  // Before any category is chosen: a cross-category sampler.
+  if (state.category === null) {
+    area.innerHTML = `
+      <div class="section-title">Popular Right Now</div>
+      <div class="lists">
+        ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"))}
+        ${listColumn("Shows", rankBy(itemsByCategory("tv"), "synth"))}
+        ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
+      </div>`;
+    wireCardClicks(area);
+    return;
+  }
+
   if (q) {
-    // Search instantly takes over the page: the lists are replaced by a single
-    // full-width results feed scoped to the active category.
     const matches = itemsByCategory(state.category)
       .filter((it) => it.title.toLowerCase().includes(q) || it.genres.join(" ").toLowerCase().includes(q))
       .map((it) => ({ it, s: scoreItem(it) }));
     area.innerHTML = `
-      <div class="section-title">Results in ${catLabel()} <span class="count">${matches.length}</span></div>
+      <div class="section-title">Results in ${cat().plural || ""} <span class="count">${matches.length}</span></div>
       <div class="results-list">
         ${matches.length ? matches.map(({ it, s }) => `
           <div class="result-item" data-slug="${it.slug}">
@@ -134,30 +228,40 @@ function renderResultsArea() {
             </div>
             <div class="result-score">${s.synth ?? "—"}</div>
           </div>`).join("")
-        : `<div class="empty">No ${catLabel().toLowerCase()} match “${state.query.trim()}”.</div>`}
+        : `<div class="empty">No ${(cat().plural || "").toLowerCase()} match “${state.query.trim()}”.</div>`}
       </div>`;
   } else {
     const inCat = itemsByCategory(state.category);
-    const games = itemsByCategory("game");
     area.innerHTML = `
-      <div class="section-title">Top Lists</div>
+      <div class="section-title">Top ${cat().plural || ""}</div>
       <div class="lists">
-        ${listColumn("Top This Month", rankedList(inCat, "synth"))}
-        ${listColumn("Trending This Week", rankedList(inCat.filter((i) => i.trending), "synth"))}
-        ${listColumn("Games · Acclaim", rankedList(games, "critic"))}
+        ${listColumn("This Month", rankThisMonth(inCat))}
+        ${listColumn("Trending", rankTrending(inCat))}
+        ${listColumn("All Time", rankBy(inCat, "synth"))}
       </div>`;
   }
   wireCardClicks(area);
 }
 
-function catLabel() {
-  return (CATEGORIES.find((c) => c.id === state.category) || {}).label || "";
+/* Switching tabs only updates the tab state, the search bar, and the lists —
+ * the rest of the page stays put (no full re-render). */
+function selectCategory(c) {
+  state.category = c;
+  state.query = "";
+  app.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.cat === c));
+  const wrap = app.querySelector(".searchbar-wrap");
+  if (wrap) wrap.classList.remove("collapsed");
+  const input = document.getElementById("search-input");
+  if (input) { input.value = ""; input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; }
+  renderResultsArea();
 }
 
 function renderLanding() {
+  const selected = state.category !== null;
   const tabs = CATEGORIES.map((c) => `
     <button class="tab ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
-      <span class="tab-icon">${c.icon}</span>${c.label}
+      <span class="tab-icon">${c.icon}</span>
+      <span class="tab-label">${c.short}</span>
     </button>`).join("");
 
   app.innerHTML = `
@@ -165,47 +269,37 @@ function renderLanding() {
       <div class="scroll">
         <div class="landing">
           <div class="landing-head rise">
-            <button class="theme-toggle" title="Toggle light / dark">${state.theme === "dark" ? "☾" : "☀"}</button>
-            <div class="wordmark">${BRAND.name}</div>
+            ${themeBtn()}
+            ${headSearch()}
+            <div class="wordmark home-link" data-home>${BRAND.name}</div>
             <div class="tagline">${BRAND.tagline}</div>
           </div>
 
-          <div class="search-block rise d1">
-            <div class="tabs">${tabs}</div>
+          <div class="prompt rise d1">What are you looking for?</div>
+          <div class="tabs rise d1">${tabs}</div>
+          <div class="searchbar-wrap ${selected ? "" : "collapsed"}">
             <div class="searchbar">
               ${ICON.search}
               <input id="search-input" type="search" autocomplete="off"
-                placeholder="Search ${catLabel().toLowerCase()} like ‘Dune: Part Two’…"
-                value="${state.query.replace(/"/g, "&quot;")}" />
+                placeholder="${selected ? `Search ${(cat().plural || "").toLowerCase()}…` : ""}"
+                value="${escapeAttr(state.query)}" />
             </div>
           </div>
 
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
-      ${bottomNav("search")}
     </div>`;
 
   renderResultsArea();
 
-  // Tabs
   app.querySelectorAll(".tab").forEach((t) =>
-    t.addEventListener("click", () => {
-      state.category = t.dataset.cat;
-      renderLanding();
-      const inp = document.getElementById("search-input");
-      if (inp && state.query) inp.focus();
-    }));
+    t.addEventListener("click", () => selectCategory(t.dataset.cat)));
 
-  // Live search (updates only the results region, keeps input focus)
   const input = document.getElementById("search-input");
-  input.addEventListener("input", (e) => {
-    state.query = e.target.value;
-    renderResultsArea();
-  });
+  input.addEventListener("input", (e) => { state.query = e.target.value; renderResultsArea(); });
 
-  app.querySelector(".theme-toggle").addEventListener("click", toggleTheme);
-  wireNav(app);
+  wireHeader(app);
 }
 
 /* =====================================================================
@@ -220,7 +314,6 @@ function watchCtas(category) {
 function renderWatch(item) {
   const data = item.watch[state.country];
   const ctas = watchCtas(item.category);
-
   const countrySelect = `
     <div class="country-row">
       ${COUNTRIES[state.country]?.flag || "🌐"}
@@ -299,8 +392,11 @@ function renderDetail(item) {
 
       <div class="scroll">
         <div class="detail-head">
-          <div class="wordmark">${BRAND.name}</div>
-          <button class="icon-btn" data-home aria-label="Search">${ICON.search}</button>
+          <div class="wordmark home-link" data-home>${BRAND.name}</div>
+          <div class="head-actions">
+            ${themeBtn()}
+            ${headSearch()}
+          </div>
         </div>
 
         <div class="title-block rise">
@@ -333,23 +429,18 @@ function renderDetail(item) {
           <div class="credits">${credits}</div>
         </div>
       </div>
-
-      ${bottomNav("home")}
     </div>`;
 
-  // Country switcher re-renders just the watch region
   const wire = () => {
     const sel = document.getElementById("country-select");
     if (sel) sel.addEventListener("change", (e) => {
       state.country = e.target.value;
-      const region = document.getElementById("watch-region");
-      region.innerHTML = renderWatch(item);
+      document.getElementById("watch-region").innerHTML = renderWatch(item);
       wire();
     });
   };
   wire();
 
-  // Show-more toggles
   app.querySelectorAll("[data-more]").forEach((btn) => {
     const label = btn.textContent;
     btn.addEventListener("click", () => {
@@ -360,24 +451,16 @@ function renderDetail(item) {
     });
   });
 
-  app.querySelector("[data-home]").addEventListener("click", () => { location.hash = "#/"; });
-  wireNav(app);
+  wireHeader(app);
   animateDials(app);
 }
 
 /* =====================================================================
- * NAV + ROUTER
+ * ROUTER
  * ===================================================================== */
 function wireCardClicks(root) {
   root.querySelectorAll("[data-slug]").forEach((c) =>
     c.addEventListener("click", () => { location.hash = `#/item/${c.dataset.slug}`; }));
-}
-function wireNav(root) {
-  root.querySelectorAll("[data-nav]").forEach((b) =>
-    b.addEventListener("click", () => {
-      // Search & Home both return to the landing in this prototype.
-      location.hash = "#/";
-    }));
 }
 
 function router() {
