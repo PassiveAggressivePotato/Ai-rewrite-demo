@@ -1,0 +1,14 @@
+{
+  "name": "Universal Entertainment Scores",
+  "short_name": "Scores",
+  "description": "Review aggregation for movies, TV, games, anime and books — every source normalized onto one 100-point scale.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06070c",
+  "theme_color": "#06070c",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

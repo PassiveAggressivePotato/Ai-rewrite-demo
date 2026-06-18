@@ -1,73 +1,70 @@
-# Orrery — a living, breakable solar system
+# Universal Entertainment Scores (working title: "SYNTH")
 
-A mobile-first, single-page WebGL solar-system simulator. Fly in through a
-warp-speed title screen with procedurally generated ambient music, then zoom
-out to the whole system. Tap any body to read an endless stream of facts and
-see a live photo, drag to orbit the camera, and use the sliders to bend the
-laws of the system to your will.
+A mobile-first review-aggregation app for **movies, TV, games, anime and
+books**. Every rating source is normalized onto one **100-point scale**, then
+combined into separate **critic** and **user** averages plus a single headline
+score — with a poster-driven, frosted-glass UI that fits on one screen.
 
-## Features
+> The name **SYNTH** is a placeholder. It lives in exactly one place
+> (`config.js` → `BRAND`); nothing else in the code is named after it, so
+> renaming the whole product is a one-line change.
 
-- **Real 3D** (three.js) with textured, sunlit spheres — so day/night
-  terminators (planet phases) render correctly. Camera angle presets
-  (Oblique / Top / Side / Follow) plus drag-to-orbit and pinch / wheel zoom.
-- **Cinematic intro** — a warp starfield + title, then a zoom-out reveal of
-  the system when you enter.
-- **Procedural audio** (Tone.js): an evolving ambient pad for the title and
-  sim, plus **Harmony of the Spheres** sonification — each planet plays a tone
-  as it completes an orbit, so speeding up the sim plays a chord.
-- **Time control**: a log-scaled speed dial from fractions of a day per second
-  up to years per second, in either direction, plus play/pause.
-- **Live parameters that change the system**:
-  - *Sun mass* — rescales orbital speeds (Kepler's third law), the Sun's
-    brightness/size, and the live **habitable-zone ring**.
-  - *Distance scale* — blend from a compact, readable layout to true-to-life
-    AU spacing.
-  - *Planet size boost* — real planets are invisibly small at true scale, so
-    exaggerate them to taste.
-  - Per-body *size*, *orbit distance*, and *spin* controls for the selected
-    planet, moon, or the Sun.
-- **"What if…" sandbox** (all reversible): ignite Jupiter into a brown dwarf,
-  give Earth a ring system, add a binary companion star, send a rogue planet
-  tearing through, or swell the Sun into a red giant.
-- **Facts & photos**: curated facts ship in `data.js` for an always-available,
-  endless next/prev stream; live **Wikipedia** summaries and images are merged
-  in when you're online, with a link out to the full article.
+## Status — v1 prototype
 
-## Running it
+This is a polished **mock-data** prototype: the UI and the rating engine are
+real, the catalog (`data.js`) stands in for live APIs. The data layer is shaped
+to match the real sources so they can be wired in later without UI changes.
 
-It's a static site — no build step.
+## Run it
+
+Static site, no build step:
 
 ```bash
-# from the repo root
 python3 -m http.server 8000
-# then open http://localhost:8000 on your phone or desktop
+# open http://localhost:8000
 ```
 
-Opening `index.html` directly via `file://` also works for the 3D, audio, and
-curated facts; serving over `http(s)` is recommended so the live Wikipedia
-fetches succeed reliably. Add it to your phone's home screen for a full-screen,
-app-like experience.
+Serving over `http(s)` (rather than `file://`) lets the service worker register
+and the web fonts load; the app still works offline and falls back to gradient
+posters + system fonts when assets are unavailable.
 
-## Tech / structure
+## Structure
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Markup + HUD/overlays, loads three.js & Tone.js from CDN |
-| `styles.css` | Mobile-first styling, safe-area aware |
-| `data.js` | Planet physical parameters + curated fact pools |
-| `app.js` | Scene, procedural textures, Keplerian physics, camera, audio, UI |
+| `index.html` | App shell, fonts, PWA hooks |
+| `styles.css` | Design system (dark default + light theme), layouts |
+| `config.js` | **Brand placeholder** + engine tuning + theme/category config |
+| `sources.js` | Rating-source registry: native scale → 0–100 per source |
+| `normalize.js` | The engine: normalize → median → headline score → divergence |
+| `data.js` | Mock catalog across all five categories |
+| `app.js` | Hash router, rendering, search, theme, interactions |
+| `manifest.webmanifest`, `sw.js`, `icons/` | Installable PWA / offline shell |
+| `orrery/` | The unrelated earlier project, preserved (served at `/orrery/`) |
 
-### Physics model
+## How scores work
 
-Stable **Keplerian** orbits by default (mean motion `n = 2π·√M / T`), which
-keeps the system beautiful and predictable while still responding to the Sun's
-mass. Orbits are drawn near-circular for clarity. A full N-body "chaos" sandbox
-is a natural next step.
+Each source declares its true native scale in `sources.js` and how to map it to
+0–100. The engine (`normalize.js`) then:
 
-## Roadmap ideas
+1. Normalizes every raw value to 0–100.
+2. Splits sources into **critic** vs **user** and takes the **median** of each
+   (robust to a single outlier; method is configurable in `config.js`).
+3. Blends them into a **confidence-weighted headline score** (default 60/40
+   critic/user).
+4. Reports **critic-vs-user divergence** ("Critics & fans agree" → "Divisive").
 
-- Free-orbit camera and device-tilt parallax.
-- N-body gravity mode where things can actually collide or get ejected.
-- Save/share custom systems to local storage.
-- Tap-to-compare two planets side by side.
+Note: Rotten Tomatoes' Tomatometer is a *% of positive critics*, not an average,
+so it is flagged (`recommendation: true`) and shown as context.
+
+## Mobile / app path
+
+Mobile-first and installable as a PWA today. Because it is plain HTML/CSS/JS
+with a hash router and no server dependency, the same build wraps into native
+iOS/Android via **Capacitor** (or as a Trusted Web Activity) without a rewrite.
+
+## Deferred to later
+
+Real API integration (TMDB + OMDb, IGDB/OpenCritic/Steam, MAL/AniList,
+Goodreads/StoryGraph) behind a proxy; user-submitted ratings + accounts;
+persistent watchlist; trailers; final branding.

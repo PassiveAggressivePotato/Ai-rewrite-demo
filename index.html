@@ -1,147 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#05060d" />
+<meta name="theme-color" content="#06070c" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>Orrery — A Living Solar System</title>
+<meta name="description" content="Universal review aggregation for movies, TV, games, anime and books — every source normalized onto one 100-point scale." />
+<title>Universal Entertainment Scores</title>
+
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+
+<!-- Fonts: display + body. The app still works if these fail to load. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" />
+
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- 3D canvas lives here -->
-  <div id="scene"></div>
+  <!-- The entire app is rendered into here by app.js -->
+  <div id="app"></div>
 
-  <!-- Warp/starfield + title overlay -->
-  <div id="title">
-    <canvas id="warp"></canvas>
-    <div class="title-inner">
-      <div class="kicker">an interactive</div>
-      <h1>ORRERY</h1>
-      <div class="subtitle">A living, breakable solar system</div>
-      <button id="startBtn">▶ &nbsp;Enter the System</button>
-      <div class="hint">headphones recommended · tap planets to explore</div>
-      <label class="muteRow"><input type="checkbox" id="muteIntro" /> start muted</label>
-    </div>
-    <div id="loadStatus">warming up the engines…</div>
-  </div>
-
-  <!-- Top heads-up bar -->
-  <div id="hud" class="hidden">
-    <div class="hud-left">
-      <button class="chip" id="playPause" title="Play / pause">⏸</button>
-      <span id="clock" class="clock">Year 0.00</span>
-    </div>
-    <div class="hud-right">
-      <button class="chip" id="soundToggle" title="Sonification">♪</button>
-      <button class="chip" id="trailToggle" title="Orbit trails">◠</button>
-      <button class="chip" id="panelToggle" title="Controls">⚙</button>
-    </div>
-  </div>
-
-  <!-- Camera angle presets -->
-  <div id="angles" class="hidden">
-    <button data-view="oblique" class="active">Oblique</button>
-    <button data-view="top">Top</button>
-    <button data-view="side">Side</button>
-    <button data-view="follow">Follow</button>
-  </div>
-
-  <!-- Speed dial -->
-  <div id="speedDock" class="hidden">
-    <span class="speedLabel" id="speedLabel">1 day/s</span>
-    <input id="speed" type="range" min="-3" max="3.5" step="0.01" value="0" />
-  </div>
-
-  <!-- Selection / info panel -->
-  <div id="info" class="hidden">
-    <button id="infoClose" class="x">✕</button>
-    <h2 id="infoName">—</h2>
-    <div id="infoTag" class="tag"></div>
-    <div id="infoPhoto" class="photo"></div>
-    <p id="infoFact" class="fact">…</p>
-    <div class="factNav">
-      <button id="factPrev">‹ Prev</button>
-      <span id="factCount" class="muted">—</span>
-      <button id="factNext">Next ›</button>
-    </div>
-    <button id="infoSource" class="source hidden" >read on Wikipedia ↗</button>
-  </div>
-
-  <!-- Bottom control sheet -->
-  <div id="sheet" class="hidden">
-    <div class="sheetHandle"><span></span></div>
-    <div class="tabs">
-      <button data-tab="system" class="active">System</button>
-      <button data-tab="body">Selected</button>
-      <button data-tab="whatif">What if…</button>
-    </div>
-
-    <div class="tabPanel" data-panel="system">
-      <div class="ctl">
-        <label>Sun mass <b id="sunMassVal">1.00×</b></label>
-        <input id="sunMass" type="range" min="0.2" max="3" step="0.01" value="1" />
-        <small>changes orbital speeds, brightness &amp; the habitable zone</small>
-      </div>
-      <div class="ctl">
-        <label>Distance scale <b id="distVal">compact</b></label>
-        <input id="distScale" type="range" min="0" max="1" step="0.01" value="0" />
-        <small>compact ⟷ true-to-life spacing</small>
-      </div>
-      <div class="ctl">
-        <label>Planet size boost <b id="sizeVal">40×</b></label>
-        <input id="sizeBoost" type="range" min="1" max="120" step="1" value="40" />
-        <small>real planets are tiny — exaggerate to see them</small>
-      </div>
-      <div class="ctl toggleRow">
-        <label>Habitable-zone ring</label>
-        <input id="hzToggle" type="checkbox" checked />
-      </div>
-      <div class="ctl toggleRow">
-        <label>Orbit trails</label>
-        <input id="trailToggle2" type="checkbox" checked />
-      </div>
-    </div>
-
-    <div class="tabPanel hidden" data-panel="body">
-      <div id="bodyEmpty" class="muted center">Tap a planet, moon, or the Sun to tune it.</div>
-      <div id="bodyControls" class="hidden">
-        <div class="ctl">
-          <label><span id="bodySel">—</span> size <b id="bodySizeVal">1.0×</b></label>
-          <input id="bodySize" type="range" min="0.1" max="6" step="0.05" value="1" />
-        </div>
-        <div class="ctl" id="bodyDistWrap">
-          <label>orbit distance <b id="bodyDistVal">1.0×</b></label>
-          <input id="bodyDist" type="range" min="0.3" max="2.5" step="0.01" value="1" />
-        </div>
-        <div class="ctl" id="bodySpinWrap">
-          <label>spin <b id="bodySpinVal">1.0×</b></label>
-          <input id="bodySpin" type="range" min="0" max="5" step="0.05" value="1" />
-        </div>
-        <button id="focusBtn" class="wide">🔭 Zoom in &amp; follow</button>
-      </div>
-    </div>
-
-    <div class="tabPanel hidden" data-panel="whatif">
-      <p class="muted">Break things. Everything is reversible.</p>
-      <div class="whatif-grid">
-        <button data-wi="ignite">🔥 Ignite Jupiter</button>
-        <button data-wi="earthrings">💍 Earth gets rings</button>
-        <button data-wi="binary">☀️☀️ Binary sun</button>
-        <button data-wi="rogue">🪨 Rogue planet</button>
-        <button data-wi="swell">🔴 Sun → red giant</button>
-        <button data-wi="reset">↩ Reset everything</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast"></div>
-
-  <!-- Libraries (UMD builds so the app also works from file://) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
+  <script>
+    /* Register the service worker for offline / installable PWA behaviour.
+       Guarded so it never breaks file:// or older browsers. */
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
