@@ -324,7 +324,7 @@ function listColumn(title, rows, featured = false) {
       <button class="list-item" data-slug="${it.slug}">
         <div class="poster-card" style="background:${posterBg(it)}">
           ${it.poster ? "" : catIcon(it)}
-          <span class="score-badge">${s.synth ?? "—"}</span>
+          <span class="score-badge"><span class="sb-num">${s.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>
         </div>
         <div class="li-text">
           <span class="li-title">${it.title}</span>
