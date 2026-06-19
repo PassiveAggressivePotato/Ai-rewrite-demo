@@ -42,11 +42,19 @@ const LOGO_PATH = "M55 0 H164 L215 57 V142 H135 V83 H83 V313 H135 V254 H215 V339
 function logo(cls = "") {
   return `<span class="wordmark home-link ${cls}" data-home role="button" aria-label="${BRAND.name} — home">
     <svg class="logo" viewBox="0 0 1333 396" role="img" aria-label="${BRAND.name}">
-      <defs><linearGradient id="logo-gold" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f3cd7a"/><stop offset="1" stop-color="#c2872b"/>
-      </linearGradient></defs>
       <path fill="url(#logo-gold)" fill-rule="evenodd" d="${LOGO_PATH}"/>
     </svg></span>`;
+}
+
+/* Flat gradient category icons (replace the emoji). Gradients live in index.html. */
+const ICON_SVG = {
+  movie: `<rect x="3" y="8.4" width="18" height="12.6" rx="2.2" fill="url(#gi-movie)"/><path d="M3.4 6.1 L20.2 3.4 L20.8 6.8 L4 9.5 Z" fill="url(#gi-movie)"/><path d="M7.5 5.2 L6.1 8.6 M11.4 4.6 L10 8 M15.3 4 L13.9 7.4" stroke="#160f04" stroke-width="1.1" stroke-linecap="round"/>`,
+  tv: `<rect x="3" y="7.2" width="18" height="11.8" rx="2.4" fill="url(#gi-tv)"/><path d="M8.4 3.8 L12 7 L15.6 3.8" fill="none" stroke="url(#gi-tv)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="7.5" y="20" width="9" height="1.8" rx="0.9" fill="url(#gi-tv)"/>`,
+  game: `<rect x="2.5" y="8.4" width="19" height="9.4" rx="4.7" fill="url(#gi-game)"/><path d="M7 11.1 V14.1 M5.5 12.6 H8.5" stroke="#0d0916" stroke-width="1.5" stroke-linecap="round"/><circle cx="15.8" cy="11.9" r="1.15" fill="#0d0916"/><circle cx="17.7" cy="13.7" r="1.15" fill="#0d0916"/>`,
+  book: `<rect x="3.6" y="4.6" width="14" height="3.9" rx="1" fill="url(#gi-book)" transform="rotate(-5 10.6 6.5)"/><rect x="5.4" y="9.4" width="14" height="3.9" rx="1" fill="url(#gi-book)" transform="rotate(4 12.4 11.3)"/><rect x="4" y="14.2" width="15" height="4.1" rx="1" fill="url(#gi-book)"/>`,
+};
+function catIconSvg(id) {
+  return `<svg class="cat-ic" viewBox="0 0 24 24" aria-hidden="true">${ICON_SVG[id] || ""}</svg>`;
 }
 
 /* ---- Small helpers -------------------------------------------------------- */
@@ -157,7 +165,7 @@ function renderHeadDropdown(dd, q) {
 
   const tabs = CATEGORIES.map((c) => `
     <button class="hsd-tab ${c.id === active ? "active" : ""} ${byCat[c.id].length ? "" : "empty"}"
-      data-hcat="${c.id}" title="${c.plural}">${c.icon}</button>`).join("");
+      data-hcat="${c.id}" title="${c.plural}">${catIconSvg(c.id)}</button>`).join("");
 
   const list = byCat[active] || [];
   const listHtml = list.length
@@ -326,6 +334,7 @@ function renderResultsArea() {
 function selectCategory(c) {
   state.category = c;
   state.query = "";
+  app.querySelector(".tabs")?.classList.add("has-sel");
   app.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.cat === c));
   const input = document.getElementById("search-input");
   if (input) { input.value = ""; input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; }
@@ -348,6 +357,7 @@ function closeSearch() {
   state.category = null;
   state.query = "";
   app.querySelector(".landing")?.classList.remove("searching");
+  app.querySelector(".tabs")?.classList.remove("has-sel");
   app.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   app.querySelector(".searchbar-wrap")?.classList.add("collapsed");
   const input = document.getElementById("search-input");
@@ -359,7 +369,7 @@ function renderLanding() {
   const selected = state.category !== null;
   const tabs = CATEGORIES.map((c) => `
     <button class="tab ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
-      <span class="tab-icon">${c.icon}</span>
+      <span class="tab-icon">${catIconSvg(c.id)}</span>
       <span class="tab-label">${c.plural}</span>
     </button>`).join("");
 
@@ -373,7 +383,7 @@ function renderLanding() {
           </div>
 
           <div class="prompt rise d1">What are you looking for?</div>
-          <div class="tabs rise d1">${tabs}</div>
+          <div class="tabs rise d1 ${selected ? "has-sel" : ""}">${tabs}</div>
           <div class="searchbar-wrap ${state.searchOpen ? "" : "collapsed"}">
             <div class="searchbar">
               <span class="search-ic">${ICON.search}</span>

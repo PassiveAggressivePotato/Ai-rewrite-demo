@@ -24,6 +24,21 @@
   <!-- The entire app is rendered into here by app.js -->
   <div id="app"></div>
 
+  <!-- Shared SVG gradient defs for the flat category icons + metallic logo. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="gi-movie" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset="1" stop-color="#d4942a"/></linearGradient>
+      <linearGradient id="gi-tv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#2f74d8"/></linearGradient>
+      <linearGradient id="gi-game" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#caa6ff"/><stop offset="1" stop-color="#7a3fe0"/></linearGradient>
+      <linearGradient id="gi-book" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9fb0"/><stop offset="1" stop-color="#d23b5e"/></linearGradient>
+      <linearGradient id="logo-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fdecc0"/><stop offset="0.32" stop-color="#f4cf72"/>
+        <stop offset="0.55" stop-color="#e3ad44"/><stop offset="1" stop-color="#b9791f"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+
   <script type="module" src="app.js"></script>
   <script>
     /* Register the service worker for offline / installable PWA behaviour.
