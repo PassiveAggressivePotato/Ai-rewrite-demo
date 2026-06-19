@@ -592,7 +592,13 @@ function renderDetail(item) {
           </div>
         </div>
 
-        <div class="panel score-stack rise d1">
+        <div class="quick-info rise d1">
+          <p class="synopsis">${item.synopsis}</p>
+          <button class="read-more" hidden>Read more</button>
+          <div class="credits">${credits}</div>
+        </div>
+
+        <div class="panel score-stack rise d2">
           <div class="score-card">
             <div class="score-text">
               <div class="score-label">${BRAND.scoreLabel}</div>
@@ -608,15 +614,8 @@ function renderDetail(item) {
           </div>
         </div>
 
-        <div class="sec-head rise d2"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
-        <div id="watch-region" class="rise d2">${renderWatch(item)}</div>
-
-        <div class="sec-head rise d3"><h2>Quick Info</h2></div>
-        <div class="panel panel-pad quick-info rise d3">
-          <p class="synopsis">${item.synopsis}</p>
-          <button class="read-more" hidden>Read more</button>
-          <div class="credits">${credits}</div>
-        </div>
+        <div class="sec-head rise d3"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
+        <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
       </div>
       ${fabStack()}
     </div>`;
