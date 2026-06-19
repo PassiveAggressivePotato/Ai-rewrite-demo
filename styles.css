@@ -132,39 +132,38 @@ body::before {
 }
 .scroll::-webkit-scrollbar { display: none; }
 
-/* ---- Brand / wordmark ----------------------------------------------------- */
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: .14em;
-  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 0 rgba(255,255,255,.06);
-}
+/* ---- Brand / wordmark (CRITIKL logo) -------------------------------------- */
+.wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; }
+.wordmark .logo { height: .82em; width: auto; display: block; filter: drop-shadow(0 1px 6px rgba(0,0,0,.35)); transition: transform .2s var(--ease); }
+.wordmark:hover .logo { transform: scale(1.03); }
 
 /* =====================================================================
  * LANDING PAGE
  * ===================================================================== */
-.landing { padding: 14px 18px 0; }
-.landing-head { text-align: center; padding-top: 44px; position: relative; }
-.landing-head .wordmark { font-size: 40px; cursor: pointer; }
-.landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 4px; letter-spacing: .04em; }
+.landing { padding: 16px 18px 0; }
+.landing-head { text-align: center; padding-top: 6px; position: relative; }
+.landing-head .wordmark { font-size: 44px; }
+.landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 6px; letter-spacing: .04em; }
 
 .home-link { cursor: pointer; }
 
+/* Floating theme toggle — pinned bottom-right above content, fixed on the page. */
 .theme-toggle {
   position: relative;
-  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
   display: grid; place-items: center;
   /* Solid disc colored to the destination theme (inverts via --text/--bg). */
   background: var(--text); color: var(--bg); border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
   transition: transform .3s var(--ease), filter .25s; z-index: 4;
 }
-.theme-toggle svg { width: 19px; height: 19px; }
-.theme-toggle:hover { transform: rotate(-18deg) scale(1.06); filter: brightness(.95); }
-.landing-head .theme-toggle { position: absolute; top: 4px; right: 0; }
+.theme-fab {
+  position: absolute; right: 14px; bottom: 14px; z-index: 60;
+  width: 34px; height: 34px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.theme-toggle svg { width: 16px; height: 16px; }
+.theme-toggle:hover { transform: rotate(-18deg) scale(1.08); filter: brightness(.95); }
 
 /* Slide-out header search (detail page). Theme toggle stays the far-right
  * corner; the search expands as an ABSOLUTE overlay to the left so it never
@@ -275,30 +274,43 @@ body::before {
 }
 .searchbar input::placeholder { color: var(--text-faint); }
 
-/* Top lists — three compact columns */
-.section-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 22px 0 12px; }
-.lists { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-bottom: 18px; }
+/* Top lists — three vertical columns of poster cards */
+.section-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 16px 0 10px; cursor: pointer; }
+.lists { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-bottom: 14px; align-items: start; }
 .list-col h3 {
-  font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--gold); margin-bottom: 10px; min-height: 26px; line-height: 1.25;
+  font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px; line-height: 1.2; text-align: center; cursor: pointer;
 }
-.list-item {
-  display: flex; align-items: center; gap: 7px;
-  padding: 6px; border-radius: 10px;
-  margin-bottom: 7px;
-  transition: background .2s;
+/* The featured (first) column gets a soft gold-tinted shape around it. */
+.list-col.featured {
+  background: linear-gradient(180deg, rgba(240,196,105,.13), rgba(240,196,105,.02));
+  border: 1px solid rgba(240,196,105,.30);
+  border-radius: 14px; padding: 10px 8px 6px;
 }
-.list-item:hover { background: var(--surface); }
-.list-item .rank { font-size: 11px; font-weight: 800; color: var(--text-faint); width: 12px; flex: none; text-align: center; }
-.thumb {
-  width: 30px; height: 42px; border-radius: 6px; flex: none;
-  display: grid; place-items: center; overflow: hidden;
-  font-size: 13px;
-  box-shadow: 0 3px 8px rgba(0,0,0,.35);
+
+/* Card-style list item: poster with score badge, title beneath. */
+.lists.cards .list-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin-bottom: 7px; background: none; border: none; padding: 0; width: 100%;
 }
-.list-item .meta { min-width: 0; }
-.list-item .name { font-size: 11px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.list-item .sc { font-size: 10px; font-weight: 800; color: var(--gold); margin-top: 2px; }
+.lists.cards .list-item:last-child { margin-bottom: 0; }
+.poster-card {
+  position: relative; height: 62px; aspect-ratio: 2 / 3; width: auto;
+  border-radius: 8px; overflow: hidden; display: grid; place-items: center;
+  font-size: 18px; box-shadow: 0 5px 12px rgba(0,0,0,.4);
+  transition: transform .18s var(--ease), box-shadow .18s;
+}
+.list-item:hover .poster-card { transform: translateY(-3px); box-shadow: 0 9px 18px rgba(0,0,0,.5); }
+.score-badge {
+  position: absolute; left: 4px; bottom: 4px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: #241a05; font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  padding: 1px 6px; border-radius: 7px; box-shadow: 0 1px 4px rgba(0,0,0,.45);
+}
+.card-title {
+  font-size: 10px; font-weight: 600; line-height: 1.15; text-align: center; color: var(--text);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .empty { color: var(--text-faint); font-size: 13px; text-align: center; padding: 30px 0; }
 

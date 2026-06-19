@@ -8,7 +8,7 @@
  * ========================================================================== */
 
 export const BRAND = {
-  name: "SYNTH",                              // placeholder wordmark
+  name: "CRITIKL",                            // wordmark (rendered as the SVG logo)
   tagline: "Universal Entertainment Scores",
   scoreLabel: "UNIVERSAL SCORE",             // headline (gold) score label
   scoreBlurb: "Calculated, combined normalized average",

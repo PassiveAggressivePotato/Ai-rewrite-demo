@@ -191,6 +191,25 @@ export const CATALOG = [
       GB: { stream: [{ name: "NOW", color: "#00807d", url: "#" }], rentbuy: ["Apple TV"] },
     },
   },
+  {
+    id: "tv-severance", slug: "severance", category: "tv",
+    title: "Severance", year: 2022, certification: "TV-MA",
+    genres: ["Sci-Fi", "Thriller"], runtime: "2 seasons",
+    colors: ["#2a4a6f", "#080b12"], poster: "", trending: true,
+    synopsis: "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
+    credits: { Creator: "Dan Erickson", Cast: "Adam Scott, Britt Lower, Patricia Arquette" },
+    ratings: [
+      { sourceId: "rt_critic", value: 97, reviewCount: 120 },
+      { sourceId: "metacritic_critic", value: 83, reviewCount: 36 },
+      { sourceId: "imdb", value: 8.7, reviewCount: 250000 },
+      { sourceId: "tmdb", value: 84, reviewCount: 2400 },
+      { sourceId: "google", value: 95, reviewCount: 22000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Apple TV+", color: "#000", url: "#" }], rentbuy: [] },
+      GB: { stream: [{ name: "Apple TV+", color: "#000", url: "#" }], rentbuy: [] },
+    },
+  },
 
   /* ===== GAMES ============================================================ */
   {
@@ -260,6 +279,23 @@ export const CATALOG = [
       US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store"] },
     },
   },
+  {
+    id: "game-gow-ragnarok", slug: "god-of-war-ragnarok", category: "game",
+    title: "God of War Ragnarök", year: 2022, certification: "M",
+    genres: ["Action Adventure"], runtime: "PC, PS5, PS4",
+    colors: ["#3a5a7a", "#0a0c12"], poster: "", trending: true,
+    synopsis: "Kratos and Atreus journey through the Nine Realms in search of answers as Asgardian forces prepare for a prophesied battle that will end the world. Together they face the wrath of the gods on the road to Ragnarök.",
+    credits: { Developer: "Santa Monica Studio", Platforms: "PC, PlayStation 5, PlayStation 4" },
+    ratings: [
+      { sourceId: "opencritic", value: 94, reviewCount: 190 },
+      { sourceId: "metacritic_critic", value: 94, reviewCount: 130 },
+      { sourceId: "steam", value: 96, reviewCount: 60000 },
+      { sourceId: "igdb", value: 90, reviewCount: 800 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Steam", color: "#1b2838", url: "#" }], rentbuy: ["PS Store", "Epic"] },
+    },
+  },
 
   /* ===== BOOKS ============================================================ */
   {
@@ -317,6 +353,21 @@ export const CATALOG = [
     ratings: [
       { sourceId: "goodreads", value: 4.2, reviewCount: 800000 },
       { sourceId: "storygraph", value: 4.2, reviewCount: 95000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },
+    },
+  },
+  {
+    id: "book-iron-flame", slug: "iron-flame", category: "book",
+    title: "Iron Flame", year: 2023, certification: "",
+    genres: ["Fantasy", "Romance"], runtime: "640 pages",
+    colors: ["#6f2a3a", "#0e0a0c"], poster: "", trending: true,
+    synopsis: "Everyone expected Violet Sorrengail to die during her first year at Basgiath War College — but now the real test begins under a brutal new leadership intent on breaking her. With the world on the brink of war, she must keep the dragons' secrets and her own.",
+    credits: { Author: "Rebecca Yarros", Publisher: "Entangled: Red Tower" },
+    ratings: [
+      { sourceId: "goodreads", value: 4.3, reviewCount: 600000 },
+      { sourceId: "storygraph", value: 4.1, reviewCount: 70000 },
     ],
     watch: {
       US: { stream: [{ name: "Kindle", color: "#232f3e", url: "#" }], rentbuy: ["Audible", "Apple Books", "Libraries"] },

@@ -32,8 +32,22 @@ const ICON = {
   moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
 };
 
+/* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
+const LOGO_PATH = "M55 0 H164 L215 57 V142 H135 V83 H83 V313 H135 V254 H215 V339 L161 396 H55 L0 339 V57 Z M244 0 H401 L458 58 V157 L424 196 L458 238 V396 H378 V240 H324 V396 H244 Z M324 83 H379 V157 H324 Z M486 0 H568 V396 H486 Z M587 0 H806 V82 H735 V396 H657 V82 H587 Z M827 0 H907 V396 H827 Z M930 0 H1010 V158 L1069 0 H1144 L1075 190 L1144 396 H1072 L1010 237 V396 H930 Z M1168 0 H1248 V313 H1333 V396 H1168 Z";
+function logo(cls = "") {
+  return `<span class="wordmark home-link ${cls}" data-home role="button" aria-label="${BRAND.name} — home">
+    <svg class="logo" viewBox="0 0 1333 396" role="img" aria-label="${BRAND.name}">
+      <defs><linearGradient id="logo-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f3cd7a"/><stop offset="1" stop-color="#c2872b"/>
+      </linearGradient></defs>
+      <path fill="url(#logo-gold)" fill-rule="evenodd" d="${LOGO_PATH}"/>
+    </svg></span>`;
+}
+
 /* ---- Small helpers -------------------------------------------------------- */
 const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.colors[1]})`;
+const posterBg = (item) => item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
+const catIcon = (item) => (CATEGORIES.find((x) => x.id === item.category) || {}).icon || "";
 const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
 const cat = () => CATEGORIES.find((c) => c.id === state.category) || {};
 
@@ -85,8 +99,9 @@ function toggleTheme() {
 /* =====================================================================
  * SHARED HEADER: wordmark (home link), theme toggle, slide-out search
  * ===================================================================== */
-function themeBtn() {
-  return `<button class="theme-toggle" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>`;
+// Floating theme toggle, pinned bottom-right above the content on every page.
+function themeFab() {
+  return `<button class="theme-toggle theme-fab" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>`;
 }
 function headSearch() {
   return `
@@ -209,20 +224,25 @@ function rankThisMonth(items) {
     .sort((a, b) => (b.it.year - a.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0))).slice(0, 5);
 }
 function rankTrending(items) {
-  const t = items.filter((i) => i.trending);
-  return rankBy(t.length ? t : items, "synth");
+  // Trending titles first, then fill with the next-best so the list reaches 5.
+  const scored = items.map((it) => ({ it, s: scoreItem(it) }));
+  const tr = scored.filter((x) => x.it.trending).sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0));
+  const rest = scored.filter((x) => !x.it.trending).sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0));
+  return [...tr, ...rest].slice(0, 5);
 }
 
-function listColumn(title, rows) {
+function listColumn(title, rows, featured = false) {
   const body = rows.length
-    ? rows.map(({ it, s }, i) => `
-      <div class="list-item" data-slug="${it.slug}">
-        <span class="rank">${i + 1}</span>
-        ${posterBox(it)}
-        <div class="meta"><div class="name">${it.title}</div><div class="sc">${s.synth ?? "—"}</div></div>
-      </div>`).join("")
-    : `<div class="empty">Nothing here yet</div>`;
-  return `<div class="list-col"><h3>${title}</h3>${body}</div>`;
+    ? rows.map(({ it, s }) => `
+      <button class="list-item" data-slug="${it.slug}">
+        <div class="poster-card" style="background:${posterBg(it)}">
+          ${it.poster ? "" : catIcon(it)}
+          <span class="score-badge">${s.synth ?? "—"}</span>
+        </div>
+        <div class="card-title">${it.title}</div>
+      </button>`).join("")
+    : `<div class="empty">—</div>`;
+  return `<div class="list-col ${featured ? "featured" : ""}"><h3>${title}</h3>${body}</div>`;
 }
 
 function renderResultsArea() {
@@ -234,8 +254,8 @@ function renderResultsArea() {
   if (state.category === null) {
     area.innerHTML = `
       <div class="section-title">Popular Right Now</div>
-      <div class="lists">
-        ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"))}
+      <div class="lists cards">
+        ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"), true)}
         ${listColumn("Shows", rankBy(itemsByCategory("tv"), "synth"))}
         ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
       </div>`;
@@ -265,8 +285,8 @@ function renderResultsArea() {
     const inCat = itemsByCategory(state.category);
     area.innerHTML = `
       <div class="section-title">Top ${cat().plural || ""}</div>
-      <div class="lists">
-        ${listColumn("This Month", rankThisMonth(inCat))}
+      <div class="lists cards">
+        ${listColumn("This Month", rankThisMonth(inCat), true)}
         ${listColumn("Trending", rankTrending(inCat))}
         ${listColumn("All Time", rankBy(inCat, "synth"))}
       </div>`;
@@ -300,8 +320,7 @@ function renderLanding() {
       <div class="scroll">
         <div class="landing">
           <div class="landing-head rise">
-            ${themeBtn()}
-            <div class="wordmark home-link" data-home>${BRAND.name}</div>
+            ${logo()}
             <div class="tagline">${BRAND.tagline}</div>
           </div>
 
@@ -319,6 +338,7 @@ function renderLanding() {
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
+      ${themeFab()}
     </div>`;
 
   renderResultsArea();
@@ -422,10 +442,9 @@ function renderDetail(item) {
 
       <div class="scroll">
         <div class="detail-head">
-          <div class="wordmark home-link" data-home>${BRAND.name}</div>
+          ${logo()}
           <div class="head-actions">
             ${headSearch()}
-            ${themeBtn()}
           </div>
         </div>
 
@@ -459,6 +478,7 @@ function renderDetail(item) {
           <div class="credits">${credits}</div>
         </div>
       </div>
+      ${themeFab()}
     </div>`;
 
   const wire = () => {
@@ -506,4 +526,7 @@ function router() {
 
 window.addEventListener("hashchange", router);
 applyTheme();
+// Lock to portrait where supported (installed/standalone PWA + Android Chrome);
+// the manifest also declares portrait. Silently ignored where unsupported.
+try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch (_) {}
 router();
