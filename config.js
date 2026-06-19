@@ -31,14 +31,6 @@ export const TUNING = {
   divergence: { agree: 6, mixed: 15 }, // <=6 agree, <=15 mixed, else divisive
 };
 
-/* Default + available UI themes. Dark is the default; light is opt-in and
- * persisted to localStorage by app.js. */
-export const THEME = {
-  default: "dark",
-  available: ["dark", "light"],
-  storageKey: "ui.theme",
-};
-
 /* Content categories shown as tabs on the landing page (order matters).
  * `short` = tab label, `plural` = used in section headings ("Top Movies"). */
 export const CATEGORIES = [
