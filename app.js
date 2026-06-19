@@ -405,8 +405,10 @@ function openSearch() {
   state.searchOpen = true;
   app.querySelector(".landing")?.classList.add("searching");
   app.querySelector(".searchbar-wrap")?.classList.remove("collapsed");
+  // Reveal the search bar but DON'T auto-focus it — focusing pops the mobile
+  // keyboard, which obscures the list results. The user taps it when ready.
   const input = document.getElementById("search-input");
-  if (input) { input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; setTimeout(() => input.focus(), 30); }
+  if (input) input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`;
 }
 
 /* The prominent X closes the search bar and returns the landing to its default,
