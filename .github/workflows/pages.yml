@@ -32,6 +32,8 @@ jobs:
           cp index.html styles.css app.js config.js sources.js normalize.js data.js \
              manifest.webmanifest sw.js robots.txt _site/
           cp -r icons _site/
+          # Static artwork (posters / backdrops)
+          cp -r assets _site/
           # Orrery preserved at /orrery/
           mkdir -p _site/orrery
           cp orrery/index.html orrery/styles.css orrery/app.js orrery/data.js _site/orrery/
