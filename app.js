@@ -702,3 +702,11 @@ applyDebug();
 // the manifest also declares portrait. Silently ignored where unsupported.
 try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch (_) {}
 router();
+
+// Warm the image cache so page backgrounds appear instantly on navigation.
+function preloadArt() {
+  const urls = new Set();
+  CATALOG.forEach((it) => { if (it.poster) urls.add(it.poster); if (it.backdrop) urls.add(it.backdrop); });
+  urls.forEach((u) => { const img = new Image(); img.decoding = "async"; img.src = u; });
+}
+(window.requestIdleCallback || ((fn) => setTimeout(fn, 200)))(preloadArt);

@@ -4,7 +4,7 @@
  * network fallback for navigations. Bump CACHE when assets change. Remote
  * fonts/artwork are fetched best-effort and simply skipped when offline (the
  * UI falls back to gradients and system fonts). */
-const CACHE = "scores-shell-v2";
+const CACHE = "scores-shell-v3";
 const SHELL = [
   "./",
   "./index.html",
@@ -16,6 +16,17 @@ const SHELL = [
   "./data.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
+  // Poster / backdrop artwork — precached so page backgrounds appear instantly.
+  "./assets/dune-part-two-poster.webp",
+  "./assets/dune-part-two-backdrop.webp",
+  "./assets/oppenheimer-poster.webp",
+  "./assets/oppenheimer-backdrop.webp",
+  "./assets/poor-things-poster.webp",
+  "./assets/poor-things-backdrop.webp",
+  "./assets/across-the-spider-verse-poster.webp",
+  "./assets/across-the-spider-verse-backdrop.webp",
+  "./assets/everything-everywhere-all-at-once-poster.webp",
+  "./assets/everything-everywhere-all-at-once-backdrop.webp",
 ];
 
 self.addEventListener("install", (e) => {
