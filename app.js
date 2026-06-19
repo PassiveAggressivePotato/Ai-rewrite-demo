@@ -22,6 +22,7 @@ const state = {
   query: "",
   country: DEFAULT_COUNTRY,
   debugTap: localStorage.getItem("debug.tap") === "1", // temporary tap-highlight debug
+  listLayout: localStorage.getItem("listLayout") || "vertical", // landing lists: vertical | horizontal
 };
 let pendingSearch = false; // set when a header search submit should survive the home reset
 
@@ -33,6 +34,7 @@ const ICON = {
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   debug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5" stroke-linecap="round"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5 19 12 7 18.5z"/></svg>`,
+  layout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="6.5" height="15" rx="1.5"/><line x1="13" y1="7" x2="21" y2="7"/><line x1="13" y1="11" x2="21" y2="11"/><line x1="13" y1="15" x2="18.5" y2="15"/></svg>`,
   // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
   sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
@@ -149,11 +151,25 @@ function toggleTheme() {
  * ===================================================================== */
 // Floating control stack pinned bottom-right: a TEMPORARY tap-highlight debug
 // toggle (to be removed later) plus the theme toggle.
-function fabStack() {
+function fabStack({ layout = false } = {}) {
+  const layoutBtn = layout
+    ? `<button class="layout-toggle ${state.listLayout === "horizontal" ? "on" : ""}" title="Switch to ${state.listLayout === "horizontal" ? "vertical" : "horizontal"} lists" aria-label="Toggle list layout">${ICON.layout}</button>`
+    : "";
   return `<div class="fab-stack">
+    ${layoutBtn}
     <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
     <button class="theme-toggle" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>
   </div>`;
+}
+
+function toggleLayout() {
+  state.listLayout = state.listLayout === "vertical" ? "horizontal" : "vertical";
+  localStorage.setItem("listLayout", state.listLayout);
+  document.querySelectorAll(".layout-toggle").forEach((b) => {
+    b.classList.toggle("on", state.listLayout === "horizontal");
+    b.title = `Switch to ${state.listLayout === "horizontal" ? "vertical" : "horizontal"} lists`;
+  });
+  renderResultsArea();
 }
 
 function applyDebug() {
@@ -277,6 +293,7 @@ function wireHeadSearch(root) {
 function wireHeader(root) {
   root.querySelector(".theme-toggle")?.addEventListener("click", toggleTheme);
   root.querySelector(".debug-toggle")?.addEventListener("click", toggleDebug);
+  root.querySelector(".layout-toggle")?.addEventListener("click", toggleLayout);
   root.querySelectorAll("[data-home]").forEach((el) =>
     el.addEventListener("click", goHome));
   wireHeadSearch(root);
@@ -302,18 +319,23 @@ function rankTrending(items) {
 }
 
 function listColumn(title, rows, featured = false) {
-  const body = rows.length
+  const items = rows.length
     ? rows.map(({ it, s }) => `
       <button class="list-item" data-slug="${it.slug}">
         <div class="poster-card" style="background:${posterBg(it)}">
           ${it.poster ? "" : catIcon(it)}
           <span class="score-badge">${s.synth ?? "—"}</span>
         </div>
-        <div class="card-title">${it.title}</div>
+        <div class="li-text">
+          <span class="li-title">${it.title}</span>
+          <span class="li-year">${it.year}</span>
+        </div>
       </button>`).join("")
     : `<div class="empty">—</div>`;
-  return `<div class="list-col ${featured ? "featured" : ""}"><h3>${title}</h3>${body}</div>`;
+  return `<div class="list-col ${featured ? "featured" : ""}"><h3>${title}</h3><div class="col-items">${items}</div></div>`;
 }
+
+const listsClass = () => `lists cards layout-${state.listLayout}`;
 
 function renderResultsArea() {
   const area = document.getElementById("results-area");
@@ -324,7 +346,7 @@ function renderResultsArea() {
   if (state.category === null) {
     area.innerHTML = `
       <div class="section-title">Popular Right Now</div>
-      <div class="lists cards">
+      <div class="${listsClass()}">
         ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"), true)}
         ${listColumn("Shows", rankBy(itemsByCategory("tv"), "synth"))}
         ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
@@ -356,7 +378,7 @@ function renderResultsArea() {
     const inCat = itemsByCategory(state.category);
     area.innerHTML = `
       <div class="section-title">Top ${cat().plural || ""}</div>
-      <div class="lists cards">
+      <div class="${listsClass()}">
         ${listColumn("This Month", rankThisMonth(inCat), true)}
         ${listColumn("Trending", rankTrending(inCat))}
         ${listColumn("All Time", rankBy(inCat, "synth"))}
@@ -434,7 +456,7 @@ function renderLanding() {
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
-      ${fabStack()}
+      ${fabStack({ layout: true })}
     </div>`;
 
   renderResultsArea();
