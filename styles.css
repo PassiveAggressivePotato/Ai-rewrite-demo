@@ -256,6 +256,8 @@ body::before {
 .hs-cat { display: block; font-size: 10px; color: var(--text-faint); margin-top: 1px; }
 .hs-score { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--gold); flex: none; }
 .hs-empty { padding: 14px; text-align: center; color: var(--text-faint); font-size: 12px; }
+.thumb { flex: none; overflow: hidden; background-size: cover; background-position: center;
+  display: grid; place-items: center; border: 1px solid var(--gold); border-radius: 6px; }
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
@@ -361,14 +363,26 @@ body::before {
   position: relative; height: 46px; aspect-ratio: 2 / 3; width: auto; flex: none;
   border-radius: 8px; overflow: hidden; display: grid; place-items: center;
   font-size: 18px; box-shadow: var(--shadow-dir-sm);
+  border: 1px solid var(--gold);
   transition: transform .18s var(--ease), box-shadow .18s;
 }
 .list-item:hover .poster-card { transform: translateY(-3px); box-shadow: 0 9px 18px rgba(0,0,0,.5); }
+/* Score badge: gold number tile + "Critikl Score" label in a bordered chip. */
 .score-badge {
-  position: absolute; left: 4px; bottom: 4px;
-  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
-  color: #241a05; font-family: var(--font-display); font-weight: 800; font-size: 10px;
-  padding: 0 5px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.45);
+  position: absolute; left: 5px; bottom: 5px;
+  display: inline-flex; align-items: stretch; gap: 4px; padding: 3px;
+  border-radius: 8px; background: rgba(10,12,18,.62);
+  border: 1px solid var(--gold); box-shadow: 0 2px 6px rgba(0,0,0,.5);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+.score-badge .sb-num {
+  display: grid; place-items: center; min-width: 21px; padding: 1px 3px; border-radius: 5px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); color: #241a05;
+  font-family: var(--font-display); font-weight: 800; font-size: 12.5px; line-height: 1;
+}
+.score-badge .sb-lab {
+  display: flex; flex-direction: column; justify-content: center;
+  font-size: 7.5px; font-weight: 800; line-height: 1.04; letter-spacing: .03em; color: #fff;
 }
 .li-text { min-width: 0; display: flex; flex-direction: column; }
 .li-title { font-weight: 600; color: var(--text); line-height: 1.15; overflow: hidden; }
@@ -379,6 +393,10 @@ body::before {
 .lists.layout-vertical .col-items { gap: 11px; }
 .lists.layout-vertical .list-item { flex-direction: row; }
 .lists.layout-vertical .poster-card { height: 46px; }
+/* Tiny posters: number-only badge (no room for the label). */
+.lists.layout-vertical .score-badge { left: 3px; bottom: 3px; padding: 2px; gap: 0; }
+.lists.layout-vertical .score-badge .sb-lab { display: none; }
+.lists.layout-vertical .score-badge .sb-num { min-width: 17px; font-size: 9.5px; }
 .lists.layout-vertical .li-title {
   font-size: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
@@ -394,7 +412,7 @@ body::before {
 .lists.layout-horizontal .col-items {
   flex-direction: row; gap: 13px; width: 100%; overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x proximity; padding-bottom: 6px; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch; touch-action: pan-x; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
 }
 .lists.layout-horizontal .col-items::-webkit-scrollbar { display: none; }
 .lists.layout-horizontal .list-item {
@@ -438,7 +456,9 @@ body::before {
  * ===================================================================== */
 .detail { position: relative; }
 /* Layered backdrop: sharp image at top -> blurs + fades toward the bottom */
-.backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+/* Height pinned to the LARGE viewport (not dynamic) so the on-screen keyboard
+ * opening doesn't shrink/zoom the background when the search field is focused. */
+.backdrop { position: absolute; top: 0; left: 0; right: 0; height: 100%; height: 100lvh; z-index: 0; overflow: hidden; }
 .backdrop .art {
   position: absolute; top: 0; left: 0; right: 0; height: 56%;
   background-size: cover; background-position: center top;
@@ -470,7 +490,7 @@ body::before {
   position: sticky; top: 0; z-index: 30;
   margin: 0 -16px; padding: 12px 16px;
   background: rgba(18,15,22,.5);
-  backdrop-filter: blur(10px) saturate(1.35); -webkit-backdrop-filter: blur(10px) saturate(1.35);
+  backdrop-filter: blur(5px) saturate(1.35); -webkit-backdrop-filter: blur(5px) saturate(1.35);
   border-bottom: 1px solid rgba(255,255,255,.09);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.16), var(--shadow-dir);
 }
@@ -479,7 +499,7 @@ body::before {
   border-bottom: 1px solid rgba(20,24,40,.1);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.8), var(--shadow-dir);
 }
-.detail-head .wordmark { font-size: 26px; }
+.detail-head .wordmark { font-size: 29px; }
 .head-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Hero: poster beside the title, with a Trailer/Review bar over the poster. */
