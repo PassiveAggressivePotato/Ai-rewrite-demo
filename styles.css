@@ -49,25 +49,6 @@
   --teal: var(--teal-1);
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #e9ecf3;
-  --bg-grad-1: #f7f9fc;
-  --bg-grad-2: #dde2ec;
-  --surface: rgba(255,255,255,.66);
-  --surface-2: rgba(255,255,255,.85);
-  --surface-strong: rgba(255,255,255,.82);
-  --menu: #ffffff;
-  --border: rgba(20,24,40,.10);
-  --border-strong: rgba(20,24,40,.16);
-  --text: #14171f;
-  --text-dim: #525a6b;
-  --text-faint: #8b93a3;
-  --shadow: 6px 9px 28px rgba(40,50,80,.22);
-  --gold: var(--gold-2);
-  --teal: var(--teal-2);
-}
-
 /* ---- Reset ---------------------------------------------------------------- */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 /* Debug mode (temporary): re-enable a visible tap highlight to inspect targets. */
@@ -95,13 +76,6 @@ body::before {
     radial-gradient(120% 90% at 50% 110%, #1a1326 0%, transparent 55%),
     var(--bg-grad-2);
 }
-:root[data-theme="light"] body::before {
-  background:
-    radial-gradient(120% 80% at 50% -10%, var(--bg-grad-1), transparent 60%),
-    radial-gradient(120% 90% at 50% 110%, #d7dbe8 0%, transparent 55%),
-    var(--bg-grad-2);
-}
-
 /* ---- App shell ------------------------------------------------------------ */
 #app {
   position: relative;
@@ -151,23 +125,13 @@ body::before {
  * LANDING PAGE
  * ===================================================================== */
 .landing { padding: 16px 18px 0; }
-.landing-head { text-align: center; padding-top: 6px; position: relative; }
-.landing-head .wordmark { font-size: 44px; }
-.landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 6px; letter-spacing: .04em; }
+.landing-head { text-align: center; padding-top: 16px; position: relative; }
+.landing-head .wordmark { font-size: 54px; }
+.landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 10px; letter-spacing: .04em; }
 
 .home-link { cursor: pointer; }
 
-/* Floating theme toggle — pinned bottom-right above content, fixed on the page. */
-.theme-toggle {
-  position: relative;
-  width: 32px; height: 32px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  /* Solid disc colored to the destination theme (inverts via --text/--bg). */
-  background: var(--text); color: var(--bg); border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  transition: transform .3s var(--ease), filter .25s; z-index: 4;
-}
-/* Bottom-right floating control stack (debug toggle stacked above theme toggle) */
+/* Bottom-right floating control stack (temporary debug toggle). */
 .fab-stack {
   position: absolute; z-index: 200;
   right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -184,19 +148,6 @@ body::before {
 .debug-toggle svg { width: 16px; height: 16px; display: block; }
 .debug-toggle:hover { transform: scale(1.08); color: var(--text); }
 .debug-toggle.on { background: #58a6ff; border-color: #58a6ff; color: #fff; }
-/* List-layout toggle (landing only) — matches the debug FAB, gold when on. */
-.layout-toggle {
-  width: 32px; height: 32px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  background: var(--menu); border: 1px solid var(--border-strong); color: var(--text-dim);
-  box-shadow: 0 4px 12px rgba(0,0,0,.35);
-  transition: transform .25s var(--ease), background .2s, color .2s;
-}
-.layout-toggle svg { width: 17px; height: 17px; display: block; }
-.layout-toggle:hover { transform: scale(1.08); color: var(--text); }
-.layout-toggle.on { background: var(--gold); border-color: var(--gold); color: #1a1206; }
-.theme-toggle svg { width: 18px; height: 18px; display: block; }
-.theme-toggle:hover { transform: rotate(-18deg) scale(1.08); filter: brightness(.95); }
 
 /* Slide-out header search (detail page). Theme toggle stays the far-right
  * corner; the search expands as an ABSOLUTE overlay to the left so it never
@@ -281,7 +232,6 @@ body::before {
   background: #0c0d14; color: var(--text-faint);
   opacity: .5; transform: scale(.95);
 }
-:root[data-theme="light"] .tabs.has-sel .tab:not(.active) { background: #d6dae4; opacity: .55; }
 .tabs.has-sel .tab:not(.active) .cat-ic { filter: grayscale(.9) brightness(.65); }
 .tab:hover { transform: translateY(-1px); }
 /* Active tab: bright, glowing, metallic gold outline. */
@@ -388,25 +338,11 @@ body::before {
 .li-title { font-weight: 600; color: var(--text); line-height: 1.15; overflow: hidden; }
 .li-year { color: var(--text-dim); }
 
-/* VERTICAL — poster on the left, title + year beside it. */
-.lists.layout-vertical { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.lists.layout-vertical .col-items { gap: 11px; }
-.lists.layout-vertical .list-item { flex-direction: row; }
-.lists.layout-vertical .poster-card { height: 46px; }
-/* Tiny posters: number-only badge (no room for the label). */
-.lists.layout-vertical .score-badge { left: 3px; bottom: 3px; padding: 2px; gap: 0; }
-.lists.layout-vertical .score-badge .sb-lab { display: none; }
-.lists.layout-vertical .score-badge .sb-num { min-width: 17px; font-size: 9.5px; }
-.lists.layout-vertical .li-title {
-  font-size: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-}
-.lists.layout-vertical .li-year { font-size: 9px; margin-top: 1px; }
-
 /* HORIZONTAL — each list is one sideways-scrolling row of poster cards.
  * Block layout (not flex) so each row is bounded to the viewport width and the
  * .col-items becomes a real horizontal scroll container. */
 .lists.layout-horizontal { display: block; }
-.lists.layout-horizontal .list-col { padding: 8px 6px 6px; margin-bottom: 16px; min-width: 0; }
+.lists.layout-horizontal .list-col { padding: 6px; margin-bottom: 10px; min-width: 0; }
 .lists.layout-horizontal .list-col:last-child { margin-bottom: 0; }
 .lists.layout-horizontal .list-col h3 { font-size: 12.5px; text-align: left; margin: 0 2px 8px; }
 .lists.layout-horizontal .col-items {
@@ -478,10 +414,6 @@ body::before {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(6,7,12,0) 0%, rgba(6,7,12,.22) 44%, var(--bg) 82%);
 }
-:root[data-theme="light"] .backdrop .scrim {
-  background: linear-gradient(180deg, rgba(233,236,243,0) 0%, rgba(233,236,243,.4) 44%, var(--bg) 84%);
-}
-
 .detail .scroll { position: relative; z-index: 1; padding: 0 16px 16px; }
 
 /* Static frosted-glass header with a bevelled edge; content flows beneath it. */
@@ -494,18 +426,13 @@ body::before {
   border-bottom: 1px solid rgba(255,255,255,.09);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.16), var(--shadow-dir);
 }
-:root[data-theme="light"] .detail-head {
-  background: rgba(255,255,255,.55);
-  border-bottom: 1px solid rgba(20,24,40,.1);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), var(--shadow-dir);
-}
 .detail-head .wordmark { font-size: 29px; }
 .head-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Hero: poster beside the title, with a Trailer/Review bar over the poster. */
 .hero { display: flex; gap: 14px; align-items: flex-start; padding: 14px 2px 0; position: relative; }
 .hero-poster {
-  position: relative; width: 110px; flex: none; aspect-ratio: 2 / 3;
+  position: relative; width: 121px; flex: none; aspect-ratio: 2 / 3;
   border-radius: 12px; overflow: hidden; background-size: cover; background-position: center;
   box-shadow: var(--shadow-dir); display: grid; place-items: center;
   border: 1px solid rgba(240,196,105,.35);
@@ -515,7 +442,7 @@ body::before {
 /* Trailer/Review bar — two frosted-glass halves, each a big play + label. */
 .media-bar {
   position: absolute; left: 0; right: 0; bottom: 0; height: 62px;
-  display: grid; grid-template-columns: 1fr 1fr;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   background: rgba(12,12,18,.18);
   backdrop-filter: blur(3px) saturate(1.1); -webkit-backdrop-filter: blur(3px) saturate(1.1);
   border-top: 1px solid rgba(255,255,255,.22);

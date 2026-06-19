@@ -9,20 +9,18 @@
  * engine in normalize.js for every score on screen.
  * ========================================================================== */
 
-import { BRAND, THEME, CATEGORIES, DEFAULT_COUNTRY } from "./config.js";
+import { BRAND, CATEGORIES, DEFAULT_COUNTRY } from "./config.js";
 import { CATALOG, COUNTRIES, getItem, itemsByCategory } from "./data.js";
 import { scoreItem, formatReviews } from "./normalize.js";
 import { SOURCE_BADGES } from "./sources.js";
 
 /* ---- App state ------------------------------------------------------------ */
 const state = {
-  theme: localStorage.getItem(THEME.storageKey) || THEME.default,
   category: null,          // null until the user picks a tab for the first time
   searchOpen: false,       // landing search bar visible?
   query: "",
   country: DEFAULT_COUNTRY,
   debugTap: localStorage.getItem("debug.tap") === "1", // temporary tap-highlight debug
-  listLayout: localStorage.getItem("listLayout") || "vertical", // landing lists: vertical | horizontal
 };
 let pendingSearch = false; // set when a header search submit should survive the home reset
 
@@ -34,10 +32,6 @@ const ICON = {
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   debug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5" stroke-linecap="round"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5 19 12 7 18.5z"/></svg>`,
-  layout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="6.5" height="15" rx="1.5"/><line x1="13" y1="7" x2="21" y2="7"/><line x1="13" y1="11" x2="21" y2="11"/><line x1="13" y1="15" x2="18.5" y2="15"/></svg>`,
-  // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
-  sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
-  moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -126,50 +120,13 @@ function applyArtwork(root) {
 }
 
 /* =====================================================================
- * THEME
+ * SHARED HEADER: wordmark (home link) + slide-out search; floating controls
  * ===================================================================== */
-function applyTheme() {
-  document.documentElement.setAttribute("data-theme", state.theme);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", state.theme === "dark" ? "#06070c" : "#e9ecf3");
-}
-// Show the destination theme's icon: a sun while in dark mode, a moon in light.
-function themeIcon() { return state.theme === "dark" ? ICON.sun : ICON.moon; }
-
-function toggleTheme() {
-  state.theme = state.theme === "dark" ? "light" : "dark";
-  localStorage.setItem(THEME.storageKey, state.theme);
-  applyTheme();
-  document.querySelectorAll(".theme-toggle").forEach((b) => {
-    b.innerHTML = themeIcon();
-    b.title = `Switch to ${state.theme === "dark" ? "light" : "dark"} mode`;
-  });
-}
-
-/* =====================================================================
- * SHARED HEADER: wordmark (home link), theme toggle, slide-out search
- * ===================================================================== */
-// Floating control stack pinned bottom-right: a TEMPORARY tap-highlight debug
-// toggle (to be removed later) plus the theme toggle.
-function fabStack({ layout = false } = {}) {
-  const layoutBtn = layout
-    ? `<button class="layout-toggle ${state.listLayout === "horizontal" ? "on" : ""}" title="Switch to ${state.listLayout === "horizontal" ? "vertical" : "horizontal"} lists" aria-label="Toggle list layout">${ICON.layout}</button>`
-    : "";
+// Floating control stack: a TEMPORARY tap-highlight debug toggle (to be removed later).
+function fabStack() {
   return `<div class="fab-stack">
-    ${layoutBtn}
     <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
-    <button class="theme-toggle" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>
   </div>`;
-}
-
-function toggleLayout() {
-  state.listLayout = state.listLayout === "vertical" ? "horizontal" : "vertical";
-  localStorage.setItem("listLayout", state.listLayout);
-  document.querySelectorAll(".layout-toggle").forEach((b) => {
-    b.classList.toggle("on", state.listLayout === "horizontal");
-    b.title = `Switch to ${state.listLayout === "horizontal" ? "vertical" : "horizontal"} lists`;
-  });
-  renderResultsArea();
 }
 
 function applyDebug() {
@@ -291,9 +248,7 @@ function wireHeadSearch(root) {
 }
 
 function wireHeader(root) {
-  root.querySelector(".theme-toggle")?.addEventListener("click", toggleTheme);
   root.querySelector(".debug-toggle")?.addEventListener("click", toggleDebug);
-  root.querySelector(".layout-toggle")?.addEventListener("click", toggleLayout);
   root.querySelectorAll("[data-home]").forEach((el) =>
     el.addEventListener("click", goHome));
   wireHeadSearch(root);
@@ -335,7 +290,7 @@ function listColumn(title, rows, featured = false) {
   return `<div class="list-col ${featured ? "featured" : ""}"><h3>${title}</h3><div class="col-items">${items}</div></div>`;
 }
 
-const listsClass = () => `lists cards layout-${state.listLayout}`;
+const listsClass = () => "lists cards layout-horizontal";
 
 function renderResultsArea() {
   const area = document.getElementById("results-area");
@@ -350,6 +305,7 @@ function renderResultsArea() {
         ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"), true)}
         ${listColumn("Shows", rankBy(itemsByCategory("tv"), "synth"))}
         ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
+        ${listColumn("Books", rankBy(itemsByCategory("book"), "synth"))}
       </div>`;
     wireCardClicks(area);
     applyArtwork(area);
@@ -458,7 +414,7 @@ function renderLanding() {
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
-      ${fabStack({ layout: true })}
+      ${fabStack()}
     </div>`;
 
   renderResultsArea();
@@ -576,10 +532,10 @@ function renderDetail(item) {
           <div class="hero-poster${hasArt ? " has-art" : ""}" data-poster style="background:${posterBg(item)}">
             <span class="hero-fallback">${catIcon(item)}</span>
             <div class="media-bar">
-              <button class="media-btn" data-play="trailer">
+              ${item.category !== "book" ? `<button class="media-btn" data-play="trailer">
                 <span class="play-ic">${ICON.play}</span>
                 <span class="media-label">Trailer</span>
-              </button>
+              </button>` : ""}
               <button class="media-btn" data-play="review">
                 <span class="play-ic">${ICON.play}</span>
                 <span class="media-label">Review</span>
@@ -712,7 +668,6 @@ function router() {
 }
 
 window.addEventListener("hashchange", router);
-applyTheme();
 applyDebug();
 // Lock to portrait where supported (installed/standalone PWA + Android Chrome);
 // the manifest also declares portrait. Silently ignored where unsupported.
