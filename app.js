@@ -585,7 +585,7 @@ function renderDetail(item) {
             </div>
           </div>
           <div class="hero-info">
-            <h1>${item.title} <span class="yr">(${item.year})</span></h1>
+            <h1 class="${item.title.length > 30 ? "xlong" : item.title.length > 19 ? "long" : ""}">${item.title} <span class="yr">(${item.year})</span></h1>
             <div class="metaline">${metaline}</div>
           </div>
         </div>
@@ -612,6 +612,7 @@ function renderDetail(item) {
         <div class="sec-head rise d3"><h2>Quick Info</h2></div>
         <div class="panel panel-pad quick-info rise d3">
           <p class="synopsis">${item.synopsis}</p>
+          <button class="read-more" hidden>Read more</button>
           <div class="credits">${credits}</div>
         </div>
       </div>
@@ -665,8 +666,23 @@ function renderDetail(item) {
         </div>`;
       stage.classList.add("playing");
       stage.querySelector(".player-close").addEventListener("click", closePlayer);
-      stage.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Wait for the grow transition, then scroll it clear of the sticky header
+      // (scroll-margin-top on .video-stage reserves the header's height).
+      requestAnimationFrame(() => stage.scrollIntoView({ behavior: "smooth", block: "start" }));
     }));
+
+  // Read more / less for the synopsis when it overflows the 2-line clamp.
+  const syn = app.querySelector(".synopsis");
+  const rm = app.querySelector(".read-more");
+  if (syn && rm) requestAnimationFrame(() => {
+    if (syn.scrollHeight - syn.clientHeight > 2) {
+      rm.hidden = false;
+      rm.addEventListener("click", () => {
+        const ex = syn.classList.toggle("expanded");
+        rm.textContent = ex ? "Read less" : "Read more";
+      });
+    }
+  });
 
   wireHeader(app);
   animateDials(app);
