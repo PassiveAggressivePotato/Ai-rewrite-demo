@@ -21,7 +21,9 @@ const state = {
   searchOpen: false,       // landing search bar visible?
   query: "",
   country: DEFAULT_COUNTRY,
+  debugTap: localStorage.getItem("debug.tap") === "1", // temporary tap-highlight debug
 };
+let pendingSearch = false; // set when a header search submit should survive the home reset
 
 const app = document.getElementById("app");
 
@@ -29,6 +31,7 @@ const app = document.getElementById("app");
 const ICON = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  debug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5" stroke-linecap="round"/></svg>`,
   // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
   sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
@@ -101,9 +104,23 @@ function toggleTheme() {
 /* =====================================================================
  * SHARED HEADER: wordmark (home link), theme toggle, slide-out search
  * ===================================================================== */
-// Floating theme toggle, pinned bottom-right above the content on every page.
-function themeFab() {
-  return `<button class="theme-toggle theme-fab" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>`;
+// Floating control stack pinned bottom-right: a TEMPORARY tap-highlight debug
+// toggle (to be removed later) plus the theme toggle.
+function fabStack() {
+  return `<div class="fab-stack">
+    <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
+    <button class="theme-toggle" title="Switch to ${state.theme === "dark" ? "light" : "dark"} mode" aria-label="Toggle theme">${themeIcon()}</button>
+  </div>`;
+}
+
+function applyDebug() {
+  document.documentElement.classList.toggle("tap-debug", state.debugTap);
+}
+function toggleDebug() {
+  state.debugTap = !state.debugTap;
+  localStorage.setItem("debug.tap", state.debugTap ? "1" : "0");
+  applyDebug();
+  document.querySelectorAll(".debug-toggle").forEach((b) => b.classList.toggle("on", state.debugTap));
 }
 function headSearch() {
   return `
@@ -166,14 +183,25 @@ function renderHeadDropdown(dd, q) {
     b.addEventListener("click", () => { location.hash = `#/item/${b.dataset.slug}`; }));
 }
 
-/* Submit a header search → go to the landing and show the results there. */
+/* Submit a header search → go to the landing and show the results there.
+ * This is the one case that survives the otherwise-full reset on home returns. */
 function goHomeWithQuery(q) {
   const matches = searchAll(q);
   state.query = q;
+  state.searchOpen = true;
   if (matches.length) state.category = matches[0].category;
   else if (state.category === null) state.category = CATEGORIES[0].id;
   if ((location.hash || "#/") === "#/" || location.hash === "") renderLanding();
-  else location.hash = "#/";
+  else { pendingSearch = true; location.hash = "#/"; }
+}
+
+/* Logo / home navigation = a complete reset of the landing state. */
+function goHome() {
+  state.category = null;
+  state.searchOpen = false;
+  state.query = "";
+  if ((location.hash || "#/") !== "#/" && location.hash !== "") location.hash = "#/";
+  else renderLanding();
 }
 
 let _docClick = null;
@@ -204,13 +232,10 @@ function wireHeadSearch(root) {
 }
 
 function wireHeader(root) {
-  const tb = root.querySelector(".theme-toggle");
-  if (tb) tb.addEventListener("click", toggleTheme);
+  root.querySelector(".theme-toggle")?.addEventListener("click", toggleTheme);
+  root.querySelector(".debug-toggle")?.addEventListener("click", toggleDebug);
   root.querySelectorAll("[data-home]").forEach((el) =>
-    el.addEventListener("click", () => {
-      if ((location.hash || "#/") !== "#/" && location.hash !== "") location.hash = "#/";
-      else app.querySelector(".scroll")?.scrollTo({ top: 0, behavior: "smooth" });
-    }));
+    el.addEventListener("click", goHome));
   wireHeadSearch(root);
 }
 
@@ -359,7 +384,7 @@ function renderLanding() {
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
-      ${themeFab()}
+      ${fabStack()}
     </div>`;
 
   renderResultsArea();
@@ -500,7 +525,7 @@ function renderDetail(item) {
           <div class="credits">${credits}</div>
         </div>
       </div>
-      ${themeFab()}
+      ${fabStack()}
     </div>`;
 
   const wire = () => {
@@ -542,12 +567,17 @@ function router() {
     const item = getItem(decodeURIComponent(m[1]));
     if (item) { renderDetail(item); return; }
   }
+  // Returning to the landing is a full reset, unless a header search submit
+  // explicitly asked to carry results across.
+  if (!pendingSearch) { state.category = null; state.searchOpen = false; state.query = ""; }
+  pendingSearch = false;
   renderLanding();
   app.querySelector(".scroll")?.scrollTo(0, 0);
 }
 
 window.addEventListener("hashchange", router);
 applyTheme();
+applyDebug();
 // Lock to portrait where supported (installed/standalone PWA + Android Chrome);
 // the manifest also declares portrait. Silently ignored where unsupported.
 try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch (_) {}
