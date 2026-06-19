@@ -341,11 +341,14 @@ function openSearch() {
   if (input) { input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; setTimeout(() => input.focus(), 30); }
 }
 
-/* The prominent X closes the search bar and clears the query (back to lists). */
+/* The prominent X closes the search bar and returns the landing to its default,
+ * fully-deselected state (no active category, default cross-category lists). */
 function closeSearch() {
   state.searchOpen = false;
+  state.category = null;
   state.query = "";
   app.querySelector(".landing")?.classList.remove("searching");
+  app.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
   app.querySelector(".searchbar-wrap")?.classList.add("collapsed");
   const input = document.getElementById("search-input");
   if (input) input.value = "";
