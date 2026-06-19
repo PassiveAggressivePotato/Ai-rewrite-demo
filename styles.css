@@ -215,20 +215,22 @@ body::before {
   border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
   animation: rise .16s var(--ease) both;
 }
-/* Sectioned category switcher at the top of the dropdown — one joined table. */
+/* Sectioned category switcher at the top of the dropdown — one joined table.
+ * Fixed height so it never resizes when the results list grows. */
 .hsd-tabs {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr); align-items: stretch;
   margin-bottom: 6px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
 }
 .hsd-tab {
-  padding: 8px 0; font-size: 16px; display: grid; place-items: center;
+  height: 42px; display: grid; place-items: center;
   background: transparent; border-right: 1px solid var(--border);
-  transition: transform .18s var(--ease), background .18s, filter .18s, opacity .18s;
-  transform: scale(.86); filter: grayscale(.5); opacity: .8;
+  transition: background .18s, filter .18s, opacity .18s;
+  filter: grayscale(.7); opacity: .7;
 }
+.hsd-tab .cat-ic { width: 22px; height: 22px; display: block; }
 .hsd-tab:last-child { border-right: none; }
 .hsd-tab.empty { opacity: .3; }
-.hsd-tab.active { background: var(--gold); transform: scale(1.08); filter: none; opacity: 1; }
+.hsd-tab.active { background: rgba(240,196,105,.18); filter: none; opacity: 1; box-shadow: inset 0 -2px 0 var(--gold); }
 .hsd-list { display: flex; flex-direction: column; gap: 2px; }
 .hs-item { display: flex; align-items: center; gap: 9px; padding: 6px; border-radius: 10px; text-align: left; transition: background .15s; }
 .hs-item:hover { background: var(--surface-2); }
@@ -243,35 +245,42 @@ body::before {
 .prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: 24px 0 12px; letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
 .tab {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
   padding: 14px 6px 12px;
   border-radius: 16px;
-  color: var(--text-faint);
-  background: var(--surface);
+  color: var(--text);
+  background: var(--menu);                 /* solid, not transparent */
   border: 1px solid var(--border);
-  transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s;
-  transform: scale(.92); opacity: .68;
+  transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
-.tab .tab-icon { font-size: 22px; line-height: 1; filter: grayscale(.4); transition: filter .25s; }
+.tab .tab-icon { line-height: 0; }
+.tab .cat-ic { width: 30px; height: 30px; display: block; transition: filter .25s, transform .25s; }
 .tab .tab-label { font-size: 11px; font-weight: 700; letter-spacing: .02em; }
-.tab:hover { opacity: .9; }
-/* Active tab pops forward; when the search bar is open it fuses into it. */
+/* No selection yet → every tab is bright in its own button.
+ * Once one is selected → the others fall back and fade toward darkness. */
+.tabs.has-sel .tab:not(.active) {
+  background: #0c0d14; color: var(--text-faint);
+  opacity: .5; transform: scale(.95);
+}
+:root[data-theme="light"] .tabs.has-sel .tab:not(.active) { background: #d6dae4; opacity: .55; }
+.tabs.has-sel .tab:not(.active) .cat-ic { filter: grayscale(.9) brightness(.65); }
+.tab:hover { transform: translateY(-1px); }
+/* Active tab: bright, glowing, metallic gold outline. */
 .tab.active {
   color: var(--text);
-  background: var(--surface-2);
+  background: linear-gradient(180deg, rgba(240,196,105,.16), var(--menu));
   border-color: var(--gold);
-  transform: scale(1.03);
-  opacity: 1;
+  transform: scale(1.04);
   position: relative; z-index: 3;
-  box-shadow: 0 6px 20px -12px var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset, 0 0 18px -5px var(--gold), 0 10px 24px -12px var(--gold);
 }
+.tab.active .cat-ic { transform: scale(1.06); filter: drop-shadow(0 2px 6px rgba(240,196,105,.4)); }
 .landing.searching .tab.active {
   border-bottom: none;
   border-bottom-left-radius: 0; border-bottom-right-radius: 0;
   margin-bottom: -9px; padding-bottom: 21px;
-  box-shadow: 0 -8px 22px -12px var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset, 0 -8px 22px -12px var(--gold);
 }
-.tab.active .tab-icon { filter: none; }
 
 /* Search bar — collapsed until a tab is first chosen; fuses to the active tab */
 .searchbar-wrap {
@@ -283,9 +292,10 @@ body::before {
 .searchbar {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 12px;
-  background: var(--surface-2);
+  background: var(--menu);                  /* solid, not transparent */
   border: 1px solid var(--gold);
   border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(240,196,105,.25), 0 0 22px -8px var(--gold);
 }
 .searchbar .search-ic { flex: none; display: grid; place-items: center; color: var(--gold); }
 .searchbar .search-ic svg { width: 24px; height: 24px; display: block; }
