@@ -32,6 +32,7 @@ const ICON = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   debug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5" stroke-linecap="round"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5 19 12 7 18.5z"/></svg>`,
   // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
   sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
@@ -85,6 +86,38 @@ function animateDials(root) {
   requestAnimationFrame(() => {
     root.querySelectorAll(".dial[data-val]").forEach((d) =>
       d.style.setProperty("--val", d.getAttribute("data-val")));
+  });
+}
+
+/* =====================================================================
+ * ARTWORK (best-effort, keyless): fetch real posters in the browser via the
+ * iTunes Search API (JSONP, no key, CORS-safe). Falls back silently to the
+ * gradient when offline / blocked / unmatched. Games aren't covered by iTunes.
+ * ===================================================================== */
+const artCache = {}; // item.id -> url | null (null = looked up, no match)
+function loadArtwork(item, cb) {
+  if (item.category === "game") return;            // not in the iTunes catalog
+  if (item.id in artCache) { if (artCache[item.id]) cb(artCache[item.id]); return; }
+  const entity = item.category === "tv" ? "tvSeason" : item.category === "book" ? "ebook" : "movie";
+  const cbName = "itart_" + Math.random().toString(36).slice(2);
+  const s = document.createElement("script");
+  const done = (url) => { artCache[item.id] = url || null; delete window[cbName]; s.remove(); if (url) cb(url); };
+  window[cbName] = (data) => {
+    const r = data && data.results && data.results[0];
+    let url = r && (r.artworkUrl100 || r.artworkUrl60);
+    if (url) url = url.replace(/\/\d+x\d+bb\.(jpg|png)/, "/600x600bb.$1");
+    done(url);
+  };
+  s.onerror = () => done(null);
+  s.src = `https://itunes.apple.com/search?term=${encodeURIComponent(item.title)}&entity=${entity}&limit=1&callback=${cbName}`;
+  document.body.appendChild(s);
+}
+// Fill any rendered poster surfaces for items under `root` with real artwork.
+function applyArtwork(root) {
+  root.querySelectorAll("[data-slug]").forEach((el) => {
+    const item = getItem(el.dataset.slug);
+    const surface = el.querySelector(".poster-card") || el;
+    if (item && surface) loadArtwork(item, (url) => { surface.style.backgroundImage = `url('${url}'), ${gradient(item)}`; surface.classList.add("has-art"); });
   });
 }
 
@@ -295,6 +328,7 @@ function renderResultsArea() {
         ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
       </div>`;
     wireCardClicks(area);
+    applyArtwork(area);
     return;
   }
 
@@ -327,6 +361,7 @@ function renderResultsArea() {
       </div>`;
   }
   wireCardClicks(area);
+  applyArtwork(area);
 }
 
 /* Switching tabs only updates the tab state, the search bar, and the lists —
@@ -495,8 +530,7 @@ function renderDetail(item) {
   app.innerHTML = `
     <div class="screen detail">
       <div class="backdrop">
-        <div class="art" style="background:${item.poster ? `url('${item.poster}')` : gradient(item)}"></div>
-        <div class="art blur" style="background:${item.poster ? `url('${item.poster}')` : gradient(item)}"></div>
+        <div class="art blur" style="background:${gradient(item)}"></div>
         <div class="scrim"></div>
       </div>
 
@@ -508,32 +542,42 @@ function renderDetail(item) {
           </div>
         </div>
 
-        <div class="title-block rise">
-          <h1>${item.title} <span style="opacity:.7;font-weight:700">(${item.year})</span></h1>
-          <div class="metaline">${metaline}</div>
+        <div class="hero rise">
+          <div class="hero-poster" data-poster style="background:${gradient(item)}">
+            <span class="hero-fallback">${catIcon(item)}</span>
+            <div class="media-bar">
+              <button class="media-btn" data-play="trailer"><span class="play-ic">${ICON.play}</span>Trailer</button>
+              <button class="media-btn" data-play="review"><span class="play-ic">${ICON.play}</span>Review</button>
+            </div>
+            <div class="hero-player"></div>
+          </div>
+          <div class="hero-info">
+            <h1>${item.title} <span class="yr">(${item.year})</span></h1>
+            <div class="metaline">${metaline}</div>
+          </div>
         </div>
 
-        <div class="panel score-card rise d1">
-          <div class="score-text">
-            <div class="score-label">${BRAND.scoreLabel}</div>
-            <div class="score-blurb">${BRAND.scoreBlurb}</div>
-            <span class="badge ${s.divergence.level}"><span class="dotmark"></span>${s.divergence.label}</span>
-            ${s.reviews ? `<div class="score-blurb" style="margin-top:6px">${formatReviews(s.reviews)} ratings</div>` : ""}
+        <div class="panel score-stack rise d1">
+          <div class="score-card">
+            <div class="score-text">
+              <div class="score-label">${BRAND.scoreLabel}</div>
+              <div class="score-blurb">${BRAND.scoreBlurb}</div>
+              <span class="badge ${s.divergence.level}"><span class="dotmark"></span>${s.divergence.label}</span>
+              ${s.reviews ? `<div class="score-blurb" style="margin-top:6px">${formatReviews(s.reviews)} ratings</div>` : ""}
+            </div>
+            ${dial(s.synth, "gold", "lg")}
           </div>
-          ${dial(s.synth, "gold", "lg")}
+          <div class="ratings-grid">
+            ${ratingColumn("critic", s.critic, s.criticRows)}
+            ${ratingColumn("user", s.user, s.userRows)}
+          </div>
         </div>
 
         <div class="sec-head rise d2"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
         <div id="watch-region" class="rise d2">${renderWatch(item)}</div>
 
-        <div class="sec-head rise d3"><h2>Normalized Ratings</h2><span class="sub">Equalized 100-pt scale</span></div>
-        <div class="panel ratings-grid rise d3">
-          ${ratingColumn("critic", s.critic, s.criticRows)}
-          ${ratingColumn("user", s.user, s.userRows)}
-        </div>
-
-        <div class="sec-head rise d4"><h2>Quick Info</h2></div>
-        <div class="panel panel-pad quick-info rise d4">
+        <div class="sec-head rise d3"><h2>Quick Info</h2></div>
+        <div class="panel panel-pad quick-info rise d3">
           <p class="synopsis">${item.synopsis}</p>
           <div class="credits">${credits}</div>
         </div>
@@ -560,6 +604,31 @@ function renderDetail(item) {
       btn.textContent = expanded ? label : "Show fewer";
     });
   });
+
+  // Real artwork for the hero poster + the blurred backdrop (best-effort).
+  loadArtwork(item, (url) => {
+    const hp = app.querySelector(".hero-poster");
+    if (hp) { hp.style.backgroundImage = `url('${url}'), ${gradient(item)}`; hp.classList.add("has-art"); }
+    app.querySelectorAll(".backdrop .art").forEach((a) => { a.style.backgroundImage = `url('${url}')`; });
+  });
+
+  // Trailer / Review play buttons → in-player YouTube (keyless search embed).
+  const hero = app.querySelector(".hero");
+  const player = hero.querySelector(".hero-player");
+  app.querySelectorAll("[data-play]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const q = btn.dataset.play === "trailer"
+        ? `${item.title} ${item.year} official trailer`
+        : `${item.title} review`;
+      player.innerHTML = `
+        <iframe src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q)}&autoplay=1&rel=0"
+          title="${btn.dataset.play}" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+        <button class="player-close" aria-label="Close">${ICON.close}</button>`;
+      hero.classList.add("playing");
+      player.querySelector(".player-close").addEventListener("click", () => {
+        hero.classList.remove("playing"); player.innerHTML = "";
+      });
+    }));
 
   wireHeader(app);
   animateDials(app);
