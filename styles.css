@@ -216,7 +216,7 @@ body::before {
   position: absolute; top: 0; right: 0; height: 38px; z-index: 1;
   width: 0; padding: 0; border-radius: 19px;
   background: var(--menu); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px; outline: none;
+  color: var(--text); font-size: 16px; outline: none;   /* >=16px stops iOS auto-zoom on focus */
   opacity: 0; pointer-events: none;
   transition: width .28s var(--ease), opacity .2s, padding .28s var(--ease);
 }
@@ -323,7 +323,7 @@ body::before {
 .searchbar .search-ic svg { width: 24px; height: 24px; display: block; }
 .searchbar input {
   flex: 1; min-width: 0; background: none; border: none; outline: none;
-  color: var(--text); font-size: 15px;
+  color: var(--text); font-size: 16px;   /* >=16px stops iOS auto-zoom on focus */
 }
 .searchbar input::placeholder { color: var(--text-faint); }
 .search-clear {
