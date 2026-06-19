@@ -685,8 +685,8 @@ body::before {
 /* Quick info */
 .quick-info .qi-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
 .quick-info h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-/* Quick Info now sits directly under the title as plain text (no box/heading). */
-.quick-info { margin-top: 12px; padding: 0 2px; }
+/* Quick Info sits in the info column, right of the poster, under the header text. */
+.quick-info { margin-top: 8px; }
 .quick-info .synopsis { font-size: 12px; line-height: 1.5; color: var(--text); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .quick-info .synopsis.expanded { -webkit-line-clamp: unset; display: block; }
 .read-more {
