@@ -589,16 +589,15 @@ function renderDetail(item) {
           <div class="hero-info">
             <h1 class="${item.title.length > 30 ? "xlong" : item.title.length > 19 ? "long" : ""}">${item.title} <span class="yr">(${item.year})</span></h1>
             <div class="metaline">${metaline}</div>
+            <div class="quick-info">
+              <p class="synopsis">${item.synopsis}</p>
+              <button class="read-more" hidden>Read more</button>
+              <div class="credits">${credits}</div>
+            </div>
           </div>
         </div>
 
-        <div class="quick-info rise d1">
-          <p class="synopsis">${item.synopsis}</p>
-          <button class="read-more" hidden>Read more</button>
-          <div class="credits">${credits}</div>
-        </div>
-
-        <div class="panel score-stack rise d2">
+        <div class="panel score-stack rise d1">
           <div class="score-card">
             <div class="score-text">
               <div class="score-label">${BRAND.scoreLabel}</div>
