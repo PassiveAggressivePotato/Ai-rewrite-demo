@@ -18,6 +18,7 @@ import { SOURCE_BADGES } from "./sources.js";
 const state = {
   theme: localStorage.getItem(THEME.storageKey) || THEME.default,
   category: null,          // null until the user picks a tab for the first time
+  searchOpen: false,       // landing search bar visible?
   query: "",
   country: DEFAULT_COUNTRY,
 };
@@ -27,6 +28,7 @@ const app = document.getElementById("app");
 /* ---- Inline icons --------------------------------------------------------- */
 const ICON = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   // Solid sun (filled disc + rays) and a solid crescent moon (disc with a cutout).
   sun: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M19.4 4.6l-1.7 1.7M6.3 17.7l-1.7 1.7"/></g></svg>`,
   moon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
@@ -300,10 +302,28 @@ function selectCategory(c) {
   state.category = c;
   state.query = "";
   app.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.cat === c));
-  const wrap = app.querySelector(".searchbar-wrap");
-  if (wrap) wrap.classList.remove("collapsed");
   const input = document.getElementById("search-input");
   if (input) { input.value = ""; input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; }
+  openSearch();
+  renderResultsArea();
+}
+
+function openSearch() {
+  state.searchOpen = true;
+  app.querySelector(".landing")?.classList.add("searching");
+  app.querySelector(".searchbar-wrap")?.classList.remove("collapsed");
+  const input = document.getElementById("search-input");
+  if (input) { input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; setTimeout(() => input.focus(), 30); }
+}
+
+/* The prominent X closes the search bar and clears the query (back to lists). */
+function closeSearch() {
+  state.searchOpen = false;
+  state.query = "";
+  app.querySelector(".landing")?.classList.remove("searching");
+  app.querySelector(".searchbar-wrap")?.classList.add("collapsed");
+  const input = document.getElementById("search-input");
+  if (input) input.value = "";
   renderResultsArea();
 }
 
@@ -318,7 +338,7 @@ function renderLanding() {
   app.innerHTML = `
     <div class="screen landing-screen">
       <div class="scroll">
-        <div class="landing">
+        <div class="landing ${state.searchOpen ? "searching" : ""}">
           <div class="landing-head rise">
             ${logo()}
             <div class="tagline">${BRAND.tagline}</div>
@@ -326,12 +346,13 @@ function renderLanding() {
 
           <div class="prompt rise d1">What are you looking for?</div>
           <div class="tabs rise d1">${tabs}</div>
-          <div class="searchbar-wrap ${selected ? "" : "collapsed"}">
+          <div class="searchbar-wrap ${state.searchOpen ? "" : "collapsed"}">
             <div class="searchbar">
-              ${ICON.search}
+              <span class="search-ic">${ICON.search}</span>
               <input id="search-input" type="search" autocomplete="off"
                 placeholder="${selected ? `Search ${(cat().plural || "").toLowerCase()}…` : ""}"
                 value="${escapeAttr(state.query)}" />
+              <button class="search-clear" aria-label="Close search">${ICON.close}</button>
             </div>
           </div>
 
@@ -348,6 +369,7 @@ function renderLanding() {
 
   const input = document.getElementById("search-input");
   input.addEventListener("input", (e) => { state.query = e.target.value; renderResultsArea(); });
+  app.querySelector(".search-clear")?.addEventListener("click", closeSearch);
 
   wireHeader(app);
 }
