@@ -61,6 +61,8 @@ function catIconSvg(id) {
 /* ---- Small helpers -------------------------------------------------------- */
 const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.colors[1]})`;
 const posterBg = (item) => item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
+const backdropArt = (item) => item.backdrop || item.poster || "";
+const backdropBg = (item) => { const a = backdropArt(item); return a ? `url('${a}') center/cover` : gradient(item); };
 const catIcon = (item) => (CATEGORIES.find((x) => x.id === item.category) || {}).icon || "";
 const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
 const cat = () => CATEGORIES.find((c) => c.id === state.category) || {};
@@ -117,7 +119,7 @@ function applyArtwork(root) {
   root.querySelectorAll("[data-slug]").forEach((el) => {
     const item = getItem(el.dataset.slug);
     const surface = el.querySelector(".poster-card") || el;
-    if (item && surface) loadArtwork(item, (url) => { surface.style.backgroundImage = `url('${url}'), ${gradient(item)}`; surface.classList.add("has-art"); });
+    if (item && surface && !item.poster) loadArtwork(item, (url) => { surface.style.backgroundImage = `url('${url}'), ${gradient(item)}`; surface.classList.add("has-art"); });
   });
 }
 
@@ -527,10 +529,12 @@ function renderDetail(item) {
   const credits = Object.entries(item.credits)
     .map(([k, v]) => `<div class="row"><span class="k">${k}:</span>${v}</div>`).join("");
 
+  const hasArt = !!item.poster;
   app.innerHTML = `
     <div class="screen detail">
       <div class="backdrop">
-        <div class="art blur" style="background:${gradient(item)}"></div>
+        <div class="art" style="background:${backdropBg(item)}"></div>
+        <div class="art blur" style="background:${backdropBg(item)}"></div>
         <div class="scrim"></div>
       </div>
 
@@ -542,14 +546,21 @@ function renderDetail(item) {
           </div>
         </div>
 
+        <div class="video-stage" id="video-stage"></div>
+
         <div class="hero rise">
-          <div class="hero-poster" data-poster style="background:${gradient(item)}">
+          <div class="hero-poster${hasArt ? " has-art" : ""}" data-poster style="background:${posterBg(item)}">
             <span class="hero-fallback">${catIcon(item)}</span>
             <div class="media-bar">
-              <button class="media-btn" data-play="trailer"><span class="play-ic">${ICON.play}</span>Trailer</button>
-              <button class="media-btn" data-play="review"><span class="play-ic">${ICON.play}</span>Review</button>
+              <button class="media-btn" data-play="trailer">
+                <span class="play-ic">${ICON.play}</span>
+                <span class="media-label">Trailer</span>
+              </button>
+              <button class="media-btn" data-play="review">
+                <span class="play-ic">${ICON.play}</span>
+                <span class="media-label">Review</span>
+              </button>
             </div>
-            <div class="hero-player"></div>
           </div>
           <div class="hero-info">
             <h1>${item.title} <span class="yr">(${item.year})</span></h1>
@@ -605,29 +616,34 @@ function renderDetail(item) {
     });
   });
 
-  // Real artwork for the hero poster + the blurred backdrop (best-effort).
-  loadArtwork(item, (url) => {
+  // Real artwork (best-effort) only when we don't already ship a static poster.
+  if (!item.poster) loadArtwork(item, (url) => {
     const hp = app.querySelector(".hero-poster");
     if (hp) { hp.style.backgroundImage = `url('${url}'), ${gradient(item)}`; hp.classList.add("has-art"); }
-    app.querySelectorAll(".backdrop .art").forEach((a) => { a.style.backgroundImage = `url('${url}')`; });
+    if (!item.backdrop) app.querySelectorAll(".backdrop .art").forEach((a) => { a.style.backgroundImage = `url('${url}')`; });
   });
 
-  // Trailer / Review play buttons → in-player YouTube (keyless search embed).
-  const hero = app.querySelector(".hero");
-  const player = hero.querySelector(".hero-player");
+  // Trailer / Review → 16:9 player that grows over the title area, pushing
+  // content down. Plays the item's YouTube id when known, else a search embed.
+  const stage = app.querySelector("#video-stage");
+  const closePlayer = () => { stage.classList.remove("playing"); stage.innerHTML = ""; };
   app.querySelectorAll("[data-play]").forEach((btn) =>
     btn.addEventListener("click", () => {
-      const q = btn.dataset.play === "trailer"
-        ? `${item.title} ${item.year} official trailer`
-        : `${item.title} review`;
-      player.innerHTML = `
-        <iframe src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q)}&autoplay=1&rel=0"
-          title="${btn.dataset.play}" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-        <button class="player-close" aria-label="Close">${ICON.close}</button>`;
-      hero.classList.add("playing");
-      player.querySelector(".player-close").addEventListener("click", () => {
-        hero.classList.remove("playing"); player.innerHTML = "";
-      });
+      const kind = btn.dataset.play;
+      const id = kind === "trailer" ? item.trailer : item.review;
+      const q = kind === "trailer" ? `${item.title} ${item.year} official trailer` : `${item.title} ${item.year} review`;
+      const src = id
+        ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`
+        : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q)}&autoplay=1&rel=0`;
+      stage.innerHTML = `
+        <div class="video-frame">
+          <iframe src="${src}" title="${kind}" frameborder="0"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+          <button class="player-close" aria-label="Close player">${ICON.close}</button>
+        </div>`;
+      stage.classList.add("playing");
+      stage.querySelector(".player-close").addEventListener("click", closePlayer);
+      stage.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
 
   wireHeader(app);

@@ -22,7 +22,8 @@ export const CATALOG = [
     id: "movie-dune-2", slug: "dune-part-two", category: "movie",
     title: "Dune: Part Two", year: 2024, certification: "PG-13",
     genres: ["Sci-Fi", "Adventure"], runtime: "2h 46m",
-    colors: ["#c9892f", "#1a0f06"], poster: "", trending: true,
+    colors: ["#c9892f", "#1a0f06"], poster: "assets/dune-part-two-poster.webp", backdrop: "assets/dune-part-two-backdrop.webp", trending: true,
+    trailer: "Way9Dexny3w",
     synopsis: "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family, facing a choice between the love of his life and the fate of the universe.",
     credits: { Director: "Denis Villeneuve", Cast: "Timothée Chalamet, Zendaya, Rebecca Ferguson" },
     ratings: [
@@ -43,7 +44,8 @@ export const CATALOG = [
     id: "movie-oppenheimer", slug: "oppenheimer", category: "movie",
     title: "Oppenheimer", year: 2023, certification: "R",
     genres: ["Drama", "History"], runtime: "3h 0m",
-    colors: ["#c64a2a", "#0a0a0d"], poster: "",
+    colors: ["#c64a2a", "#0a0a0d"], poster: "assets/oppenheimer-poster.webp", backdrop: "assets/oppenheimer-backdrop.webp",
+    trailer: "uYPbbksJxIg",
     synopsis: "The story of J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, and the fallout that defined the rest of his life.",
     credits: { Director: "Christopher Nolan", Cast: "Cillian Murphy, Emily Blunt, Robert Downey Jr." },
     ratings: [
@@ -62,7 +64,8 @@ export const CATALOG = [
     id: "movie-poor-things", slug: "poor-things", category: "movie",
     title: "Poor Things", year: 2023, certification: "R",
     genres: ["Sci-Fi", "Comedy"], runtime: "2h 21m",
-    colors: ["#3aa0a0", "#10141f"], poster: "", trending: true,
+    colors: ["#3aa0a0", "#10141f"], poster: "assets/poor-things-poster.webp", backdrop: "assets/poor-things-backdrop.webp", trending: true,
+    trailer: "RlbR5N6veqw",
     synopsis: "Brought back to life by an unorthodox scientist, a young woman runs off with a lawyer on a whirlwind adventure across the continents, growing steadfast in her purpose to stand for equality and liberation.",
     credits: { Director: "Yorgos Lanthimos", Cast: "Emma Stone, Mark Ruffalo, Willem Dafoe" },
     ratings: [
@@ -81,7 +84,8 @@ export const CATALOG = [
     id: "movie-spiderverse-2", slug: "across-the-spider-verse", category: "movie",
     title: "Spider-Man: Across the Spider-Verse", year: 2023, certification: "PG",
     genres: ["Animation", "Action"], runtime: "2h 20m",
-    colors: ["#d6336c", "#13123a"], poster: "",
+    colors: ["#d6336c", "#13123a"], poster: "assets/across-the-spider-verse-poster.webp", backdrop: "assets/across-the-spider-verse-backdrop.webp",
+    trailer: "shW9i6k8cB0",
     synopsis: "Miles Morales catapults across the multiverse, where he encounters a team of Spider-People charged with protecting its very existence — and clashes with them over how to handle a new threat.",
     credits: { Director: "Joaquim Dos Santos", Cast: "Shameik Moore, Hailee Steinfeld, Oscar Isaac" },
     ratings: [
@@ -99,7 +103,8 @@ export const CATALOG = [
     id: "movie-everything", slug: "everything-everywhere-all-at-once", category: "movie",
     title: "Everything Everywhere All at Once", year: 2022, certification: "R",
     genres: ["Sci-Fi", "Comedy"], runtime: "2h 19m",
-    colors: ["#e8a13a", "#1b1030"], poster: "",
+    colors: ["#e8a13a", "#1b1030"], poster: "assets/everything-everywhere-all-at-once-poster.webp", backdrop: "assets/everything-everywhere-all-at-once-backdrop.webp",
+    trailer: "wxN1T1uxQ2g",
     synopsis: "An aging Chinese immigrant is swept up in an insane adventure in which she alone can save existence by exploring other universes and connecting with the lives she could have led.",
     credits: { Director: "Daniels", Cast: "Michelle Yeoh, Ke Huy Quan, Jamie Lee Curtis" },
     ratings: [

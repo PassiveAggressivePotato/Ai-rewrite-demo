@@ -23,6 +23,11 @@
   --nav-h: 60px;
   --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Sora", var(--font);
+  /* Unified directional shadow: starker, cast slightly down + to the right. */
+  --shadow-dir: 5px 7px 16px rgba(0,0,0,.55);
+  --shadow-dir-sm: 3px 4px 9px rgba(0,0,0,.5);
+  --text-shadow-dir: 2px 3px 3px rgba(0,0,0,.6);
+  --drop-dir: drop-shadow(2px 3px 4px rgba(0,0,0,.55));
 }
 
 :root[data-theme="dark"] {
@@ -39,7 +44,7 @@
   --text: #f3f4f8;
   --text-dim: #9aa1b0;
   --text-faint: #6b7080;
-  --shadow: 0 18px 40px rgba(0,0,0,.45);
+  --shadow: 6px 9px 28px rgba(0,0,0,.5);
   --gold: var(--gold-1);
   --teal: var(--teal-1);
 }
@@ -58,7 +63,7 @@
   --text: #14171f;
   --text-dim: #525a6b;
   --text-faint: #8b93a3;
-  --shadow: 0 18px 40px rgba(40,50,80,.18);
+  --shadow: 6px 9px 28px rgba(40,50,80,.22);
   --gold: var(--gold-2);
   --teal: var(--teal-2);
 }
@@ -139,7 +144,7 @@ body::before {
 
 /* ---- Brand / wordmark (CRITIKL logo) -------------------------------------- */
 .wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; }
-.wordmark .logo { height: .82em; width: auto; display: block; filter: drop-shadow(0 1px 6px rgba(0,0,0,.35)); transition: transform .2s var(--ease); }
+.wordmark .logo { height: .82em; width: auto; display: block; filter: drop-shadow(3px 4px 2px rgba(0,0,0,.65)); transition: transform .2s var(--ease); }
 .wordmark:hover .logo { transform: scale(1.03); }
 
 /* =====================================================================
@@ -218,18 +223,19 @@ body::before {
 /* Sectioned category switcher at the top of the dropdown — one joined table.
  * Fixed height so it never resizes when the results list grows. */
 .hsd-tabs {
-  display: grid; grid-template-columns: repeat(4, 1fr); align-items: stretch;
+  display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 42px; align-items: stretch;
   margin-bottom: 6px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
 }
 .hsd-tab {
-  height: 42px; display: grid; place-items: center;
+  height: 42px; min-height: 0; min-width: 0; padding: 0; overflow: hidden;
+  display: grid; place-items: center;
   background: transparent; border-right: 1px solid var(--border);
   transition: background .18s, filter .18s, opacity .18s;
   filter: grayscale(.7); opacity: .7;
 }
-.hsd-tab .cat-ic { width: 22px; height: 22px; display: block; }
+.hsd-tab .cat-ic { width: 22px; height: 22px; display: block; flex: none; }
 .hsd-tab:last-child { border-right: none; }
-.hsd-tab.empty { opacity: .3; }
+.hsd-tab.empty { opacity: .3; padding: 0; font-size: 0; }
 .hsd-tab.active { background: rgba(240,196,105,.18); filter: none; opacity: 1; box-shadow: inset 0 -2px 0 var(--gold); }
 .hsd-list { display: flex; flex-direction: column; gap: 2px; }
 .hs-item { display: flex; align-items: center; gap: 9px; padding: 6px; border-radius: 10px; text-align: left; transition: background .15s; }
@@ -386,81 +392,101 @@ body::before {
  * DETAIL PAGE
  * ===================================================================== */
 .detail { position: relative; }
-/* Layered backdrop: poster sharp at top -> heavy blur -> dark base */
+/* Layered backdrop: sharp image at top -> blurs + fades toward the bottom */
 .backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .backdrop .art {
-  position: absolute; top: 0; left: 0; right: 0; height: 62%;
+  position: absolute; top: 0; left: 0; right: 0; height: 56%;
   background-size: cover; background-position: center top;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 38%, transparent 100%);
-          mask-image: linear-gradient(180deg, #000 0%, #000 38%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
 }
 .backdrop .art.blur {
-  top: 0; height: 60%;
-  filter: blur(34px) saturate(1.15);
-  transform: scale(1.2);
-  opacity: .85;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
-          mask-image: linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+  top: 0; height: 64%;
+  filter: blur(28px) saturate(1.18);
+  transform: scale(1.12);
+  opacity: .92;
+  -webkit-mask-image: linear-gradient(180deg, transparent 36%, #000 70%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 36%, #000 70%, transparent 100%);
 }
 .backdrop .scrim {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(6,7,12,.05) 0%, rgba(6,7,12,.35) 45%, var(--bg) 78%);
+  background: linear-gradient(180deg, rgba(6,7,12,0) 0%, rgba(6,7,12,.22) 44%, var(--bg) 82%);
 }
 :root[data-theme="light"] .backdrop .scrim {
-  background: linear-gradient(180deg, rgba(233,236,243,0) 0%, rgba(233,236,243,.45) 45%, var(--bg) 80%);
+  background: linear-gradient(180deg, rgba(233,236,243,0) 0%, rgba(233,236,243,.4) 44%, var(--bg) 84%);
 }
 
 .detail .scroll { position: relative; z-index: 1; padding: 0 16px 16px; }
 
+/* Static frosted-glass header with a bevelled edge; content flows beneath it. */
 .detail-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 2px 0; position: relative; z-index: 3;
+  position: sticky; top: 0; z-index: 30;
+  margin: 0 -16px; padding: 12px 16px;
+  background: rgba(18,15,22,.5);
+  backdrop-filter: blur(20px) saturate(1.35); -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), var(--shadow-dir);
 }
-.detail-head .wordmark { font-size: 22px; }
+:root[data-theme="light"] .detail-head {
+  background: rgba(255,255,255,.55);
+  border-bottom: 1px solid rgba(20,24,40,.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), var(--shadow-dir);
+}
+.detail-head .wordmark { font-size: 26px; }
 .head-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Hero: poster beside the title, with a Trailer/Review bar over the poster. */
-.hero { display: flex; gap: 13px; align-items: flex-end; padding: 40px 2px 0; position: relative; }
+.hero { display: flex; gap: 14px; align-items: flex-start; padding: 14px 2px 0; position: relative; }
 .hero-poster {
-  position: relative; width: 88px; flex: none; aspect-ratio: 2 / 3;
+  position: relative; width: 110px; flex: none; aspect-ratio: 2 / 3;
   border-radius: 12px; overflow: hidden; background-size: cover; background-position: center;
-  box-shadow: 0 12px 30px rgba(0,0,0,.55); display: grid; place-items: center;
+  box-shadow: var(--shadow-dir); display: grid; place-items: center;
   border: 1px solid rgba(240,196,105,.35);
 }
-.hero-fallback { font-size: 30px; }
+.hero-fallback { font-size: 34px; }
 .hero-poster.has-art .hero-fallback { display: none; }
-/* Trailer/Review bar — gold-line split, blurred so the poster shows through. */
+/* Trailer/Review bar — two frosted-glass halves, each a big play + label. */
 .media-bar {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 32px;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 62px;
   display: grid; grid-template-columns: 1fr 1fr;
-  background: rgba(8,8,12,.32); border-top: 1px solid var(--gold);
-  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  background: rgba(12,12,18,.18);
+  backdrop-filter: blur(3px) saturate(1.1); -webkit-backdrop-filter: blur(3px) saturate(1.1);
+  border-top: 1px solid rgba(255,255,255,.22);
 }
 .media-btn {
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
-  color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
-  transition: background .15s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  color: #fff; transition: background .15s;
 }
-.media-btn:hover { background: rgba(240,196,105,.18); }
-.media-btn + .media-btn { border-left: 1px solid var(--gold); }
-.media-btn .play-ic { display: grid; place-items: center; color: var(--gold); }
-.media-btn .play-ic svg { width: 9px; height: 9px; display: block; }
-/* In-player video grows over the whole hero section. */
-.hero-player { position: absolute; inset: 0; display: none; z-index: 5; border-radius: 12px; overflow: hidden; background: #000; }
-.hero.playing .hero-player { display: block; }
-.hero-player iframe { width: 100%; height: 100%; border: 0; }
+.media-btn:hover { background: rgba(240,196,105,.16); }
+.media-btn + .media-btn { border-left: 1px solid rgba(255,255,255,.22); }
+.media-btn .play-ic {
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(240,196,105,.92); color: #1a1206;
+  box-shadow: var(--shadow-dir-sm);
+}
+.media-btn .play-ic svg { width: 12px; height: 12px; display: block; margin-left: 1px; }
+.media-btn .media-label {
+  font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  text-shadow: var(--text-shadow-dir);
+}
+/* In-flow 16:9 player that grows over the title area and pushes content down. */
+.video-stage { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); margin: 0 -16px; }
+.video-stage.playing { max-height: 70vh; margin-bottom: 4px; }
+.video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; box-shadow: var(--shadow-dir); }
+.video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 .player-close {
-  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%;
-  background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; z-index: 6;
+  position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,.62); color: #fff; display: grid; place-items: center; z-index: 6;
+  box-shadow: var(--shadow-dir-sm);
 }
-.player-close svg { width: 15px; height: 15px; }
-.hero-info { min-width: 0; padding-bottom: 4px; }
+.player-close svg { width: 16px; height: 16px; }
+.hero-info { min-width: 0; padding-top: 2px; }
 .hero-info h1 {
   font-family: var(--font-display); font-weight: 800;
   font-size: clamp(20px, 5.6vw, 28px); line-height: 1.06;
   text-transform: uppercase; letter-spacing: .01em;
-  text-shadow: 0 2px 18px rgba(0,0,0,.55);
+  text-shadow: var(--text-shadow-dir), 0 2px 18px rgba(0,0,0,.5);
 }
 .hero-info h1 .yr { opacity: .7; font-weight: 700; }
 .hero-info .metaline { color: var(--text-dim); font-size: 12.5px; margin-top: 7px; line-height: 1.5; }
@@ -481,7 +507,7 @@ body::before {
 .score-stack { margin-top: 14px; padding: 0; overflow: hidden; }
 .score-stack .ratings-grid { border-top: 1px solid var(--border); }
 
-.score-card { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
+.score-card { display: flex; align-items: center; gap: 14px; padding: 9px 16px; }
 .score-card .score-text { flex: 1; min-width: 0; }
 .score-card .score-label { font-weight: 800; font-size: 14px; letter-spacing: .04em; }
 .score-card .score-blurb { color: var(--text-dim); font-size: 11px; margin-top: 3px; }
@@ -523,7 +549,7 @@ body::before {
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 12px 2px 7px; }
 /* Reserve stable space so live changes (e.g. country switch) never resize the page. */
-#watch-region { min-height: 120px; }
+#watch-region { min-height: 100px; }
 .sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 
@@ -564,7 +590,7 @@ body::before {
 
 /* Normalized ratings — two columns */
 .ratings-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.ratings-grid .col { padding: 11px 11px 12px; }
+.ratings-grid .col { padding: 7px 10px 9px; }
 .ratings-grid .col + .col { border-left: 1px solid var(--border); }
 .col-title { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); text-align: center; }
 .col .dial { margin: 8px auto 9px; }
