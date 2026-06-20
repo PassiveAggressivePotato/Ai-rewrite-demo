@@ -21,6 +21,7 @@ const state = {
   query: "",
   country: DEFAULT_COUNTRY,
   debugTap: localStorage.getItem("debug.tap") === "1", // temporary tap-highlight debug
+  pickMode: false,         // Studio "pick a component to edit" mode
 };
 let pendingSearch = false; // set when a header search submit should survive the home reset
 
@@ -34,6 +35,7 @@ const ICON = {
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5 19 12 7 18.5z"/></svg>`,
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
   studio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M8 14h8"/></svg>`,
+  hand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V6a1.5 1.5 0 0 1 3 0v7.5c0 3.6-2.3 6.5-6 6.5s-5-2.4-5.6-4.2L5 13.6a1.4 1.4 0 0 1 2.3-1.6L8.5 13"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -130,9 +132,17 @@ function fabStack() {
     <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
   </div>`;
 }
-// Bottom-left floating button → the Studio (component tweaking page).
-function studioFab() {
-  return `<a class="fab-left" href="#/studio" title="Open Studio" aria-label="Open Studio">${ICON.studio}</a>`;
+// Bottom-left floating controls: pick-mode (finger) + Studio entry.
+function leftFabs() {
+  return `<div class="fab-left-stack">
+    <button class="fab-left pick-toggle ${state.pickMode ? "on" : ""}" data-pick title="Pick a component to edit" aria-label="Pick a component to edit">${ICON.hand}</button>
+    <a class="fab-left" href="#/studio" title="Open Studio" aria-label="Open Studio">${ICON.studio}</a>
+  </div>`;
+}
+function togglePick() {
+  state.pickMode = !state.pickMode;
+  document.documentElement.classList.toggle("pick-mode", state.pickMode);
+  document.querySelectorAll(".pick-toggle").forEach((b) => b.classList.toggle("on", state.pickMode));
 }
 
 function applyDebug() {
@@ -259,6 +269,7 @@ function wireHeader(root) {
     el.addEventListener("click", goHome));
   root.querySelectorAll("[data-back]").forEach((el) =>
     el.addEventListener("click", () => { if (history.length > 1) history.back(); else location.hash = "#/"; }));
+  root.querySelectorAll("[data-pick]").forEach((el) => el.addEventListener("click", togglePick));
   wireHeadSearch(root);
 }
 
@@ -423,7 +434,7 @@ function renderLanding() {
         </div>
       </div>
       ${fabStack()}
-      ${studioFab()}
+      ${leftFabs()}
     </div>`;
 
   renderResultsArea();
@@ -585,7 +596,7 @@ function renderDetail(item) {
         <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
       </div>
       ${fabStack()}
-      ${studioFab()}
+      ${leftFabs()}
     </div>`;
 
   const wire = () => {
@@ -665,7 +676,10 @@ function renderDetail(item) {
  * ===================================================================== */
 function wireCardClicks(root) {
   root.querySelectorAll("[data-slug]").forEach((c) =>
-    c.addEventListener("click", () => { location.hash = `#/item/${c.dataset.slug}`; }));
+    c.addEventListener("click", () => {
+      if (state.pickMode) { togglePick(); location.hash = "#/studio/poster"; return; }
+      location.hash = `#/item/${c.dataset.slug}`;
+    }));
 }
 
 /* =====================================================================
@@ -688,86 +702,94 @@ function parseColor(str) {
 }
 function colorStr(r, g, b, a) { return a >= 1 ? rgbToHex(r, g, b) : `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${+(+a).toFixed(2)})`; }
 
-/* ---- component token registry ---- */
-const SB_NUM = [
-  { k: "--b-sq", label: "Square size", val: 24, step: 1, min: 8 },
-  { k: "--b-numfs", label: "Number font", val: 13, step: 1, min: 6 },
-  { k: "--b-labfs", label: "Label font", val: 9, step: 0.5, min: 5 },
-  { k: "--b-gap", label: "Tile–label gap", val: 4, step: 1, min: 0 },
-  { k: "--b-pad", label: "Chip padding", val: 3, step: 1, min: 0 },
-  { k: "--b-chipr", label: "Chip radius", val: 8, step: 1, min: 0 },
-  { k: "--b-tiler", label: "Tile radius", val: 6, step: 1, min: 0 },
-  { k: "--b-inset", label: "Corner inset", val: 4, step: 1, min: 0 },
-];
-const SB_COL = [
-  { k: "--b-gold", label: "Tile gold", val: "#f0c469" },
-  { k: "--b-lab", label: "Label colour", val: "#f0c469" },
-  { k: "--b-chip", label: "Chip fill", val: "rgba(11,13,19,0.62)" },
-];
-const BRAND_COL = [
-  { k: "--gold-1", label: "Gold 1", val: "#f0c469" },
-  { k: "--gold-2", label: "Gold 2", val: "#c98f30" },
-  { k: "--teal-1", label: "Teal 1", val: "#4fd0c8" },
-  { k: "--teal-2", label: "Teal 2", val: "#2c97a8" },
-];
-
-/* ---- accelerating stepper + colour swatch controls ---- */
-function stepperRow(c) {
-  return `<div class="ctl">
-    <span class="ctl-l">${c.label}</span>
-    <div class="step" data-var="${c.k}" data-step="${c.step}" data-min="${c.min}">
+/* ---- control builders + shadow sub-editor ---- */
+function stepperHTML(v, val, step, min) {
+  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-step="${step}" data-min="${min}">
       <button class="step-btn" data-dir="-1" aria-label="decrease">−</button>
-      <input class="step-val" type="text" inputmode="decimal" value="${c.val}">
+      <input class="step-val" type="text" inputmode="decimal" value="${val}">
       <button class="step-btn" data-dir="1" aria-label="increase">+</button>
-    </div>
-  </div>`;
+    </div>`;
 }
-function swatchRow(c) {
-  return `<div class="ctl">
-    <span class="ctl-l">${c.label}</span>
-    <button class="swatch" data-var="${c.k}" data-val="${c.val}">
-      <span class="swatch-chip"><span style="background:${c.val}"></span></span>
-      <span class="swatch-val">${c.val}</span>
-    </button>
-  </div>`;
+function swatchHTML(v, val) {
+  return `<button class="swatch" data-var="${v}" data-val="${val}">
+      <span class="swatch-chip"><span style="background:${val}"></span></span>
+      <span class="swatch-val">${val}</span></button>`;
 }
-function wireControls(root, applyVar) {
-  // steppers
-  root.querySelectorAll(".step").forEach((step) => {
-    const input = step.querySelector(".step-val");
-    const v = step.dataset.var, min = parseFloat(step.dataset.min), size = parseFloat(step.dataset.step);
-    const get = () => (parseFloat(input.value) || 0);
-    const set = (n) => { if (n < min) n = min; n = Math.round(n * 100) / 100; input.value = n; applyVar(v, n + "px"); };
-    set(get());
-    input.addEventListener("change", () => set(get()));
-    step.querySelectorAll(".step-btn").forEach((btn) => {
-      const dir = parseFloat(btn.dataset.dir);
-      let timer = null, delay = 0, count = 0;
-      const tick = () => {
-        count++;
-        const mult = count > 22 ? 10 : count > 14 ? 5 : count > 7 ? 2 : 1;
-        set(get() + dir * size * mult);
-        delay = Math.max(38, delay * 0.82);
-        timer = setTimeout(tick, delay);
-      };
-      const start = (e) => { e.preventDefault(); count = 0; delay = 320; set(get() + dir * size); timer = setTimeout(tick, delay); };
-      const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
-      btn.addEventListener("pointerdown", start);
-      ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
-    });
-  });
-  // colour swatches
-  root.querySelectorAll(".swatch").forEach((sw) => {
-    sw.addEventListener("click", () => openColorPicker(sw.dataset.val, (val) => {
-      sw.dataset.val = val;
-      sw.querySelector(".swatch-chip > span").style.background = val;
-      sw.querySelector(".swatch-val").textContent = val;
-      applyVar(sw.dataset.var, val);
-    }));
+function controlRow(it) {
+  let ctrl;
+  if (it.type === "color") ctrl = swatchHTML(it.k, it.val);
+  else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
+  else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min);
+  return `<div class="ctl"><span class="ctl-l">${it.label}</span>${ctrl}</div>`;
+}
+function groupHTML(g) {
+  return `<section class="st-sec"><h2>${g.name}</h2><div class="st-controls">${g.items.map(controlRow).join("")}</div></section>`;
+}
+
+/* Accelerating stepper: tap = one step; hold ramps up; value tappable to type. */
+function attachStepper(step, onValue) {
+  const input = step.querySelector(".step-val");
+  const min = parseFloat(step.dataset.min), size = parseFloat(step.dataset.step);
+  const get = () => (parseFloat(input.value) || 0);
+  const set = (n) => { if (!isNaN(min) && n < min) n = min; n = Math.round(n * 100) / 100; input.value = n; onValue(n); };
+  input.addEventListener("change", () => set(get()));
+  step.querySelectorAll(".step-btn").forEach((btn) => {
+    const dir = parseFloat(btn.dataset.dir); let timer = null, delay = 0, count = 0;
+    const tick = () => { count++; const m = count > 22 ? 10 : count > 14 ? 5 : count > 7 ? 2 : 1; set(get() + dir * size * m); delay = Math.max(38, delay * 0.82); timer = setTimeout(tick, delay); };
+    const start = (e) => { e.preventDefault(); count = 0; delay = 320; set(get() + dir * size); timer = setTimeout(tick, delay); };
+    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    btn.addEventListener("pointerdown", start);
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
   });
 }
 
-/* ---- full colour picker (bottom sheet) ---- */
+const SHADOWS = {};
+function shadowCss(s) {
+  const r = (s.angle * Math.PI) / 180;
+  const ox = +(Math.cos(r) * s.distance).toFixed(1), oy = +(Math.sin(r) * s.distance).toFixed(1);
+  const c = parseColor(s.color), a = Math.max(0, Math.min(100, s.opacity)) / 100;
+  return `${ox}px ${oy}px ${Math.max(0, s.blur)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
+}
+function wireGroupControls(root, applyVar) {
+  root.querySelectorAll(".st-controls .step[data-var]").forEach((step) =>
+    attachStepper(step, (n) => applyVar(step.dataset.var, n + "px")));
+  root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
+    openColorPicker(sw.dataset.val, (val) => {
+      sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
+      sw.querySelector(".swatch-val").textContent = val; applyVar(sw.dataset.var, val);
+    })));
+  root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
+}
+
+function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
+function openShadowEditor(v, applyVar) {
+  closeShadowEditor();
+  const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", opacity: 55, angle: 90, distance: 6, blur: 14 });
+  const stepF = (label, f, step, min) =>
+    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
+  const wrap = document.createElement("div");
+  wrap.className = "shed";
+  wrap.innerHTML = `
+    <div class="cp-scrim"></div>
+    <div class="cp-sheet">
+      <div class="cp-head"><span>Shadow</span><button class="cp-done">Done</button></div>
+      <div class="ctl"><span class="ctl-l">Colour</span>${swatchHTML("__shcol", s.color)}</div>
+      ${stepF("Angle°", "angle", 5, -100000)}
+      ${stepF("Distance", "distance", 1, 0)}
+      ${stepF("Blur", "blur", 1, 0)}
+      ${stepF("Opacity %", "opacity", 5, 0)}
+    </div>`;
+  app.appendChild(wrap);
+  const upd = () => applyVar(v, shadowCss(s));
+  wrap.querySelectorAll(".step[data-field]").forEach((step) => attachStepper(step, (n) => { s[step.dataset.field] = n; upd(); }));
+  const sw = wrap.querySelector(".swatch");
+  sw.addEventListener("click", () => openColorPicker(s.color, (val) => {
+    s.color = val; sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val; sw.querySelector(".swatch-val").textContent = val; upd();
+  }));
+  wrap.querySelector(".cp-scrim").addEventListener("click", closeShadowEditor);
+  wrap.querySelector(".cp-done").addEventListener("click", closeShadowEditor);
+  upd();
+}
 function closeColorPicker() { app.querySelector(".cp")?.remove(); }
 function openColorPicker(initial, onChange) {
   closeColorPicker();
@@ -846,7 +868,7 @@ function openColorPicker(initial, onChange) {
 
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
-  { id: "badge", name: "Score Badge", desc: "Gold tile + Critikl Score chip on a PosterCard" },
+  { id: "poster", name: "PosterCard", desc: "List poster + score badge" },
   { id: "brand", name: "Brand Tokens", desc: "Site-wide colours" },
 ];
 function renderStudioHome() {
@@ -857,7 +879,7 @@ function renderStudioHome() {
           <button class="icon-btn" data-home aria-label="Home">${ICON.back}</button>
           <h1>Studio</h1><span class="studio-tag">component sandbox</span>
         </div>
-        <p class="st-note">Pick a component to focus on. Tweak its values, then export them to me to bake into the live site.</p>
+        <p class="st-note">Pick a component to focus on — or use the finger button on Home to tap one directly. Tweak its values, then export them to me to bake into the live site.</p>
         <div class="studio-grid">
           ${STUDIO_COMPONENTS.map((c) => `
             <a class="studio-card" href="#/studio/${c.id}">
@@ -871,53 +893,83 @@ function renderStudioHome() {
   wireHeader(app);
 }
 
-/* ---- Studio: Score Badge focus ---- */
-function renderStudioBadge() {
+/* PosterCard editor: the whole list item (poster + score badge). */
+function posterGroups() {
+  return [
+    { name: "Poster card", items: [
+      { k: "--pc-radius", label: "Corner radius", val: 8, step: 1, min: 0 },
+      { k: "--pc-bw", label: "Border width", val: 1, step: 0.5, min: 0 },
+      { k: "--pc-bc", label: "Border colour", type: "color", val: "#f0c469" },
+      { k: "--pc-shadow", label: "Drop shadow", type: "shadow" },
+    ] },
+    { name: "Score chip", items: [
+      { k: "--b-inset", label: "Corner inset", val: 1, step: 1, min: 0 },
+      { k: "--b-pad", label: "Padding", val: 3, step: 1, min: 0 },
+      { k: "--b-gap", label: "Tile–label gap", val: 4, step: 1, min: 0 },
+      { k: "--b-chipr", label: "Chip radius", val: 8, step: 1, min: 0 },
+      { k: "--b-chip", label: "Chip fill", type: "color", val: "rgba(11,13,19,0.62)" },
+      { k: "--b-shadow", label: "Chip shadow", type: "shadow" },
+    ] },
+    { name: "Score tile", items: [
+      { k: "--b-sq", label: "Square size", val: 20, step: 1, min: 6 },
+      { k: "--b-numfs", label: "Number font", val: 12, step: 1, min: 6 },
+      { k: "--b-tiler", label: "Tile radius", val: 6, step: 1, min: 0 },
+      { k: "--b-gold", label: "Tile gold", type: "color", val: "#f0c469" },
+    ] },
+    { name: "Label", items: [
+      { k: "--b-labfs", label: "Label font", val: 8, step: 0.5, min: 5 },
+      { k: "--b-lab", label: "Label colour", type: "color", val: "#f0c469" },
+    ] },
+  ];
+}
+function renderStudioPoster() {
   const sample = getItem("poor-things") || CATALOG[0];
   const sc = scoreItem(sample);
-  const initStyle = [...SB_NUM.map((c) => `${c.k}:${c.val}px`), ...SB_COL.map((c) => `${c.k}:${c.val}`)].join(";");
+  const groups = posterGroups();
+  const init = [];
+  groups.forEach((g) => g.items.forEach((it) => {
+    if (it.type === "color") init.push(`${it.k}:${it.val}`);
+    else if (it.type !== "shadow") init.push(`${it.k}:${it.val}px`);
+  }));
+  const initStyle = init.join(";");
+  const curBadge = `<span class="score-badge"><span class="sb-num">${sc.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>`;
+  const candBadge = `<span class="sb2"><span class="sb2-num">${sc.synth ?? "—"}</span><span class="sb2-lab"><span>Critikl</span><span>Score</span></span></span>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
         <div class="studio-head">
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
-          <h1>Score Badge</h1>
+          <h1>PosterCard</h1>
         </div>
-
-        <div class="st-stage st-compare">
-          <figure class="st-cmp">
-            <div class="pc-scale"><div class="pc2" style="background:${posterBg(sample)}">
-              <span class="score-badge"><span class="sb-num">${sc.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>
-            </div></div>
-            <figcaption>Current</figcaption>
-          </figure>
-          <figure class="st-cmp">
-            <div class="pc-scale"><div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">
-              <span class="sb2"><span class="sb2-num">${sc.synth ?? "—"}</span><span class="sb2-lab"><span>Critikl</span><span>Score</span></span></span>
-            </div></div>
-            <figcaption>Candidate</figcaption>
-          </figure>
+        <div class="st-stage">
+          <div class="st-row1">
+            <figure class="st-cmp"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Current</figcaption></figure>
+            <figure class="st-cmp"><div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div><figcaption>Candidate</figcaption></figure>
+          </div>
+          <div class="st-zoom"><div class="pc-zoom"><div class="pc2" id="candZoom" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div></div></div>
         </div>
-
-        <section class="st-sec"><h2>Dimensions</h2><div class="st-controls">${SB_NUM.map(stepperRow).join("")}</div></section>
-        <section class="st-sec"><h2>Colours</h2><div class="st-controls">${SB_COL.map(swatchRow).join("")}</div></section>
+        <div id="st-controls-root">${groups.map(groupHTML).join("")}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
-          <textarea class="st-out" id="st-out" readonly rows="9" placeholder="Values appear here…"></textarea>
+          <textarea class="st-out" id="st-out" readonly rows="10" placeholder="Values appear here…"></textarea>
         </section>
       </div>
       ${fabStack()}
     </div>`;
 
-  const preview = app.querySelector("#cand");
-  const applyVar = (v, val) => (v.startsWith("--b-") ? preview : document.documentElement).style.setProperty(v, val);
-  wireControls(app, applyVar);
+  const cands = ["#cand", "#candZoom"].map((s) => app.querySelector(s)).filter(Boolean);
+  const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
 
   app.querySelector("#st-export").addEventListener("click", () => {
-    const grabN = Object.fromEntries(SB_NUM.map((c) => [c.k, (parseFloat(app.querySelector(`.step[data-var="${c.k}"] .step-val`).value) || 0) + "px"]));
-    const grabC = Object.fromEntries(SB_COL.map((c) => [c.k, app.querySelector(`.swatch[data-var="${c.k}"]`).dataset.val]));
-    const text = JSON.stringify({ ScoreBadge: { ...grabN, ...grabC } }, null, 2);
+    const out = {};
+    groups.forEach((g) => g.items.forEach((it) => {
+      if (it.type === "color") out[it.k] = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val;
+      else if (it.type === "shadow") out[it.k] = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : "none";
+      else out[it.k] = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + "px";
+    }));
+    const text = JSON.stringify({ PosterCard: out }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -927,8 +979,14 @@ function renderStudioBadge() {
   wireHeader(app);
 }
 
-/* ---- Studio: Brand Tokens focus ---- */
+/* ---- Studio: Brand Tokens ---- */
 function renderStudioBrand() {
+  const group = { name: "Colours", items: [
+    { k: "--gold-1", label: "Gold 1", type: "color", val: "#f0c469" },
+    { k: "--gold-2", label: "Gold 2", type: "color", val: "#c98f30" },
+    { k: "--teal-1", label: "Teal 1", type: "color", val: "#4fd0c8" },
+    { k: "--teal-2", label: "Teal 2", type: "color", val: "#2c97a8" },
+  ] };
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
@@ -936,7 +994,7 @@ function renderStudioBrand() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>Brand Tokens</h1>
         </div>
-        <section class="st-sec"><h2>Colours</h2><div class="st-controls">${BRAND_COL.map(swatchRow).join("")}</div></section>
+        <div id="st-controls-root">${groupHTML(group)}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
@@ -946,10 +1004,10 @@ function renderStudioBrand() {
       ${fabStack()}
     </div>`;
   const applyVar = (v, val) => document.documentElement.style.setProperty(v, val);
-  wireControls(app, applyVar);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("#st-export").addEventListener("click", () => {
-    const grab = Object.fromEntries(BRAND_COL.map((c) => [c.k, app.querySelector(`.swatch[data-var="${c.k}"]`).dataset.val]));
-    const text = JSON.stringify({ Brand: grab }, null, 2);
+    const out = Object.fromEntries(group.items.map((it) => [it.k, app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val]));
+    const text = JSON.stringify({ Brand: out }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -958,11 +1016,10 @@ function renderStudioBrand() {
   });
   wireHeader(app);
 }
-
 function router() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
-  if (hash === "#/studio/badge") { renderStudioBadge(); return; }
+  if (hash === "#/studio/poster") { renderStudioPoster(); return; }
   if (hash === "#/studio/brand") { renderStudioBrand(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {

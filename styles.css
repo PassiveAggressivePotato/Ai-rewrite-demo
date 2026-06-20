@@ -28,6 +28,10 @@
   --shadow-dir-sm: 3px 4px 9px rgba(0,0,0,.5);
   --text-shadow-dir: 2px 3px 3px rgba(0,0,0,.6);
   --drop-dir: drop-shadow(2px 3px 4px rgba(0,0,0,.55));
+  /* ScoreBadge tokens (tuned in the Studio, baked here) */
+  --b-sq: 20px; --b-numfs: 12px; --b-labfs: 8px; --b-gap: 4px; --b-pad: 3px;
+  --b-chipr: 8px; --b-tiler: 6px; --b-inset: 1px;
+  --b-gold: #f0c469; --b-lab: #f0c469; --b-chip: rgba(11,13,19,0.62);
 }
 
 :root[data-theme="dark"] {
@@ -317,22 +321,23 @@ body::before {
   transition: transform .18s var(--ease), box-shadow .18s;
 }
 .list-item:hover .poster-card { transform: translateY(-3px); box-shadow: 0 9px 18px rgba(0,0,0,.5); }
-/* Score badge: gold number tile + "Critikl Score" label in a bordered chip. */
+/* Score badge: square gold tile + "Critikl Score" label in a chip. Driven by
+ * --b-* tokens (defaults in :root) so the Studio and the live cards stay in sync. */
 .score-badge {
-  position: absolute; left: 5px; bottom: 5px;
-  display: inline-flex; align-items: stretch; gap: 4px; padding: 3px;
-  border-radius: 6px; background: rgba(10,12,18,.62);
-  border: 1px solid var(--gold); box-shadow: 0 2px 6px rgba(0,0,0,.5);
-  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  position: absolute; left: var(--b-inset); bottom: var(--b-inset);
+  display: inline-flex; align-items: stretch; gap: var(--b-gap); padding: var(--b-pad);
+  border-radius: var(--b-chipr); background: var(--b-chip);
+  border: 1px solid var(--b-gold); box-shadow: var(--b-shadow, none);
 }
 .score-badge .sb-num {
-  display: grid; place-items: center; min-width: 21px; padding: 1px 3px; border-radius: 4px;
-  background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); color: #241a05;
-  font-family: var(--font-display); font-weight: 800; font-size: 12.5px; line-height: 1;
+  width: var(--b-sq); height: var(--b-sq); flex: none;
+  display: grid; place-items: center; border-radius: var(--b-tiler);
+  background: linear-gradient(180deg, var(--b-gold), color-mix(in srgb, var(--b-gold) 68%, #000)); color: #241a05;
+  font-family: var(--font-display); font-weight: 800; font-size: var(--b-numfs); line-height: 1;
 }
 .score-badge .sb-lab {
   display: flex; flex-direction: column; justify-content: center;
-  font-size: 7.5px; font-weight: 800; line-height: 1.04; letter-spacing: .03em; color: #fff;
+  font-size: var(--b-labfs); font-weight: 800; line-height: 1.05; letter-spacing: .02em; color: var(--b-lab);
 }
 .li-text { min-width: 0; display: flex; flex-direction: column; }
 .li-title { font-weight: 600; color: var(--text); line-height: 1.15; overflow: hidden; }
@@ -652,9 +657,12 @@ body::before {
 .icon-btn:active { transform: scale(.94); }
 .icon-btn svg { width: 20px; height: 20px; display: block; }
 
-.fab-left {
+.fab-left-stack {
   position: absolute; z-index: 200;
   left: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 10px;
+}
+.fab-left {
   width: 38px; height: 38px; border-radius: 50%;
   display: grid; place-items: center; text-decoration: none;
   background: var(--menu); border: 1px solid var(--border-strong); color: var(--gold);
@@ -662,7 +670,10 @@ body::before {
   transition: transform .2s var(--ease), filter .2s;
 }
 .fab-left:hover { transform: scale(1.08); filter: brightness(1.08); }
+.fab-left.on { background: var(--gold); border-color: var(--gold); color: #1a1206; }
 .fab-left svg { width: 19px; height: 19px; display: block; }
+/* Pick mode: highlight tappable components */
+.pick-mode [data-slug] { outline: 2px dashed var(--gold); outline-offset: 3px; border-radius: 9px; cursor: pointer; }
 
 /* =============================================================================
  * STUDIO — component sandbox
@@ -680,23 +691,25 @@ body::before {
 .st-sec > h2 span { color: var(--text-faint); font-weight: 600; letter-spacing: .04em; text-transform: none; }
 
 .st-stage {
-  min-height: 320px; overflow: hidden;
-  border-radius: var(--radius-sm); margin-bottom: 14px;
+  overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 14px; padding: 18px 10px;
   background:
     linear-gradient(0deg, rgba(255,255,255,.03), rgba(255,255,255,.03)),
     repeating-conic-gradient(#0e1018 0% 25%, #0a0c12 0% 50%) 0 / 22px 22px;
 }
-.st-compare { display: flex; justify-content: center; align-items: start; gap: 22px; padding: 22px 6px; }
-.st-cmp { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* Top: Current + Candidate at 1×. Below: a big zoomed Candidate (live). */
+.st-row1 { display: flex; justify-content: center; align-items: flex-start; gap: 26px; }
+.st-cmp { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .st-cmp figcaption { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
-.pc-scale { width: 176px; height: 264px; display: grid; place-items: center; }
-.pc-scale .pc2 { transform: scale(2); }
+.st-zoom { display: grid; place-items: center; min-height: 360px; margin-top: 6px; }
+.pc-zoom { transform: scale(2.6); transform-origin: center; }
 
-/* Preview PosterCard + the candidate ScoreBadge (driven by --b-* tokens) */
+/* Preview PosterCard + the candidate ScoreBadge (driven by --pc-* / --b-* tokens) */
 .pc2 {
-  position: relative; width: 88px; height: 132px; border-radius: 8px;
-  border: 1px solid var(--gold); overflow: hidden;
+  position: relative; width: 88px; height: 132px; overflow: hidden;
   background-size: cover; background-position: center;
+  border-radius: var(--pc-radius, 8px);
+  border: var(--pc-bw, 1px) solid var(--pc-bc, var(--gold));
+  box-shadow: var(--pc-shadow, var(--shadow-dir-sm));
 }
 .sb2 {
   position: absolute; left: var(--b-inset); bottom: var(--b-inset);
@@ -704,6 +717,7 @@ body::before {
   padding: var(--b-pad); border-radius: var(--b-chipr);
   background: var(--b-chip);
   border: 1px solid var(--b-gold);
+  box-shadow: var(--b-shadow, none);
 }
 .sb2-num {
   width: var(--b-sq); height: var(--b-sq); flex: none;
@@ -718,10 +732,12 @@ body::before {
   color: var(--b-lab);
 }
 
-/* Controls: label on the left, control on the right */
-.st-controls { display: grid; gap: 8px; }
-.ctl { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* Controls: label on the left, control on the right (extra row spacing to avoid mis-taps) */
+.st-controls { display: grid; gap: 14px; }
+.ctl { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
 .ctl-l { font-size: 12px; color: var(--text-dim); flex: 1; min-width: 0; }
+.shadow-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
+.shadow-btn:active { background: rgba(240,196,105,.16); }
 
 /* Stepper: − [value] + with accelerating press; value tappable to type. */
 .step { display: inline-flex; align-items: stretch; flex: none; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
@@ -757,9 +773,12 @@ body::before {
 .sc-name { display: block; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--text); }
 .sc-desc { display: block; font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 
-/* Colour picker (bottom sheet within the app column) */
-.cp { position: absolute; inset: 0; z-index: 400; }
-.cp-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+/* Colour picker + shadow editor (bottom sheets within the app column).
+ * Scrim is transparent so live edits stay visible above. Picker sits above the
+ * shadow editor (so a colour can be picked from within it). */
+.shed { position: absolute; inset: 0; z-index: 400; }
+.cp { position: absolute; inset: 0; z-index: 402; }
+.cp-scrim { position: absolute; inset: 0; background: transparent; }
 .cp-sheet {
   position: absolute; left: 0; right: 0; bottom: 0; max-height: 92%; overflow-y: auto;
   background: var(--menu); border-top: 1px solid var(--border-strong);
