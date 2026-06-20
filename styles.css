@@ -18,6 +18,8 @@
   --teal-2: #2c97a8;
   --radius: 18px;
   --radius-sm: 12px;
+  --gut: 10px;            /* page side margin / list gutter (Home + Title pages) */
+  --row-gap: 16px;        /* vertical gap between list rows */
   --ease: cubic-bezier(.22,.61,.36,1);
   --app-max: 480px;
   --nav-h: 60px;
@@ -128,7 +130,7 @@ body::before {
 /* =====================================================================
  * LANDING PAGE
  * ===================================================================== */
-.landing { padding: 16px 18px 0; }
+.landing { padding: 14px var(--gut) 0; }
 .landing-head { text-align: center; padding-top: 16px; position: relative; }
 .landing-head .wordmark { font-size: 54px; }
 .landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 10px; letter-spacing: .04em; }
@@ -295,16 +297,10 @@ body::before {
 .lists.cards { --card-h: 62px; }
 /* When the search bar is open the lists shrink a touch so the page still fits. */
 .landing.searching .lists.cards { --card-h: 52px; }
-/* Every column shares identical box metrics (incl. a transparent border) so
- * rows line up; the featured one only adds colour. */
-.list-col { padding: 9px 8px 6px; border: 1px solid transparent; border-radius: 14px; }
+.list-col { padding: 0; }
 .list-col h3 {
   font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
   color: var(--gold); margin-bottom: 9px; line-height: 1.2; text-align: center; cursor: pointer;
-}
-.list-col.featured {
-  background: linear-gradient(180deg, rgba(240,196,105,.13), rgba(240,196,105,.02));
-  border-color: rgba(240,196,105,.30);
 }
 
 /* ---- Landing lists: vertical (text beside) ⇄ horizontal (scrolling rows) -- */
@@ -347,13 +343,17 @@ body::before {
  * Block layout (not flex) so each row is bounded to the viewport width and the
  * .col-items becomes a real horizontal scroll container. */
 .lists.layout-horizontal { display: block; }
-.lists.layout-horizontal .list-col { padding: 6px; margin-bottom: 10px; min-width: 0; }
+.lists.layout-horizontal .list-col { margin-bottom: var(--row-gap); min-width: 0; }
 .lists.layout-horizontal .list-col:last-child { margin-bottom: 0; }
-.lists.layout-horizontal .list-col h3 { font-size: 12.5px; text-align: left; margin: 0 2px 8px; }
+.lists.layout-horizontal .list-col h3 { font-size: 12.5px; text-align: left; margin: 0 0 8px; }
+/* Rows bleed to the screen edges: first item sits at the gutter, the row runs
+ * off the right edge; mid-scroll there are no side margins; at the end the last
+ * item stops at the right gutter. */
 .lists.layout-horizontal .col-items {
-  flex-direction: row; gap: 13px; width: 100%; overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x proximity; padding-bottom: 6px; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+  flex-direction: row; gap: 13px; overflow-x: auto; overflow-y: hidden;
+  margin: 0 calc(-1 * var(--gut)); padding: 0 var(--gut) 6px;
+  scroll-padding-left: var(--gut);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
 }
 .lists.layout-horizontal .col-items::-webkit-scrollbar { display: none; }
 .lists.layout-horizontal .list-item {
@@ -364,6 +364,25 @@ body::before {
 .lists.layout-horizontal .li-text { width: 100%; align-items: center; }
 .lists.layout-horizontal .li-title { font-size: 10px; white-space: nowrap; max-width: 100%; text-overflow: ellipsis; }
 .lists.layout-horizontal .li-year { font-size: 9px; }
+/* End-of-row "See all" tile → (future) full listing page */
+.see-all {
+  flex: 0 0 auto; width: 60px; align-self: stretch;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  color: var(--gold); border: 1px dashed rgba(240,196,105,.5); border-radius: 10px;
+  margin-bottom: 22px;
+}
+.see-all .sa-ic { transform: rotate(180deg); display: grid; place-items: center; }
+.see-all .sa-ic svg { width: 22px; height: 22px; }
+.see-all .sa-t { font-size: 10px; font-weight: 800; text-transform: uppercase; line-height: 1.12; text-align: center; }
+
+.toast {
+  position: absolute; left: 50%; bottom: 84px; transform: translate(-50%, 10px); z-index: 300;
+  background: var(--menu); border: 1px solid var(--border-strong); color: var(--text);
+  font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
+  box-shadow: var(--shadow-dir); opacity: 0; transition: opacity .25s, transform .25s;
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 .empty { color: var(--text-faint); font-size: 13px; text-align: center; padding: 30px 0; }
 
@@ -419,25 +438,30 @@ body::before {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(6,7,12,0) 0%, rgba(6,7,12,.22) 44%, var(--bg) 82%);
 }
-.detail .scroll { position: relative; z-index: 1; padding: 0 16px 16px; }
+.detail .scroll { position: relative; z-index: 1; padding: 0 var(--gut) 16px; }
 
 /* Static frosted-glass header with a bevelled edge; content flows beneath it. */
 .detail-head {
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 30;
-  margin: 0 -16px; padding: 12px 16px;
+  margin: 0 calc(-1 * var(--gut)); padding: 10px var(--gut);
   background: rgba(18,15,22,.5);
   backdrop-filter: blur(5px) saturate(1.35); -webkit-backdrop-filter: blur(5px) saturate(1.35);
   border-bottom: 1px solid rgba(255,255,255,.09);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.16), var(--shadow-dir);
 }
-.detail-head .wordmark { font-size: 29px; }
+.detail-head .wordmark { font-size: 30px; }
+/* Back button only as tall as the logo (keeps the header compact). */
+.detail-head .icon-btn { width: 28px; height: 26px; border-radius: 8px; }
+.detail-head .icon-btn svg { width: 18px; height: 18px; }
 .head-actions { display: flex; align-items: center; gap: 8px; }
+/* When the header search is open, fade the back+logo so they don't collide. */
+.detail-head:has(.head-search.open) .head-left { opacity: 0; pointer-events: none; transition: opacity .15s; }
 
 /* Hero: poster beside the title, with a Trailer/Review bar over the poster. */
-.hero { display: flex; gap: 14px; align-items: flex-start; padding: 14px 2px 0; position: relative; }
+.hero { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0 0; position: relative; }
 .hero-poster {
-  position: relative; width: 121px; flex: none; aspect-ratio: 2 / 3;
+  position: relative; width: 132px; flex: none; aspect-ratio: 2 / 3;
   border-radius: 12px; overflow: hidden; background-size: cover; background-position: center;
   box-shadow: var(--shadow-dir); display: grid; place-items: center;
   border: 1px solid rgba(240,196,105,.35);
@@ -469,7 +493,7 @@ body::before {
   text-shadow: var(--text-shadow-dir);
 }
 /* 16:9 player that pins beneath the sticky header; content scrolls underneath. */
-.video-stage { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); margin: 0 -16px; }
+.video-stage { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); margin: 0 calc(-1 * var(--gut)); }
 .video-stage.playing { position: sticky; z-index: 20; max-height: 70vh; margin-bottom: 4px; }
 .video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; box-shadow: var(--shadow-dir); }
 .video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
@@ -774,13 +798,15 @@ body::before {
 .sc-desc { display: block; font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 
 /* Colour picker + shadow editor (bottom sheets within the app column).
- * Scrim is transparent so live edits stay visible above. Picker sits above the
- * shadow editor (so a colour can be picked from within it). */
-.shed { position: absolute; inset: 0; z-index: 400; }
-.cp { position: absolute; inset: 0; z-index: 402; }
-.cp-scrim { position: absolute; inset: 0; background: transparent; }
+ * The wrapper does NOT block the page (no scrim), so content above stays
+ * scrollable while editing; only the sheet itself is interactive. Picker sits
+ * above the shadow editor (so a colour can be picked from within it). */
+.shed { position: absolute; inset: 0; z-index: 400; pointer-events: none; }
+.cp { position: absolute; inset: 0; z-index: 402; pointer-events: none; }
+.cp-scrim { display: none; }
 .cp-sheet {
-  position: absolute; left: 0; right: 0; bottom: 0; max-height: 92%; overflow-y: auto;
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 80%; overflow-y: auto;
+  pointer-events: auto;
   background: var(--menu); border-top: 1px solid var(--border-strong);
   border-radius: 18px 18px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom,0px));
   box-shadow: 0 -10px 30px rgba(0,0,0,.5); animation: rise .2s var(--ease) both;
