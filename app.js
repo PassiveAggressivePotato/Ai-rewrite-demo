@@ -43,6 +43,7 @@ const ICON = {
   smooth: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7.5"/></svg>`,
   pixel: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3.5" width="6" height="5"/><rect x="15" y="9" width="5" height="6"/><rect x="9" y="15.5" width="6" height="5"/><rect x="3.5" y="9" width="5" height="6"/></svg>`,
   shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
+  chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -404,7 +405,7 @@ function goHome() {
   else renderLanding();
 }
 
-let _docClick = null;
+let _docClick = null, _landingClick = null;
 function wireHeadSearch(root) {
   const wrap = root.querySelector(".head-search");
   if (!wrap) return;
@@ -536,6 +537,8 @@ function renderResultsArea() {
 /* Switching tabs only updates the tab state, the search bar, and the lists —
  * the rest of the page stays put (no full re-render). */
 function selectCategory(c) {
+  // Tapping the already-active tab toggles the whole thing closed again.
+  if (state.category === c && state.searchOpen) { closeSearch(); return; }
   state.category = c;
   state.query = "";
   app.querySelector(".tabs")?.classList.add("has-sel");
@@ -579,8 +582,13 @@ function renderLanding() {
       <span class="tab-label">${c.plural}</span>
     </button>`).join("");
 
+  const hasText = !!state.query.trim();
   app.innerHTML = `
     <div class="screen landing-screen">
+      <div class="landing-sticky">
+        <div class="head-left">${logo()}</div>
+        <div class="head-actions">${headSearch()}</div>
+      </div>
       <div class="scroll">
         <div class="landing ${state.searchOpen ? "searching" : ""}">
           <div class="landing-head rise">
@@ -596,6 +604,7 @@ function renderLanding() {
               <input id="search-input" type="search" autocomplete="off"
                 placeholder="${selected ? `Search ${(cat().plural || "").toLowerCase()}…` : ""}"
                 value="${escapeAttr(state.query)}" />
+              <button class="search-cleartext" ${hasText ? "" : "hidden"}>Clear</button>
               <button class="search-clear" aria-label="Close search">${ICON.close}</button>
             </div>
           </div>
@@ -609,11 +618,37 @@ function renderLanding() {
   renderResultsArea();
 
   app.querySelectorAll(".tab").forEach((t) =>
-    t.addEventListener("click", () => selectCategory(t.dataset.cat)));
+    t.addEventListener("click", (e) => { e.stopPropagation(); selectCategory(t.dataset.cat); }));
 
   const input = document.getElementById("search-input");
-  input.addEventListener("input", (e) => { state.query = e.target.value; renderResultsArea(); });
+  const clearText = app.querySelector(".search-cleartext");
+  input.addEventListener("input", (e) => {
+    state.query = e.target.value;
+    if (clearText) clearText.hidden = !e.target.value.trim();
+    renderResultsArea();
+  });
+  clearText?.addEventListener("click", () => {
+    state.query = ""; input.value = ""; clearText.hidden = true;
+    renderResultsArea(); input.focus();
+  });
   app.querySelector(".search-clear")?.addEventListener("click", closeSearch);
+
+  // Scroll past the hero → slide the compact header (logo + search) down.
+  const scroller = app.querySelector(".scroll");
+  const screen = app.querySelector(".landing-screen");
+  scroller.addEventListener("scroll", () => {
+    screen.classList.toggle("show-sticky", scroller.scrollTop > 120);
+  }, { passive: true });
+
+  // Tapping outside the tabs / search bar closes the open search.
+  if (_landingClick) document.removeEventListener("click", _landingClick);
+  _landingClick = (e) => {
+    if (!state.searchOpen) return;
+    if (e.target.closest(".tabs") || e.target.closest(".searchbar-wrap") || e.target.closest(".landing-sticky")) return;
+    if (e.target.closest("#results-area")) return;
+    closeSearch();
+  };
+  document.addEventListener("click", _landingClick);
 
   wireHeader(app);
 }
@@ -691,6 +726,25 @@ function ratingColumn(kind, value, rows) {
     </div>`;
 }
 
+/* A horizontally-scrolling row of cast members (photo / initials + name + role). */
+function personCard(p) {
+  const initials = p.name.split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  return `<div class="person-card">
+    <div class="person-photo${p.photo ? " has-photo" : ""}"${p.photo ? ` style="background-image:url('${p.photo}')"` : ""}>
+      ${p.photo ? "" : `<span class="person-initials">${initials}</span>`}
+    </div>
+    <div class="person-name">${p.name}</div>
+    ${p.character ? `<div class="person-char">${p.character}</div>` : ""}
+  </div>`;
+}
+function castSection(item) {
+  if (!item.cast || !item.cast.length) return "";
+  return `<section class="cast-sec rise d3">
+    <div class="sec-head"><h2>Actors</h2><button class="cast-toggle" data-cast-toggle aria-label="Collapse">${ICON.chev}</button></div>
+    <div class="cast-row">${item.cast.map(personCard).join("")}</div>
+  </section>`;
+}
+
 function renderDetail(item) {
   const s = scoreItem(item);
   const metaline = [item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
@@ -764,6 +818,8 @@ function renderDetail(item) {
             ${ratingColumn("user", s.user, s.userRows)}
           </div>
         </div>
+
+        ${castSection(item)}
 
         <div class="sec-head rise d3"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
         <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
@@ -841,6 +897,9 @@ function renderDetail(item) {
       });
     }
   });
+
+  app.querySelector("[data-cast-toggle]")?.addEventListener("click", (e) =>
+    e.currentTarget.closest(".cast-sec").classList.toggle("collapsed"));
 
   wireCardClicks(app);
   applyArtwork(app);

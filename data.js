@@ -387,6 +387,71 @@ export const COUNTRIES = {
   AU: { flag: "🇦🇺", label: "Australia" },
 };
 
+/* Cast lists (name + character) keyed by slug. Photos are optional — when a
+ * `photo` path is absent the UI renders an initials avatar. Merged into the
+ * catalog below so item objects keep a single shape (`item.cast`). */
+const CAST = {
+  "dune-part-two": [
+    { name: "Timothée Chalamet", character: "Paul Atreides" },
+    { name: "Zendaya", character: "Chani" },
+    { name: "Rebecca Ferguson", character: "Lady Jessica" },
+    { name: "Javier Bardem", character: "Stilgar" },
+    { name: "Austin Butler", character: "Feyd-Rautha" },
+    { name: "Florence Pugh", character: "Princess Irulan" },
+  ],
+  "oppenheimer": [
+    { name: "Cillian Murphy", character: "J. Robert Oppenheimer" },
+    { name: "Emily Blunt", character: "Kitty Oppenheimer" },
+    { name: "Matt Damon", character: "Leslie Groves" },
+    { name: "Robert Downey Jr.", character: "Lewis Strauss" },
+    { name: "Florence Pugh", character: "Jean Tatlock" },
+  ],
+  "poor-things": [
+    { name: "Emma Stone", character: "Bella Baxter" },
+    { name: "Mark Ruffalo", character: "Duncan Wedderburn" },
+    { name: "Willem Dafoe", character: "Dr. Godwin Baxter" },
+    { name: "Ramy Youssef", character: "Max McCandles" },
+  ],
+  "across-the-spider-verse": [
+    { name: "Shameik Moore", character: "Miles Morales" },
+    { name: "Hailee Steinfeld", character: "Gwen Stacy" },
+    { name: "Oscar Isaac", character: "Miguel O'Hara" },
+    { name: "Jake Johnson", character: "Peter B. Parker" },
+  ],
+  "everything-everywhere-all-at-once": [
+    { name: "Michelle Yeoh", character: "Evelyn Wang" },
+    { name: "Ke Huy Quan", character: "Waymond Wang" },
+    { name: "Jamie Lee Curtis", character: "Deirdre Beaubeirdre" },
+    { name: "Stephanie Hsu", character: "Joy Wang" },
+  ],
+  "shogun": [
+    { name: "Hiroyuki Sanada", character: "Lord Toranaga" },
+    { name: "Cosmo Jarvis", character: "John Blackthorne" },
+    { name: "Anna Sawai", character: "Toda Mariko" },
+  ],
+  "the-bear": [
+    { name: "Jeremy Allen White", character: "Carmy Berzatto" },
+    { name: "Ayo Edebiri", character: "Sydney Adamu" },
+    { name: "Ebon Moss-Bachrach", character: "Richie Jerimovich" },
+  ],
+  "fallout": [
+    { name: "Ella Purnell", character: "Lucy MacLean" },
+    { name: "Aaron Moten", character: "Maximus" },
+    { name: "Walton Goggins", character: "The Ghoul" },
+  ],
+  "succession": [
+    { name: "Brian Cox", character: "Logan Roy" },
+    { name: "Jeremy Strong", character: "Kendall Roy" },
+    { name: "Sarah Snook", character: "Shiv Roy" },
+  ],
+  "severance": [
+    { name: "Adam Scott", character: "Mark Scout" },
+    { name: "Britt Lower", character: "Helly R." },
+    { name: "Patricia Arquette", character: "Harmony Cobel" },
+  ],
+};
+CATALOG.forEach((it) => { if (CAST[it.slug]) it.cast = CAST[it.slug]; });
+
 export function getItem(slug) {
   return CATALOG.find((i) => i.slug === slug) || null;
 }
