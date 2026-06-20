@@ -765,25 +765,51 @@ body::before {
 .studio-head h1 { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: .02em; }
 .studio-tag { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); }
 
-.st-sec { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px; }
+.st-sec { margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px; }
 .st-sec > h2 {
   font-family: var(--font-display); font-size: 13px; font-weight: 800;
   letter-spacing: .06em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
 }
 .st-sec > h2 span { color: var(--text-faint); font-weight: 600; letter-spacing: .04em; text-transform: none; }
 
+/* Collapsible group: full-width header toggles its body */
+.st-h {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; background: none; border: none; padding: 0; text-align: left; cursor: pointer;
+}
+.st-h h2 {
+  font-family: var(--font-display); font-size: 13px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--gold);
+}
+.acc-ic { display: grid; place-items: center; color: var(--text-faint); }
+.acc-ic svg { width: 18px; height: 18px; transition: transform .2s var(--ease); transform: rotate(-90deg); }
+.st-sec.collapsed .acc-ic svg { transform: rotate(0deg); }
+.st-body { margin-top: 12px; }
+.st-sec.collapsed .st-body { display: none; }
+
+/* Before/After previews stay pinned to the top while you scroll the controls. */
 .st-stage {
-  overflow: hidden; border-radius: var(--radius-sm); margin-bottom: 14px; padding: 18px 10px;
+  position: sticky; top: 0; z-index: 30;
+  overflow: hidden; border-radius: var(--radius-sm); margin: 0 -2px 14px; padding: 16px 10px;
+  border: 1px solid var(--border);
   background:
     linear-gradient(0deg, rgba(255,255,255,.03), rgba(255,255,255,.03)),
     repeating-conic-gradient(#0e1018 0% 25%, #0a0c12 0% 50%) 0 / 22px 22px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.45);
 }
-/* Top: Current + Candidate at 1×. Below: a big zoomed Candidate (live). */
-.st-row1 { display: flex; justify-content: center; align-items: flex-start; gap: 26px; }
+.st-compare { display: flex; justify-content: center; align-items: flex-start; gap: 30px; }
 .st-cmp { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.st-cmp figcaption { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
-.st-zoom { display: grid; place-items: center; min-height: 360px; margin-top: 6px; }
-.pc-zoom { transform: scale(2.6); transform-origin: center; }
+.st-cmp figcaption { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+
+/* Randomise which catalog item the previews use */
+.rand-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 9px; color: var(--gold);
+  background: rgba(11,13,19,.6); backdrop-filter: blur(6px);
+}
+.rand-btn:active { background: rgba(240,196,105,.2); }
+.rand-btn svg { width: 17px; height: 17px; }
 
 /* Preview PosterCard + the candidate ScoreBadge (driven by --pc-* / --b-* tokens) */
 .pc2 {
@@ -821,16 +847,18 @@ body::before {
 .shadow-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
 .shadow-btn:active { background: rgba(240,196,105,.16); }
 
-/* Stepper: − [value] + with accelerating press; value tappable to type. */
+/* Stepper: « ‹ [value] › » — outer (.big) = whole step, inner = 0.1.
+ * Accelerating press; value tappable to type. */
 .step { display: inline-flex; align-items: stretch; flex: none; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
 .step-btn {
-  width: 34px; font-size: 18px; font-weight: 700; color: var(--gold);
+  width: 26px; font-size: 14px; font-weight: 700; color: var(--text-dim);
   display: grid; place-items: center; user-select: none; touch-action: none;
 }
-.step-btn:active { background: rgba(240,196,105,.18); }
+.step-btn.big { width: 30px; font-size: 17px; color: var(--gold); background: rgba(240,196,105,.08); }
+.step-btn:active { background: rgba(240,196,105,.22); }
 .step-val {
-  width: 56px; text-align: center; background: none; border: none; outline: none;
-  color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums;
+  width: 48px; text-align: center; background: none; border: none; outline: none;
+  color: var(--text); font-size: 16px; font-variant-numeric: tabular-nums;
   border-left: 1px solid var(--border); border-right: 1px solid var(--border);
 }
 

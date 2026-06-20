@@ -42,6 +42,7 @@ const ICON = {
   lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
   smooth: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7.5"/></svg>`,
   pixel: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3.5" width="6" height="5"/><rect x="15" y="9" width="5" height="6"/><rect x="9" y="15.5" width="6" height="5"/><rect x="3.5" y="9" width="5" height="6"/></svg>`,
+  shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -889,10 +890,12 @@ function colorStr(r, g, b, a) { return a >= 1 ? rgbToHex(r, g, b) : `rgba(${Math
 
 /* ---- control builders + shadow sub-editor ---- */
 function stepperHTML(v, val, step, min) {
-  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-step="${step}" data-min="${min}">
-      <button class="step-btn" data-dir="-1" aria-label="decrease">−</button>
+  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-min="${min}">
+      <button class="step-btn big" data-d="${-step}" aria-label="minus ${step}">«</button>
+      <button class="step-btn" data-d="-0.1" aria-label="minus 0.1">‹</button>
       <input class="step-val" type="text" inputmode="decimal" value="${val}">
-      <button class="step-btn" data-dir="1" aria-label="increase">+</button>
+      <button class="step-btn" data-d="0.1" aria-label="plus 0.1">›</button>
+      <button class="step-btn big" data-d="${step}" aria-label="plus ${step}">»</button>
     </div>`;
 }
 function swatchHTML(v, val) {
@@ -907,21 +910,25 @@ function controlRow(it) {
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min);
   return `<div class="ctl"><span class="ctl-l">${it.label}</span>${ctrl}</div>`;
 }
-function groupHTML(g) {
-  return `<section class="st-sec"><h2>${g.name}</h2><div class="st-controls">${g.items.map(controlRow).join("")}</div></section>`;
+function groupHTML(g, open) {
+  return `<section class="st-sec ${open ? "" : "collapsed"}">
+    <button class="st-h" data-acc><h2>${g.name}</h2><span class="acc-ic">${ICON.back}</span></button>
+    <div class="st-body"><div class="st-controls">${g.items.map(controlRow).join("")}</div></div>
+  </section>`;
 }
 
-/* Accelerating stepper: tap = one step; hold ramps up; value tappable to type. */
+/* Accelerating stepper: each button carries its own delta (data-d). Outer = one
+ * whole step, inner = 0.1; tap once or hold to ramp up. Value tappable to type. */
 function attachStepper(step, onValue) {
   const input = step.querySelector(".step-val");
-  const min = parseFloat(step.dataset.min), max = parseFloat(step.dataset.max), size = parseFloat(step.dataset.step);
+  const min = parseFloat(step.dataset.min), max = parseFloat(step.dataset.max);
   const get = () => (parseFloat(input.value) || 0);
   const set = (n) => { if (!isNaN(min) && n < min) n = min; if (!isNaN(max) && n > max) n = max; n = Math.round(n * 100) / 100; input.value = n; onValue(n); };
   input.addEventListener("change", () => set(get()));
   step.querySelectorAll(".step-btn").forEach((btn) => {
-    const dir = parseFloat(btn.dataset.dir); let timer = null, delay = 0, count = 0;
-    const tick = () => { count++; const m = count > 22 ? 10 : count > 14 ? 5 : count > 7 ? 2 : 1; set(get() + dir * size * m); delay = Math.max(38, delay * 0.82); timer = setTimeout(tick, delay); };
-    const start = (e) => { e.preventDefault(); count = 0; delay = 320; set(get() + dir * size); timer = setTimeout(tick, delay); };
+    const d = parseFloat(btn.dataset.d); let timer = null, delay = 0, count = 0;
+    const tick = () => { count++; const m = count > 22 ? 8 : count > 14 ? 4 : count > 7 ? 2 : 1; set(get() + d * m); delay = Math.max(40, delay * 0.82); timer = setTimeout(tick, delay); };
+    const start = (e) => { e.preventDefault(); e.stopPropagation(); count = 0; delay = 320; set(get() + d); timer = setTimeout(tick, delay); };
     const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
     btn.addEventListener("pointerdown", start);
     ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
@@ -936,6 +943,8 @@ function shadowCss(s) {
   return `${ox}px ${oy}px ${Math.max(0, s.blur)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
 }
 function wireGroupControls(root, applyVar) {
+  root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
+    h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
   root.querySelectorAll(".st-controls .step[data-var]").forEach((step) =>
     attachStepper(step, (n) => applyVar(step.dataset.var, n + "px")));
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
@@ -951,7 +960,7 @@ function openShadowEditor(v, applyVar) {
   closeShadowEditor();
   const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 });
   const stepF = (label, f, step, min, max) =>
-    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
+    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn big" data-d="${-step}">«</button><button class="step-btn" data-d="-0.1">‹</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-d="0.1">›</button><button class="step-btn big" data-d="${step}">»</button></div></div>`;
   const wrap = document.createElement("div");
   wrap.className = "shed";
   wrap.innerHTML = `
@@ -1144,13 +1153,14 @@ function renderStudioPoster() {
           <h1>PosterCard</h1>
         </div>
         <div class="st-stage st-compare">
-          <figure class="st-cmp"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Current</figcaption></figure>
+          <button class="rand-btn" data-rand aria-label="Random example">${ICON.shuffle}</button>
+          <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before</figcaption></figure>
           <figure class="st-cmp">
             <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
-            <figcaption>Candidate <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
+            <figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
           </figure>
         </div>
-        <div id="st-controls-root">${groups.map(groupHTML).join("")}</div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
@@ -1164,6 +1174,15 @@ function renderStudioPoster() {
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
+  app.querySelector("[data-rand]").addEventListener("click", () => {
+    const it = CATALOG[Math.floor(Math.random() * CATALOG.length)];
+    const num = scoreItem(it).synth ?? "—", bg = posterBg(it);
+    ["#cur", "#cand"].forEach((sel) => {
+      const el = app.querySelector(sel); if (!el) return;
+      el.style.background = bg;
+      el.querySelectorAll(".sb-num, .sb2-num").forEach((n) => (n.textContent = num));
+    });
+  });
 
   app.querySelector("#st-export").addEventListener("click", () => {
     const out = {};
@@ -1197,7 +1216,7 @@ function renderStudioBrand() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>Brand Tokens</h1>
         </div>
-        <div id="st-controls-root">${groupHTML(group)}</div>
+        <div id="st-controls-root">${groupHTML(group, true)}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
