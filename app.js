@@ -39,6 +39,9 @@ const ICON = {
   finger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 11V7a1.5 1.5 0 0 1 3 0v4"/><path d="M15 11.5a1.5 1.5 0 0 1 3 0V15c0 3.3-2 5.5-5.2 5.5-2.1 0-3.4-.8-4.4-2.3l-2.6-3.9a1.5 1.5 0 0 1 2.5-1.7L9.5 14V11"/></svg>`,
   zoom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7M10.5 7.8v5.4M7.8 10.5h5.4"/></svg>`,
   toolbox: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h18V19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19z"/><path d="M8 8.5V6a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 6v2.5"/><path d="M3 13h6v2h6v-2h6"/></svg>`,
+  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  smooth: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7.5"/></svg>`,
+  pixel: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3.5" width="6" height="5"/><rect x="15" y="9" width="5" height="6"/><rect x="9" y="15.5" width="6" height="5"/><rect x="3.5" y="9" width="5" height="6"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -183,103 +186,147 @@ function toggleDebug() {
  * ===================================================================== */
 let loupeTimer = null, loupeAbort = null;
 function closeLoupe() { app.querySelector(".loupe")?.remove(); clearTimeout(loupeTimer); loupeTimer = null; loupeAbort?.abort(); loupeAbort = null; }
+
+/* Rasterise the current screen to a canvas (SVG foreignObject) for Pixel mode. */
+async function captureScreen() {
+  const screen = app.querySelector(".screen"); if (!screen) return null;
+  const sr = screen.getBoundingClientRect();
+  const w = Math.ceil(sr.width), h = Math.ceil(sr.height);
+  const c = screen.cloneNode(true);
+  c.querySelectorAll(".loupe, .toolbox, .cp, .shed, .toast").forEach((n) => n.remove());
+  const rs = screen.querySelector(".scroll"), cs = c.querySelector(".scroll");
+  if (rs && cs && cs.children[0]) { cs.style.overflow = "hidden"; cs.children[0].style.transform = `translateY(${-rs.scrollTop}px)`; }
+  let css = ""; for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) css += r.cssText + "\n"; } catch (e) { } }
+  const xml = new XMLSerializer().serializeToString(c);
+  const html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;background:${getComputedStyle(document.body).backgroundColor}"><style>${css}</style>${xml}</div>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  cv.getContext("2d").drawImage(img, 0, 0, w, h);
+  return cv;
+}
+
 function openLoupe() {
   if (app.querySelector(".loupe")) return;
   const lp = document.createElement("div");
   lp.className = "loupe";
   lp.innerHTML = `
-    <div class="loupe-bar" data-drag>
-      <span class="loupe-title">Zoom</span>
-      <div class="loupe-tools">
-        <button data-z="-1" aria-label="Zoom out">−</button>
-        <span class="loupe-z">2.0×</span>
-        <button data-z="1" aria-label="Zoom in">+</button>
-        <button data-mode class="loupe-tg">Sharp</button>
-        <button data-lock class="loupe-tg" aria-label="Lock">Float</button>
-      </div>
+    <div class="loupe-view"><div class="loupe-clone"></div><canvas class="loupe-canvas"></canvas></div>
+    <div class="loupe-zbar">
+      <button class="lz-btn" data-z="1" aria-label="Zoom in">+</button>
+      <span class="lz-pct">200%</span>
+      <button class="lz-btn" data-z="-1" aria-label="Zoom out">−</button>
     </div>
+    <button class="loupe-ic loupe-lock" data-lock aria-label="Lock">${ICON.lock}</button>
     <button class="loupe-x" data-close aria-label="Close">${ICON.close}</button>
-    <div class="loupe-view"><div class="loupe-clone"></div></div>
-    <div class="loupe-size" data-size aria-hidden="true"></div>`;
+    <div class="loupe-size" data-size aria-hidden="true"><span></span></div>`;
   app.appendChild(lp);
   const view = lp.querySelector(".loupe-view");
   const cloneHost = lp.querySelector(".loupe-clone");
+  const canvas = lp.querySelector(".loupe-canvas");
   const ar = app.getBoundingClientRect();
-  const S = { z: 2, w: 250, h: 200, locked: false, mode: "sharp", x: Math.max(8, (ar.width - 250) / 2), y: Math.round(ar.height * 0.32), lockBaseY: 0, lockBaseScroll: 0 };
+  const S = { z: 2, w: 250, h: 210, locked: false, mode: "sharp", x: Math.max(8, (ar.width - 250) / 2), y: Math.round(ar.height * 0.30), lockCx: 0, lockCy: 0, lockBaseY: 0, lockBaseScroll: 0 };
+  let snap = null;
 
-  const setSize = () => { lp.style.width = S.w + "px"; view.style.height = S.h + "px"; };
+  const setSize = () => { lp.style.width = S.w + "px"; lp.style.height = S.h + "px"; canvas.width = S.w; canvas.height = S.h; };
   const setPos = () => { lp.style.left = S.x + "px"; lp.style.top = S.y + "px"; };
-  setSize(); setPos();
+  const setPct = () => { lp.querySelector(".lz-pct").textContent = Math.round(S.z * 100) + "%"; };
 
-  function position() {
-    const screen = app.querySelector(".screen"); if (!screen) return;
-    const sr = screen.getBoundingClientRect();
-    const vr = view.getBoundingClientRect();
-    const cx = (vr.left + vr.width / 2) - sr.left;
-    const cy = (vr.top + vr.height / 2) - sr.top;
-    cloneHost.style.transformOrigin = "0 0";
-    cloneHost.style.transform = `translate(${vr.width / 2 - cx * S.z}px, ${vr.height / 2 - cy * S.z}px) scale(${S.z})`;
-  }
-  function refresh() {
+  function buildClone() {
     const screen = app.querySelector(".screen"); if (!screen) return;
     const sr = screen.getBoundingClientRect();
     const c = screen.cloneNode(true);
     c.querySelectorAll(".loupe, .toolbox, .cp, .shed, .toast").forEach((n) => n.remove());
     c.style.width = sr.width + "px"; c.style.height = sr.height + "px";
-    const realScroll = screen.querySelector(".scroll"), cloneScroll = c.querySelector(".scroll");
     cloneHost.innerHTML = ""; cloneHost.style.width = sr.width + "px"; cloneHost.appendChild(c);
-    if (realScroll && cloneScroll) cloneScroll.scrollTop = realScroll.scrollTop;
-    position();
+    syncScroll();
   }
-  // Clone once on open; re-clone only on demand (scroll) — a constant loop made
-  // it flicker and replay the page's entrance animation.
-  refresh();
+  function syncScroll() {
+    const screen = app.querySelector(".screen"); if (!screen) return;
+    const rs = screen.querySelector(".scroll"), cs = cloneHost.querySelector(".scroll");
+    if (rs && cs) cs.scrollTop = rs.scrollTop;
+  }
+  function centre() {
+    const screen = app.querySelector(".screen"); const sr = screen.getBoundingClientRect(), vr = view.getBoundingClientRect();
+    return { cx: (vr.left + vr.width / 2) - sr.left, cy: (vr.top + vr.height / 2) - sr.top };
+  }
+  function position() {
+    const cx = S.locked ? S.lockCx : centre().cx, cy = S.locked ? S.lockCy : centre().cy;
+    cloneHost.style.transformOrigin = "0 0";
+    cloneHost.style.transform = `translate(${S.w / 2 - cx * S.z}px, ${S.h / 2 - cy * S.z}px) scale(${S.z})`;
+    if (S.mode === "pixel" && snap) {
+      const ctx = canvas.getContext("2d"); ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, S.w, S.h);
+      const sw = S.w / S.z, sh = S.h / S.z;
+      ctx.drawImage(snap, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, S.w, S.h);
+    }
+  }
+  const recapture = () => captureScreen().then((cv) => { snap = cv; position(); }).catch(() => { snap = null; });
 
-  // zoom / mode / lock / close
-  lp.querySelectorAll("[data-z]").forEach((b) => b.addEventListener("click", () => {
-    S.z = Math.max(1, Math.min(8, S.z + (+b.dataset.z) * 0.5));
-    lp.querySelector(".loupe-z").textContent = S.z.toFixed(1) + "×"; position();
-  }));
-  lp.querySelector("[data-mode]").addEventListener("click", (e) => {
-    S.mode = S.mode === "sharp" ? "pixel" : "sharp";
-    cloneHost.classList.toggle("pixel", S.mode === "pixel");
-    e.target.textContent = S.mode === "sharp" ? "Sharp" : "Pixel";
+  setSize(); setPos(); setPct(); buildClone(); position();
+
+  // zoom buttons (fine 0.1 steps, accelerating on hold)
+  lp.querySelectorAll("[data-z]").forEach((btn) => {
+    const dir = +btn.dataset.z; let t = null, delay = 0, cnt = 0;
+    const bump = () => { const m = cnt > 16 ? 4 : cnt > 8 ? 2 : 1; S.z = Math.max(1, Math.min(12, +(S.z + dir * 0.1 * m).toFixed(2))); setPct(); position(); cnt++; };
+    const tick = () => { bump(); delay = Math.max(45, delay * 0.8); t = setTimeout(tick, delay); };
+    const start = (e) => { e.preventDefault(); e.stopPropagation(); cnt = 0; delay = 320; bump(); t = setTimeout(tick, delay); };
+    const stop = () => { if (t) { clearTimeout(t); t = null; } };
+    btn.addEventListener("pointerdown", start);
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
   });
-  const lockBtn = lp.querySelector("[data-lock]");
-  lockBtn.addEventListener("click", () => {
-    S.locked = !S.locked;
-    lockBtn.textContent = S.locked ? "Locked" : "Float";
-    lockBtn.classList.toggle("on", S.locked);
-    lp.classList.toggle("locked", S.locked);
+
+  lp.querySelector("[data-lock]").addEventListener("click", (e) => {
+    e.stopPropagation();
+    S.locked = !S.locked; lp.classList.toggle("locked", S.locked);
     const sc = app.querySelector(".scroll");
-    S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0;
+    if (S.locked) { const c = centre(); S.lockCx = c.cx; S.lockCy = c.cy; S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; }
+    else position();
   });
-  lp.querySelector("[data-close]").addEventListener("click", closeLoupe);
+  lp.querySelector("[data-close]").addEventListener("click", (e) => { e.stopPropagation(); closeLoupe(); });
 
-  // On scroll: keep a locked loupe pinned to the page, reposition the magnified
-  // view, and re-clone (debounced) so content stays current — without flicker.
+  // resize (corner). Larger invisible hit area via CSS; drag to size.
+  const sizeEl = lp.querySelector("[data-size]");
+  sizeEl.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); e.stopPropagation(); sizeEl.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY, ow = S.w, oh = S.h;
+    sizeEl.onpointermove = (ev) => { S.w = Math.max(150, ow + (ev.clientX - sx)); S.h = Math.max(120, oh + (ev.clientY - sy)); setSize(); position(); };
+    sizeEl.onpointerup = () => { sizeEl.onpointermove = null; };
+  });
+
+  // drag the body to move (float); pinch with two fingers to zoom
+  const ptrs = new Map(); let pinch = null;
+  view.addEventListener("pointerdown", (e) => {
+    view.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: S.z }; }
+  });
+  view.addEventListener("pointermove", (e) => {
+    if (!ptrs.has(e.pointerId)) return;
+    const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size >= 2 && pinch) {
+      const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+      S.z = Math.max(1, Math.min(12, +(pinch.z * (d / pinch.d)).toFixed(2))); setPct(); position();
+    } else if (ptrs.size === 1 && !S.locked) {
+      S.x += e.clientX - prev.x; S.y += e.clientY - prev.y; setPos(); position();
+    }
+  });
+  const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
+  view.addEventListener("pointerup", up); view.addEventListener("pointercancel", up);
+
+  // scroll: float → content moves under (sync, no rebuild → no flicker);
+  // locked → loupe scrolls away while its magnified image stays frozen.
   loupeAbort = new AbortController();
   app.addEventListener("scroll", () => {
-    if (S.locked) {
-      const sc = app.querySelector(".scroll");
-      if (sc) { S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll); setPos(); }
+    if (!lp.isConnected) { loupeAbort.abort(); return; }
+    const sc = app.querySelector(".scroll"); if (!sc) return;
+    if (S.locked) { S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll); setPos(); }
+    else {
+      syncScroll(); position();
+      if (S.mode === "pixel") { clearTimeout(loupeTimer); loupeTimer = setTimeout(recapture, 160); }
     }
-    position();
-    clearTimeout(loupeTimer); loupeTimer = setTimeout(refresh, 140);
   }, { capture: true, signal: loupeAbort.signal });
-
-  // drag the bar to move; drag the corner to resize
-  const drag = (handle, onMove) => {
-    handle.addEventListener("pointerdown", (e) => {
-      e.preventDefault(); handle.setPointerCapture(e.pointerId);
-      const sx = e.clientX, sy = e.clientY, ox = S.x, oy = S.y, ow = S.w, oh = S.h;
-      const move = (ev) => { onMove(ev.clientX - sx, ev.clientY - sy, ox, oy, ow, oh); setPos(); setSize(); position(); };
-      handle.onpointermove = move;
-      handle.onpointerup = () => { handle.onpointermove = null; if (S.locked) { const sc = app.querySelector(".scroll"); S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; } };
-    });
-  };
-  drag(lp.querySelector("[data-drag]"), (dx, dy, ox, oy) => { S.x = ox + dx; S.y = oy + dy; });
-  drag(lp.querySelector("[data-size]"), (dx, dy, ox, oy, ow, oh) => { S.w = Math.max(140, ow + dx); S.h = Math.max(110, oh + dy); });
 }
 function headSearch() {
   return `
