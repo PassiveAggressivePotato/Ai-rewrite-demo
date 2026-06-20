@@ -673,11 +673,11 @@ function wireCardClicks(root) {
  * then "Copy values for Claude" hands the chosen numbers back to bake on-site.
  * ===================================================================== */
 const STUDIO_BADGE = [
-  { k: "--b-sq",    label: "Square size",    min: 20, max: 56, step: 1,   val: 28, unit: "px" },
-  { k: "--b-numfs", label: "Number font",    min: 10, max: 30, step: 1,   val: 16, unit: "px" },
-  { k: "--b-labfs", label: "Label font",     min: 7,  max: 16, step: 0.5, val: 10, unit: "px" },
-  { k: "--b-gap",   label: "Tile-label gap", min: 0,  max: 12, step: 1,   val: 5,  unit: "px" },
-  { k: "--b-pad",   label: "Chip padding",   min: 0,  max: 10, step: 1,   val: 4,  unit: "px" },
+  { k: "--b-sq",    label: "Square size",    min: 20, max: 56, step: 1,   val: 24, unit: "px" },
+  { k: "--b-numfs", label: "Number font",    min: 10, max: 30, step: 1,   val: 13, unit: "px" },
+  { k: "--b-labfs", label: "Label font",     min: 7,  max: 16, step: 0.5, val: 9,  unit: "px" },
+  { k: "--b-gap",   label: "Tile-label gap", min: 0,  max: 12, step: 1,   val: 4,  unit: "px" },
+  { k: "--b-pad",   label: "Chip padding",   min: 0,  max: 10, step: 1,   val: 3,  unit: "px" },
   { k: "--b-chipr", label: "Chip radius",    min: 0,  max: 16, step: 1,   val: 8,  unit: "px" },
   { k: "--b-tiler", label: "Tile radius",    min: 0,  max: 12, step: 1,   val: 6,  unit: "px" },
   { k: "--b-inset", label: "Corner inset",   min: 0,  max: 14, step: 1,   val: 4,  unit: "px" },
@@ -723,15 +723,26 @@ function renderStudio() {
 
         <section class="st-sec">
           <h2>Score Badge <span>· on PosterCard (2×)</span></h2>
-          <div class="st-stage">
-            <div class="sb-preview" style="${initStyle}">
-              <div class="pc2" style="background:${posterBg(sample)}">
-                <span class="sb2">
-                  <span class="sb2-num">${s.synth ?? "—"}</span>
-                  <span class="sb2-lab"><span>Critikl</span><span>Score</span></span>
-                </span>
+          <div class="st-stage st-compare">
+            <figure class="st-cmp">
+              <div class="pc-scale">
+                <div class="pc2" style="background:${posterBg(sample)}">
+                  <span class="score-badge"><span class="sb-num">${s.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>
+                </div>
               </div>
-            </div>
+              <figcaption>Current</figcaption>
+            </figure>
+            <figure class="st-cmp">
+              <div class="pc-scale">
+                <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">
+                  <span class="sb2">
+                    <span class="sb2-num">${s.synth ?? "—"}</span>
+                    <span class="sb2-lab"><span>Critikl</span><span>Score</span></span>
+                  </span>
+                </div>
+              </div>
+              <figcaption>Candidate</figcaption>
+            </figure>
           </div>
           <div class="st-controls">
             ${STUDIO_BADGE.map(rangeRow).join("")}
@@ -754,7 +765,7 @@ function renderStudio() {
       ${fabStack()}
     </div>`;
 
-  const preview = app.querySelector(".sb-preview");
+  const preview = app.querySelector("#cand");
   app.querySelectorAll(".st-controls input").forEach((input) => {
     const v = input.dataset.var, unit = input.dataset.unit || "";
     const out = input.parentElement.querySelector("output");
