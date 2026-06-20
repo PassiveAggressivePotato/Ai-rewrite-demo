@@ -135,10 +135,11 @@ function applyArtwork(root) {
 /* Bottom-right toolbox: collapsed to one icon; tap to expand the tools upward
  * (each with a label); auto-collapses after a while. */
 function toolbox() {
+  const onStudio = (location.hash || "").startsWith("#/studio");
   const tools = [
-    { t: "studio", label: "Studio", ic: ICON.studio },
+    { t: "studio", label: onStudio ? "Home" : "Studio", ic: ICON.studio, on: onStudio },
     { t: "pick", label: "Pick", ic: ICON.finger, on: state.pickMode },
-    { t: "zoom", label: "Zoom", ic: ICON.zoom },
+    { t: "zoom", label: "Zoom", ic: ICON.zoom, on: !!document.querySelector(".loupe") },
     { t: "debug", label: "Debug", ic: ICON.debug, on: state.debugTap },
   ];
   return `<div class="toolbox" data-toolbox>
@@ -157,10 +158,12 @@ function wireToolbox(root) {
   box.querySelectorAll("[data-tool]").forEach((b) => b.addEventListener("click", () => {
     arm();
     const t = b.dataset.tool;
-    if (t === "studio") location.hash = "#/studio";
+    if (t === "studio") location.hash = (location.hash || "").startsWith("#/studio") ? "#/" : "#/studio";
     else if (t === "pick") { togglePick(); box.classList.remove("open"); }
-    else if (t === "zoom") { openLoupe(); box.classList.remove("open"); }
-    else if (t === "debug") toggleDebug();
+    else if (t === "zoom") {
+      if (document.querySelector(".loupe")) closeLoupe(); else openLoupe();
+      b.classList.toggle("on", !!document.querySelector(".loupe"));
+    } else if (t === "debug") toggleDebug();
   }));
 }
 function togglePick() {
@@ -184,54 +187,43 @@ function toggleDebug() {
  * text stays vector-sharp ("Sharp"); a "Pixel" mode shows raster pixels. It
  * floats (stays on screen) by default, or locks to the page and scrolls away.
  * ===================================================================== */
-let loupeTimer = null, loupeAbort = null;
-function closeLoupe() { app.querySelector(".loupe")?.remove(); clearTimeout(loupeTimer); loupeTimer = null; loupeAbort?.abort(); loupeAbort = null; }
-
-/* Rasterise the current screen to a canvas (SVG foreignObject) for Pixel mode. */
-async function captureScreen() {
-  const screen = app.querySelector(".screen"); if (!screen) return null;
-  const sr = screen.getBoundingClientRect();
-  const w = Math.ceil(sr.width), h = Math.ceil(sr.height);
-  const c = screen.cloneNode(true);
-  c.querySelectorAll(".loupe, .toolbox, .cp, .shed, .toast").forEach((n) => n.remove());
-  const rs = screen.querySelector(".scroll"), cs = c.querySelector(".scroll");
-  if (rs && cs && cs.children[0]) { cs.style.overflow = "hidden"; cs.children[0].style.transform = `translateY(${-rs.scrollTop}px)`; }
-  let css = ""; for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) css += r.cssText + "\n"; } catch (e) { } }
-  const xml = new XMLSerializer().serializeToString(c);
-  const html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;background:${getComputedStyle(document.body).backgroundColor}"><style>${css}</style>${xml}</div>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
-  const img = new Image();
-  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
-  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-  cv.getContext("2d").drawImage(img, 0, 0, w, h);
-  return cv;
+let loupeAbort = null, currentLoupe = null;
+function fxLayer() {
+  let fx = document.getElementById("fx");
+  if (!fx) { fx = document.createElement("div"); fx.id = "fx"; document.body.appendChild(fx); }
+  return fx;
 }
-
+function closeLoupe() {
+  document.querySelector(".loupe")?.remove();
+  loupeAbort?.abort(); loupeAbort = null; currentLoupe = null;
+  document.querySelectorAll('.tool[data-tool="zoom"]').forEach((b) => b.classList.remove("on"));
+}
 function openLoupe() {
-  if (app.querySelector(".loupe")) return;
+  if (document.querySelector(".loupe")) return;
   const lp = document.createElement("div");
   lp.className = "loupe";
   lp.innerHTML = `
-    <div class="loupe-view"><div class="loupe-clone"></div><canvas class="loupe-canvas"></canvas></div>
-    <div class="loupe-zbar">
-      <button class="lz-btn" data-z="1" aria-label="Zoom in">+</button>
-      <span class="lz-pct">200%</span>
-      <button class="lz-btn" data-z="-1" aria-label="Zoom out">−</button>
+    <div class="loupe-frame">
+      <div class="loupe-drag" data-drag aria-label="Move"><span></span><span></span><span></span></div>
+      <div class="loupe-view"><div class="loupe-clone"></div></div>
+      <button class="loupe-ic loupe-lock" data-lock aria-label="Lock">${ICON.lock}</button>
+      <button class="loupe-x" data-close aria-label="Close">${ICON.close}</button>
+      <div class="loupe-size" data-size aria-hidden="true"><span></span></div>
     </div>
-    <button class="loupe-ic loupe-lock" data-lock aria-label="Lock">${ICON.lock}</button>
-    <button class="loupe-x" data-close aria-label="Close">${ICON.close}</button>
-    <div class="loupe-size" data-size aria-hidden="true"><span></span></div>`;
-  app.appendChild(lp);
+    <div class="loupe-jog">
+      <div class="jog-track"><div class="jog-knob"><span class="jog-pct">200%</span></div></div>
+    </div>`;
+  fxLayer().appendChild(lp);
+  const frame = lp.querySelector(".loupe-frame");
   const view = lp.querySelector(".loupe-view");
   const cloneHost = lp.querySelector(".loupe-clone");
-  const canvas = lp.querySelector(".loupe-canvas");
   const ar = app.getBoundingClientRect();
-  const S = { z: 2, w: 250, h: 210, locked: false, mode: "sharp", x: Math.max(8, (ar.width - 250) / 2), y: Math.round(ar.height * 0.30), lockCx: 0, lockCy: 0, lockBaseY: 0, lockBaseScroll: 0 };
-  let snap = null;
+  const S = { z: 2, w: 250, h: 210, locked: false, x: ar.left + Math.max(8, (ar.width - 250) / 2), y: ar.top + Math.round(ar.height * 0.28), lockCx: 0, lockCy: 0, lockBaseY: 0, lockBaseScroll: 0 };
+  const clampZ = (v) => Math.max(1, Math.min(12, +(+v).toFixed(2)));
 
-  const setSize = () => { lp.style.width = S.w + "px"; lp.style.height = S.h + "px"; canvas.width = S.w; canvas.height = S.h; };
+  const setSize = () => { frame.style.width = S.w + "px"; frame.style.height = S.h + "px"; };
   const setPos = () => { lp.style.left = S.x + "px"; lp.style.top = S.y + "px"; };
-  const setPct = () => { lp.querySelector(".lz-pct").textContent = Math.round(S.z * 100) + "%"; };
+  const setPct = () => { lp.querySelector(".jog-pct").textContent = Math.round(S.z * 100) + "%"; };
 
   function buildClone() {
     const screen = app.querySelector(".screen"); if (!screen) return;
@@ -240,53 +232,79 @@ function openLoupe() {
     c.querySelectorAll(".loupe, .toolbox, .cp, .shed, .toast").forEach((n) => n.remove());
     c.style.width = sr.width + "px"; c.style.height = sr.height + "px";
     cloneHost.innerHTML = ""; cloneHost.style.width = sr.width + "px"; cloneHost.appendChild(c);
-    syncScroll();
+    syncScroll(); position();
   }
   function syncScroll() {
-    const screen = app.querySelector(".screen"); if (!screen) return;
-    const rs = screen.querySelector(".scroll"), cs = cloneHost.querySelector(".scroll");
+    const rs = app.querySelector(".screen .scroll"), cs = cloneHost.querySelector(".scroll");
     if (rs && cs) cs.scrollTop = rs.scrollTop;
   }
   function centre() {
-    const screen = app.querySelector(".screen"); const sr = screen.getBoundingClientRect(), vr = view.getBoundingClientRect();
+    const sr = app.querySelector(".screen").getBoundingClientRect(), vr = view.getBoundingClientRect();
     return { cx: (vr.left + vr.width / 2) - sr.left, cy: (vr.top + vr.height / 2) - sr.top };
   }
   function position() {
-    const cx = S.locked ? S.lockCx : centre().cx, cy = S.locked ? S.lockCy : centre().cy;
+    if (!app.querySelector(".screen")) return;
+    const c = S.locked ? { cx: S.lockCx, cy: S.lockCy } : centre();
     cloneHost.style.transformOrigin = "0 0";
-    cloneHost.style.transform = `translate(${S.w / 2 - cx * S.z}px, ${S.h / 2 - cy * S.z}px) scale(${S.z})`;
-    if (S.mode === "pixel" && snap) {
-      const ctx = canvas.getContext("2d"); ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, S.w, S.h);
-      const sw = S.w / S.z, sh = S.h / S.z;
-      ctx.drawImage(snap, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, S.w, S.h);
-    }
+    cloneHost.style.transform = `translate(${S.w / 2 - c.cx * S.z}px, ${S.h / 2 - c.cy * S.z}px) scale(${S.z})`;
   }
-  const recapture = () => captureScreen().then((cv) => { snap = cv; position(); }).catch(() => { snap = null; });
+  setSize(); setPos(); setPct(); buildClone();
+  currentLoupe = { rebuild: buildClone };
 
-  setSize(); setPos(); setPct(); buildClone(); position();
+  // top-left drag handle + view single-finger drag (axis-locked) + pinch
+  function startDrag(sx, sy) { return { sx, sy, ox: S.x, oy: S.y, axis: null }; }
+  function moveDrag(g, cxp, cyp) {
+    const dx = cxp - g.sx, dy = cyp - g.sy;
+    if (!g.axis) { if (Math.hypot(dx, dy) < 5) return; g.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y"; }
+    if (g.axis === "x") S.x = g.ox + dx; else S.y = g.oy + dy;
+    setPos(); position();
+  }
+  const handle = lp.querySelector("[data-drag]");
+  handle.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); e.stopPropagation(); handle.setPointerCapture(e.pointerId);
+    const g = startDrag(e.clientX, e.clientY);
+    handle.onpointermove = (ev) => moveDrag(g, ev.clientX, ev.clientY);
+    handle.onpointerup = () => { handle.onpointermove = null; if (S.locked) { const sc = app.querySelector(".scroll"); S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; } };
+  });
 
-  // zoom buttons (fine 0.1 steps, accelerating on hold)
-  lp.querySelectorAll("[data-z]").forEach((btn) => {
-    const dir = +btn.dataset.z; let t = null, delay = 0, cnt = 0;
-    const bump = () => { const m = cnt > 16 ? 4 : cnt > 8 ? 2 : 1; S.z = Math.max(1, Math.min(12, +(S.z + dir * 0.1 * m).toFixed(2))); setPct(); position(); cnt++; };
-    const tick = () => { bump(); delay = Math.max(45, delay * 0.8); t = setTimeout(tick, delay); };
-    const start = (e) => { e.preventDefault(); e.stopPropagation(); cnt = 0; delay = 320; bump(); t = setTimeout(tick, delay); };
-    const stop = () => { if (t) { clearTimeout(t); t = null; } };
-    btn.addEventListener("pointerdown", start);
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
+  const ptrs = new Map(); let gesture = null;
+  view.addEventListener("pointerdown", (e) => {
+    view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; gesture = { type: "pinch", d: Math.hypot(a.x - b.x, a.y - b.y), z: S.z }; }
+    else if (!S.locked) gesture = Object.assign({ type: "drag" }, startDrag(e.clientX, e.clientY));
+  });
+  view.addEventListener("pointermove", (e) => {
+    if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (gesture?.type === "pinch") {
+      const [a, b] = [...ptrs.values()]; if (!a || !b) return;
+      S.z = clampZ(gesture.z * (Math.hypot(a.x - b.x, a.y - b.y) / gesture.d)); setPct(); position();
+    } else if (gesture?.type === "drag") moveDrag(gesture, e.clientX, e.clientY);
+  });
+  const up = (e) => { ptrs.delete(e.pointerId); gesture = ptrs.size === 2 ? gesture : null; };
+  view.addEventListener("pointerup", up); view.addEventListener("pointercancel", up);
+
+  // spring-lever zoom (snaps to centre; speed scales with how far it's pushed)
+  const knob = lp.querySelector(".jog-knob"), track = lp.querySelector(".jog-track");
+  let jogRAF = null, jogOff = 0;
+  knob.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); e.stopPropagation(); knob.setPointerCapture(e.pointerId); knob.classList.add("active");
+    const r = track.getBoundingClientRect(), half = r.width / 2, cx = r.left + half;
+    const mv = (ev) => { jogOff = Math.max(-1, Math.min(1, (ev.clientX - cx) / half)); knob.style.left = `calc(50% + ${jogOff * half * 0.78}px)`; };
+    mv(e); knob.onpointermove = mv;
+    const stop = () => { knob.onpointermove = null; knob.classList.remove("active"); jogOff = 0; knob.style.left = "50%"; cancelAnimationFrame(jogRAF); jogRAF = null; };
+    knob.onpointerup = stop; knob.onpointercancel = stop;
+    let last = performance.now();
+    const loop = (t) => { const dt = (t - last) / 1000; last = t; if (jogOff) { S.z = clampZ(S.z + Math.sign(jogOff) * Math.pow(Math.abs(jogOff), 1.6) * 4 * dt); setPct(); position(); } jogRAF = requestAnimationFrame(loop); };
+    jogRAF = requestAnimationFrame(loop);
   });
 
   lp.querySelector("[data-lock]").addEventListener("click", (e) => {
-    e.stopPropagation();
-    S.locked = !S.locked; lp.classList.toggle("locked", S.locked);
+    e.stopPropagation(); S.locked = !S.locked; lp.classList.toggle("locked", S.locked);
     const sc = app.querySelector(".scroll");
-    if (S.locked) { const c = centre(); S.lockCx = c.cx; S.lockCy = c.cy; S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; }
-    else position();
+    if (S.locked) { const c = centre(); S.lockCx = c.cx; S.lockCy = c.cy; S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; } else position();
   });
   lp.querySelector("[data-close]").addEventListener("click", (e) => { e.stopPropagation(); closeLoupe(); });
 
-  // resize (corner). Larger invisible hit area via CSS; drag to size.
   const sizeEl = lp.querySelector("[data-size]");
   sizeEl.addEventListener("pointerdown", (e) => {
     e.preventDefault(); e.stopPropagation(); sizeEl.setPointerCapture(e.pointerId);
@@ -295,37 +313,13 @@ function openLoupe() {
     sizeEl.onpointerup = () => { sizeEl.onpointermove = null; };
   });
 
-  // drag the body to move (float); pinch with two fingers to zoom
-  const ptrs = new Map(); let pinch = null;
-  view.addEventListener("pointerdown", (e) => {
-    view.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: S.z }; }
-  });
-  view.addEventListener("pointermove", (e) => {
-    if (!ptrs.has(e.pointerId)) return;
-    const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size >= 2 && pinch) {
-      const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
-      S.z = Math.max(1, Math.min(12, +(pinch.z * (d / pinch.d)).toFixed(2))); setPct(); position();
-    } else if (ptrs.size === 1 && !S.locked) {
-      S.x += e.clientX - prev.x; S.y += e.clientY - prev.y; setPos(); position();
-    }
-  });
-  const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
-  view.addEventListener("pointerup", up); view.addEventListener("pointercancel", up);
-
-  // scroll: float → content moves under (sync, no rebuild → no flicker);
-  // locked → loupe scrolls away while its magnified image stays frozen.
+  // scroll: float → content moves under; locked → loupe scrolls away, image frozen
   loupeAbort = new AbortController();
   app.addEventListener("scroll", () => {
     if (!lp.isConnected) { loupeAbort.abort(); return; }
     const sc = app.querySelector(".scroll"); if (!sc) return;
     if (S.locked) { S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll); setPos(); }
-    else {
-      syncScroll(); position();
-      if (S.mode === "pixel") { clearTimeout(loupeTimer); loupeTimer = setTimeout(recapture, 160); }
-    }
+    else { syncScroll(); position(); }
   }, { capture: true, signal: loupeAbort.signal });
 }
 function headSearch() {
@@ -1208,7 +1202,7 @@ function renderStudioBrand() {
   });
   wireHeader(app);
 }
-function router() {
+function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
@@ -1225,6 +1219,9 @@ function router() {
   renderLanding();
   app.querySelector(".scroll")?.scrollTo(0, 0);
 }
+// The zoom loupe lives in a persistent layer; after each navigation rebuild its
+// mirror so it shows the new page while keeping its position/zoom.
+function router() { route(); requestAnimationFrame(() => currentLoupe?.rebuild?.()); }
 
 window.addEventListener("hashchange", router);
 applyDebug();
