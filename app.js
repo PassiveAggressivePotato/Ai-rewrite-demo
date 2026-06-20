@@ -32,6 +32,8 @@ const ICON = {
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   debug: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5" stroke-linecap="round"/></svg>`,
   play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5 19 12 7 18.5z"/></svg>`,
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
+  studio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M8 14h8"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -127,6 +129,10 @@ function fabStack() {
   return `<div class="fab-stack">
     <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
   </div>`;
+}
+// Bottom-left floating button → the Studio (component tweaking page).
+function studioFab() {
+  return `<a class="fab-left" href="#/studio" title="Open Studio" aria-label="Open Studio">${ICON.studio}</a>`;
 }
 
 function applyDebug() {
@@ -251,6 +257,8 @@ function wireHeader(root) {
   root.querySelector(".debug-toggle")?.addEventListener("click", toggleDebug);
   root.querySelectorAll("[data-home]").forEach((el) =>
     el.addEventListener("click", goHome));
+  root.querySelectorAll("[data-back]").forEach((el) =>
+    el.addEventListener("click", () => { if (history.length > 1) history.back(); else location.hash = "#/"; }));
   wireHeadSearch(root);
 }
 
@@ -415,6 +423,7 @@ function renderLanding() {
         </div>
       </div>
       ${fabStack()}
+      ${studioFab()}
     </div>`;
 
   renderResultsArea();
@@ -520,7 +529,10 @@ function renderDetail(item) {
 
       <div class="scroll">
         <div class="detail-head">
-          ${logo()}
+          <div class="head-left">
+            <button class="icon-btn back-btn" data-back aria-label="Back">${ICON.back}</button>
+            ${logo()}
+          </div>
           <div class="head-actions">
             ${headSearch()}
           </div>
@@ -573,6 +585,7 @@ function renderDetail(item) {
         <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
       </div>
       ${fabStack()}
+      ${studioFab()}
     </div>`;
 
   const wire = () => {
@@ -655,8 +668,125 @@ function wireCardClicks(root) {
     c.addEventListener("click", () => { location.hash = `#/item/${c.dataset.slug}`; }));
 }
 
+/* =====================================================================
+ * STUDIO — component sandbox. Tweak a component's tokens live on a 2× preview,
+ * then "Copy values for Claude" hands the chosen numbers back to bake on-site.
+ * ===================================================================== */
+const STUDIO_BADGE = [
+  { k: "--b-sq",    label: "Square size",    min: 20, max: 56, step: 1,   val: 28, unit: "px" },
+  { k: "--b-numfs", label: "Number font",    min: 10, max: 30, step: 1,   val: 16, unit: "px" },
+  { k: "--b-labfs", label: "Label font",     min: 7,  max: 16, step: 0.5, val: 10, unit: "px" },
+  { k: "--b-gap",   label: "Tile-label gap", min: 0,  max: 12, step: 1,   val: 5,  unit: "px" },
+  { k: "--b-pad",   label: "Chip padding",   min: 0,  max: 10, step: 1,   val: 4,  unit: "px" },
+  { k: "--b-chipr", label: "Chip radius",    min: 0,  max: 16, step: 1,   val: 8,  unit: "px" },
+  { k: "--b-tiler", label: "Tile radius",    min: 0,  max: 12, step: 1,   val: 6,  unit: "px" },
+  { k: "--b-inset", label: "Corner inset",   min: 0,  max: 14, step: 1,   val: 4,  unit: "px" },
+  { k: "--b-chipa", label: "Chip opacity",   min: 0,  max: 100, step: 1,  val: 62, unit: "%" },
+];
+const STUDIO_BADGE_COLORS = [
+  { k: "--b-gold", label: "Tile gold",   val: "#f0c469" },
+  { k: "--b-lab",  label: "Label color", val: "#f0c469" },
+  { k: "--b-chip", label: "Chip base",   val: "#0b0d13" },
+];
+const STUDIO_BRAND = [
+  { k: "--gold-1", label: "Gold 1", val: "#f0c469" },
+  { k: "--gold-2", label: "Gold 2", val: "#c98f30" },
+  { k: "--teal-1", label: "Teal 1", val: "#4fd0c8" },
+  { k: "--teal-2", label: "Teal 2", val: "#2c97a8" },
+];
+
+function renderStudio() {
+  const sample = getItem("poor-things") || CATALOG[0];
+  const s = scoreItem(sample);
+  const rangeRow = (c) => `
+    <label class="ctl">
+      <span class="ctl-l">${c.label}</span>
+      <input type="range" data-var="${c.k}" data-unit="${c.unit}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.val}">
+      <output>${c.val}${c.unit}</output>
+    </label>`;
+  const colorRow = (c) => `
+    <label class="ctl ctl-color">
+      <span class="ctl-l">${c.label}</span>
+      <input type="color" data-var="${c.k}" value="${c.val}">
+      <output>${c.val}</output>
+    </label>`;
+  const initStyle = [...STUDIO_BADGE.map((c) => `${c.k}:${c.val}${c.unit}`),
+                     ...STUDIO_BADGE_COLORS.map((c) => `${c.k}:${c.val}`)].join(";");
+
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-home aria-label="Home">${ICON.back}</button>
+          <h1>Studio</h1><span class="studio-tag">component sandbox</span>
+        </div>
+
+        <section class="st-sec">
+          <h2>Score Badge <span>· on PosterCard (2×)</span></h2>
+          <div class="st-stage">
+            <div class="sb-preview" style="${initStyle}">
+              <div class="pc2" style="background:${posterBg(sample)}">
+                <span class="sb2">
+                  <span class="sb2-num">${s.synth ?? "—"}</span>
+                  <span class="sb2-lab"><span>Critikl</span><span>Score</span></span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="st-controls">
+            ${STUDIO_BADGE.map(rangeRow).join("")}
+            ${STUDIO_BADGE_COLORS.map(colorRow).join("")}
+          </div>
+        </section>
+
+        <section class="st-sec">
+          <h2>Brand tokens <span>· site-wide colors</span></h2>
+          <div class="st-controls">${STUDIO_BRAND.map(colorRow).join("")}</div>
+        </section>
+
+        <section class="st-sec">
+          <h2>Export</h2>
+          <p class="st-note">Tweak above, then copy these values into the chat and I'll bake them into the live site.</p>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="9" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${fabStack()}
+    </div>`;
+
+  const preview = app.querySelector(".sb-preview");
+  app.querySelectorAll(".st-controls input").forEach((input) => {
+    const v = input.dataset.var, unit = input.dataset.unit || "";
+    const out = input.parentElement.querySelector("output");
+    const brand = STUDIO_BRAND.some((b) => b.k === v);
+    const apply = () => {
+      const val = input.value + (input.type === "range" ? unit : "");
+      (brand ? document.documentElement : preview).style.setProperty(v, val);
+      out.textContent = val;
+    };
+    apply();
+    input.addEventListener("input", apply);
+  });
+
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const grab = (list) => Object.fromEntries(list.map((c) => {
+      const i = app.querySelector(`input[data-var="${c.k}"]`);
+      return [c.k, i.value + (i.type === "range" ? (i.dataset.unit || "") : "")];
+    }));
+    const text = JSON.stringify({ ScoreBadge: grab([...STUDIO_BADGE, ...STUDIO_BADGE_COLORS]), Brand: grab(STUDIO_BRAND) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+
+  wireHeader(app);
+}
+
 function router() {
   const hash = location.hash || "#/";
+  if (hash === "#/studio") { renderStudio(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {
     const item = getItem(decodeURIComponent(m[1]));
