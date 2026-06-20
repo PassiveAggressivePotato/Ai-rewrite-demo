@@ -139,7 +139,6 @@ function toolbox() {
   const tools = [
     { t: "studio", label: onStudio ? "Home" : "Studio", ic: ICON.studio, on: onStudio },
     { t: "pick", label: "Pick", ic: ICON.finger, on: state.pickMode },
-    { t: "zoom", label: "Zoom", ic: ICON.zoom, on: !!document.querySelector(".loupe") },
     { t: "debug", label: "Debug", ic: ICON.debug, on: state.debugTap },
   ];
   return `<div class="toolbox" data-toolbox>
@@ -1108,6 +1107,23 @@ function posterGroups() {
     ] },
   ];
 }
+/* Tap-to-inspect: a near-fullscreen popup with a scaled-up copy of a component. */
+function openInspect(srcSel) {
+  const src = app.querySelector(srcSel); if (!src) return;
+  const ov = document.createElement("div");
+  ov.className = "inspect";
+  ov.innerHTML = `<div class="inspect-scrim"></div><div class="inspect-stage"></div><button class="inspect-x" aria-label="Close">${ICON.close}</button>`;
+  const clone = src.cloneNode(true); clone.removeAttribute("id");
+  ov.querySelector(".inspect-stage").appendChild(clone);
+  app.appendChild(ov);
+  const cw = src.offsetWidth || 88, ch = src.offsetHeight || 132;
+  const scale = Math.min((app.clientWidth * 0.92) / cw, (app.clientHeight * 0.82) / ch);
+  clone.style.transform = `scale(${scale})`; clone.style.transformOrigin = "center";
+  const close = () => ov.remove();
+  ov.querySelector(".inspect-scrim").addEventListener("click", close);
+  ov.querySelector(".inspect-x").addEventListener("click", close);
+}
+
 function renderStudioPoster() {
   const sample = getItem("poor-things") || CATALOG[0];
   const sc = scoreItem(sample);
@@ -1127,12 +1143,12 @@ function renderStudioPoster() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>PosterCard</h1>
         </div>
-        <div class="st-stage">
-          <div class="st-row1">
-            <figure class="st-cmp"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Current</figcaption></figure>
-            <figure class="st-cmp"><div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div><figcaption>Candidate</figcaption></figure>
-          </div>
-          <div class="st-zoom"><div class="pc-zoom"><div class="pc2" id="candZoom" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div></div></div>
+        <div class="st-stage st-compare">
+          <figure class="st-cmp"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Current</figcaption></figure>
+          <figure class="st-cmp">
+            <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
+            <figcaption>Candidate <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
+          </figure>
         </div>
         <div id="st-controls-root">${groups.map(groupHTML).join("")}</div>
         <section class="st-sec">
@@ -1144,9 +1160,10 @@ function renderStudioPoster() {
       ${toolbox()}
     </div>`;
 
-  const cands = ["#cand", "#candZoom"].map((s) => app.querySelector(s)).filter(Boolean);
+  const cands = [app.querySelector("#cand")].filter(Boolean);
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
 
   app.querySelector("#st-export").addEventListener("click", () => {
     const out = {};
