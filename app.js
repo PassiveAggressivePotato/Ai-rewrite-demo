@@ -42,6 +42,7 @@ const ICON = {
   lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
   smooth: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7.5"/></svg>`,
   pixel: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3.5" width="6" height="5"/><rect x="15" y="9" width="5" height="6"/><rect x="9" y="15.5" width="6" height="5"/><rect x="3.5" y="9" width="5" height="6"/></svg>`,
+  shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -887,12 +888,51 @@ function parseColor(str) {
 }
 function colorStr(r, g, b, a) { return a >= 1 ? rgbToHex(r, g, b) : `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${+(+a).toFixed(2)})`; }
 
+/* ---- gradient parsing / serialising (every colour chooser can emit one) ---- */
+function splitTop(s) {
+  const out = []; let depth = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") depth++; else if (ch === ")") depth--;
+    if (ch === "," && depth === 0) { out.push(cur); cur = ""; } else cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out;
+}
+function gradCss(g) {
+  const stops = g.stops.map((s) => `${s.color} ${Math.round(s.pos)}%`).join(", ");
+  return g.type === "radial"
+    ? `radial-gradient(circle at ${Math.round(g.off)}% 50%, ${stops})`
+    : `linear-gradient(${Math.round(g.angle)}deg, ${stops})`;
+}
+/* Parse any colour-or-gradient string into a uniform editor model. */
+function parseValue(str) {
+  str = String(str || "").trim();
+  const m = str.match(/^(linear|radial)-gradient\((.*)\)$/i);
+  if (m) {
+    const type = m[1].toLowerCase();
+    let parts = splitTop(m[2]); let angle = 90, off = 50;
+    if (type === "linear") { const a = (parts[0] || "").match(/(-?\d+(?:\.\d+)?)deg/); if (a) { angle = +a[1]; parts = parts.slice(1); } }
+    else { const o = (parts[0] || "").match(/at\s+(-?\d+(?:\.\d+)?)%/); if (o) { off = +o[1]; parts = parts.slice(1); } }
+    const stops = parts.map((p) => {
+      const t = p.trim(); const pm = t.match(/\s(-?\d+(?:\.\d+)?)%\s*$/);
+      return { color: (pm ? t.slice(0, pm.index) : t).trim() || "#888888", pos: pm ? +pm[1] : null };
+    });
+    stops.forEach((s, i) => { if (s.pos == null) s.pos = stops.length > 1 ? Math.round((i / (stops.length - 1)) * 100) : 0; });
+    while (stops.length < 2) stops.push({ color: "#000000", pos: 100 });
+    return { mode: "grad", color: stops[0].color, grad: { type, angle, off, stops } };
+  }
+  const c = str || "#888888";
+  return { mode: "solid", color: c, grad: { type: "linear", angle: 90, off: 50, stops: [{ color: c, pos: 0 }, { color: "#000000", pos: 100 }] } };
+}
+
 /* ---- control builders + shadow sub-editor ---- */
 function stepperHTML(v, val, step, min) {
-  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-step="${step}" data-min="${min}">
-      <button class="step-btn" data-dir="-1" aria-label="decrease">−</button>
+  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-min="${min}">
+      <button class="step-btn big" data-d="${-step}" aria-label="minus ${step}">«</button>
+      <button class="step-btn" data-d="-0.1" aria-label="minus 0.1">‹</button>
       <input class="step-val" type="text" inputmode="decimal" value="${val}">
-      <button class="step-btn" data-dir="1" aria-label="increase">+</button>
+      <button class="step-btn" data-d="0.1" aria-label="plus 0.1">›</button>
+      <button class="step-btn big" data-d="${step}" aria-label="plus ${step}">»</button>
     </div>`;
 }
 function swatchHTML(v, val) {
@@ -900,28 +940,57 @@ function swatchHTML(v, val) {
       <span class="swatch-chip"><span style="background:${val}"></span></span>
       <span class="swatch-val">${val}</span></button>`;
 }
+const FONT_OPTS = [
+  { v: "var(--font-display)", l: "Display" },
+  { v: "system-ui, sans-serif", l: "System" },
+  { v: "Georgia, 'Times New Roman', serif", l: "Serif" },
+  { v: "ui-monospace, Menlo, Consolas, monospace", l: "Mono" },
+];
+function selectHTML(v, val, opts) {
+  return `<select class="st-select" data-var="${v}">${opts.map((o) => `<option value="${o.v}"${o.v === val ? " selected" : ""}>${o.l}</option>`).join("")}</select>`;
+}
+/* Corner-radius control: one stepper for all corners + ⊞ to expand to TL/TR/BR/BL. */
+function radiusRow(it) {
+  const step = it.step || 1, min = it.min == null ? 0 : it.min;
+  const corners = ["TL", "TR", "BR", "BL"];
+  return `<div class="ctl ctl-radius" data-var="${it.k}" data-step="${step}" data-min="${min}">
+    <div class="ctl-top">
+      <span class="ctl-l">${it.label}</span>
+      <div class="rad-main">${stepperHTML("", it.val, step, min)}<button class="rad-exp" data-rad-exp aria-label="Per-corner">⊞</button></div>
+    </div>
+    <div class="rad-quad hidden">
+      ${corners.map((c) => `<div class="rq"><span>${c}</span>${stepperHTML("", it.val, step, min)}</div>`).join("")}
+    </div>
+  </div>`;
+}
 function controlRow(it) {
+  if (it.type === "radius") return radiusRow(it);
   let ctrl;
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
+  else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min);
   return `<div class="ctl"><span class="ctl-l">${it.label}</span>${ctrl}</div>`;
 }
-function groupHTML(g) {
-  return `<section class="st-sec"><h2>${g.name}</h2><div class="st-controls">${g.items.map(controlRow).join("")}</div></section>`;
+function groupHTML(g, open) {
+  return `<section class="st-sec ${open ? "" : "collapsed"}">
+    <button class="st-h" data-acc><h2>${g.name}</h2><span class="acc-ic">${ICON.back}</span></button>
+    <div class="st-body"><div class="st-controls">${g.items.map(controlRow).join("")}</div></div>
+  </section>`;
 }
 
-/* Accelerating stepper: tap = one step; hold ramps up; value tappable to type. */
+/* Accelerating stepper: each button carries its own delta (data-d). Outer = one
+ * whole step, inner = 0.1; tap once or hold to ramp up. Value tappable to type. */
 function attachStepper(step, onValue) {
   const input = step.querySelector(".step-val");
-  const min = parseFloat(step.dataset.min), max = parseFloat(step.dataset.max), size = parseFloat(step.dataset.step);
+  const min = parseFloat(step.dataset.min), max = parseFloat(step.dataset.max);
   const get = () => (parseFloat(input.value) || 0);
   const set = (n) => { if (!isNaN(min) && n < min) n = min; if (!isNaN(max) && n > max) n = max; n = Math.round(n * 100) / 100; input.value = n; onValue(n); };
   input.addEventListener("change", () => set(get()));
   step.querySelectorAll(".step-btn").forEach((btn) => {
-    const dir = parseFloat(btn.dataset.dir); let timer = null, delay = 0, count = 0;
-    const tick = () => { count++; const m = count > 22 ? 10 : count > 14 ? 5 : count > 7 ? 2 : 1; set(get() + dir * size * m); delay = Math.max(38, delay * 0.82); timer = setTimeout(tick, delay); };
-    const start = (e) => { e.preventDefault(); count = 0; delay = 320; set(get() + dir * size); timer = setTimeout(tick, delay); };
+    const d = parseFloat(btn.dataset.d); let timer = null, delay = 0, count = 0;
+    const tick = () => { count++; const m = count > 22 ? 8 : count > 14 ? 4 : count > 7 ? 2 : 1; set(get() + d * m); delay = Math.max(40, delay * 0.82); timer = setTimeout(tick, delay); };
+    const start = (e) => { e.preventDefault(); e.stopPropagation(); count = 0; delay = 320; set(get() + d); timer = setTimeout(tick, delay); };
     const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
     btn.addEventListener("pointerdown", start);
     ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => btn.addEventListener(ev, stop));
@@ -936,6 +1005,8 @@ function shadowCss(s) {
   return `${ox}px ${oy}px ${Math.max(0, s.blur)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
 }
 function wireGroupControls(root, applyVar) {
+  root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
+    h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
   root.querySelectorAll(".st-controls .step[data-var]").forEach((step) =>
     attachStepper(step, (n) => applyVar(step.dataset.var, n + "px")));
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
@@ -943,6 +1014,28 @@ function wireGroupControls(root, applyVar) {
       sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
       sw.querySelector(".swatch-val").textContent = val; applyVar(sw.dataset.var, val);
     })));
+  root.querySelectorAll(".st-select").forEach((sel) =>
+    sel.addEventListener("change", () => applyVar(sel.dataset.var, sel.value)));
+  // per-corner radius: single value, or 4-value shorthand when expanded
+  root.querySelectorAll(".ctl-radius").forEach((rc) => {
+    const vvar = rc.dataset.var;
+    const mainStep = rc.querySelector(".rad-main .step");
+    const quad = rc.querySelector(".rad-quad");
+    const quadSteps = [...quad.querySelectorAll(".step")];
+    const sval = (st) => parseFloat(st.querySelector(".step-val").value) || 0;
+    const apply = () => applyVar(vvar, rc.classList.contains("expanded")
+      ? quadSteps.map((s) => sval(s) + "px").join(" ")
+      : sval(mainStep) + "px");
+    attachStepper(mainStep, apply);
+    quadSteps.forEach((s) => attachStepper(s, apply));
+    rc.querySelector("[data-rad-exp]").addEventListener("click", () => {
+      const exp = !rc.classList.contains("expanded");
+      rc.classList.toggle("expanded", exp);
+      quad.classList.toggle("hidden", !exp);
+      if (exp) quadSteps.forEach((s) => (s.querySelector(".step-val").value = sval(mainStep)));
+      apply();
+    });
+  });
   root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
 }
 
@@ -951,7 +1044,7 @@ function openShadowEditor(v, applyVar) {
   closeShadowEditor();
   const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 });
   const stepF = (label, f, step, min, max) =>
-    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
+    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn big" data-d="${-step}">«</button><button class="step-btn" data-d="-0.1">‹</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-d="0.1">›</button><button class="step-btn big" data-d="${step}">»</button></div></div>`;
   const wrap = document.createElement("div");
   wrap.className = "shed";
   wrap.innerHTML = `
@@ -978,14 +1071,38 @@ function openShadowEditor(v, applyVar) {
 function closeColorPicker() { app.querySelector(".cp")?.remove(); }
 function openColorPicker(initial, onChange) {
   closeColorPicker();
-  let { r, g, b, a } = parseColor(initial);
-  let { h, s, v } = rgbToHsv(r, g, b);
+  const model = parseValue(initial);
+  let mode = model.mode;          // "solid" | "grad"
+  const grad = model.grad;        // { type, angle, off, stops:[{color,pos}] }
+  let active = 0;                 // index of the gradient stop being edited
+  let r, g, b, a, h, s, v;
   const wrap = document.createElement("div");
   wrap.className = "cp";
   wrap.innerHTML = `
     <div class="cp-scrim"></div>
     <div class="cp-sheet">
       <div class="cp-head"><span>Colour</span><button class="cp-done">Done</button></div>
+      <label class="cp-grad-tog"><input class="cp-grad-on" type="checkbox"> Gradient</label>
+      <div class="cp-grad hidden">
+        <div class="cp-grad-prev"></div>
+        <div class="cp-stops"></div>
+        <div class="cp-grow">
+          <span>Stops</span>
+          <div class="cp-seg" data-seg="count">
+            <button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button>
+          </div>
+        </div>
+        <div class="cp-grow">
+          <span>Type</span>
+          <div class="cp-seg" data-seg="type">
+            <button data-t="linear">Linear</button><button data-t="radial">Radial</button>
+          </div>
+        </div>
+        <div class="cp-grow cp-grow-angle"><span class="cp-anglab">Angle°</span>
+          <input class="cp-angle" type="range" min="0" max="360" step="1"></div>
+        <div class="cp-grow"><span>Stop offset %</span>
+          <input class="cp-stoppos" type="range" min="0" max="100" step="1"></div>
+      </div>
       <div class="cp-sv"><div class="cp-sv-thumb"></div></div>
       <div class="cp-row"><span>Hue</span><input class="cp-hue" type="range" min="0" max="360" step="1"></div>
       <div class="cp-row"><span>Alpha</span><input class="cp-alpha" type="range" min="0" max="100" step="1"></div>
@@ -1003,8 +1120,33 @@ function openColorPicker(initial, onChange) {
   const $ = (s) => wrap.querySelector(s);
   const sv = $(".cp-sv"), thumb = $(".cp-sv-thumb"), hue = $(".cp-hue"), alpha = $(".cp-alpha");
   const hex = $(".cp-hex"), Ri = $(".cp-r"), Gi = $(".cp-g"), Bi = $(".cp-b"), Ai = $(".cp-a");
+  const gradBox = $(".cp-grad"), gradOn = $(".cp-grad-on");
 
-  function render(emit = true) {
+  // load a colour string into the HSV editor state
+  function loadColor(str) { const c = parseColor(str); a = c.a; const hsv = rgbToHsv(c.r, c.g, c.b); h = hsv.h; s = hsv.s; v = hsv.v; }
+  loadColor(mode === "grad" ? grad.stops[active].color : model.color);
+
+  function emit() { onChange(mode === "grad" ? gradCss(grad) : colorStr(r, g, b, a)); }
+
+  function paintGradUI() {
+    gradBox.classList.toggle("hidden", mode !== "grad");
+    gradOn.checked = mode === "grad";
+    if (mode !== "grad") return;
+    $(".cp-grad-prev").style.background = gradCss(grad);
+    $(".cp-stops").innerHTML = grad.stops.map((st, i) =>
+      `<button class="cp-stop ${i === active ? "on" : ""}" data-i="${i}" style="background:${st.color}"></button>`).join("");
+    $(".cp-stops").querySelectorAll(".cp-stop").forEach((bt) => bt.addEventListener("click", () => {
+      active = +bt.dataset.i; loadColor(grad.stops[active].color); render(false); paintGradUI();
+    }));
+    wrap.querySelectorAll('[data-seg="count"] button').forEach((bt) => bt.classList.toggle("on", +bt.dataset.n === grad.stops.length));
+    wrap.querySelectorAll('[data-seg="type"] button').forEach((bt) => bt.classList.toggle("on", bt.dataset.t === grad.type));
+    const angRow = $(".cp-grow-angle"), angLab = $(".cp-anglab"), ang = $(".cp-angle");
+    angLab.textContent = grad.type === "radial" ? "Centre %" : "Angle°";
+    ang.value = grad.type === "radial" ? grad.off : grad.angle;
+    $(".cp-stoppos").value = Math.round(grad.stops[active].pos);
+  }
+
+  function render(emitNow = true) {
     const rgb = hsvToRgb(h, s, v); r = rgb.r; g = rgb.g; b = rgb.b;
     const hx = rgbToHex(r, g, b);
     sv.style.setProperty("--cp-hue", `hsl(${h} 100% 50%)`);
@@ -1012,7 +1154,8 @@ function openColorPicker(initial, onChange) {
     hue.value = Math.round(h); alpha.value = Math.round(a * 100);
     alpha.style.setProperty("--cp-solid", hx);
     hex.value = hx; Ri.value = Math.round(r); Gi.value = Math.round(g); Bi.value = Math.round(b); Ai.value = Math.round(a * 100);
-    if (emit) onChange(colorStr(r, g, b, a));
+    if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); $(".cp-grad-prev").style.background = gradCss(grad); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; }
+    if (emitNow) emit();
   }
   function fromRgb() { const hsv = rgbToHsv(+Ri.value || 0, +Gi.value || 0, +Bi.value || 0); h = hsv.h; s = hsv.s; v = hsv.v; render(); }
 
@@ -1026,9 +1169,32 @@ function openColorPicker(initial, onChange) {
   sv.addEventListener("pointerup", () => { sv.onpointermove = null; });
   hue.addEventListener("input", () => { h = +hue.value; render(); });
   alpha.addEventListener("input", () => { a = +alpha.value / 100; render(); });
-  hex.addEventListener("change", () => { const c = parseColor(hex.value); a = c.a; const hsv = rgbToHsv(c.r, c.g, c.b); h = hsv.h; s = hsv.s; v = hsv.v; render(); });
+  hex.addEventListener("change", () => { loadColor(hex.value); render(); });
   [Ri, Gi, Bi].forEach((i) => i.addEventListener("input", fromRgb));
   Ai.addEventListener("input", () => { a = Math.max(0, Math.min(100, +Ai.value || 0)) / 100; render(); });
+
+  // gradient toggle + controls
+  gradOn.addEventListener("change", () => {
+    mode = gradOn.checked ? "grad" : "solid";
+    if (mode === "grad") { grad.stops[0].color = colorStr(r, g, b, a); active = 0; loadColor(grad.stops[0].color); }
+    else loadColor(grad.stops[active].color);
+    paintGradUI(); render();
+  });
+  wrap.querySelector('[data-seg="count"]').addEventListener("click", (e) => {
+    const bt = e.target.closest("button"); if (!bt) return;
+    const n = +bt.dataset.n, cur = grad.stops.length;
+    if (n > cur) for (let i = cur; i < n; i++) grad.stops.push({ color: grad.stops[grad.stops.length - 1].color, pos: Math.round((i / (n - 1)) * 100) });
+    else grad.stops.length = n;
+    grad.stops.forEach((st, i) => (st.pos = Math.round((i / (n - 1)) * 100)));
+    if (active >= n) active = n - 1;
+    loadColor(grad.stops[active].color); paintGradUI(); render();
+  });
+  wrap.querySelector('[data-seg="type"]').addEventListener("click", (e) => {
+    const bt = e.target.closest("button"); if (!bt) return;
+    grad.type = bt.dataset.t; paintGradUI(); render();
+  });
+  $(".cp-angle").addEventListener("input", (e) => { if (grad.type === "radial") grad.off = +e.target.value; else grad.angle = +e.target.value; $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
+  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; paintGradUI(); $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
 
   // brand swatches (current values from :root, fall back to defaults)
   $(".cp-brand-btn").addEventListener("click", () => {
@@ -1040,15 +1206,13 @@ function openColorPicker(initial, onChange) {
         const val = (cs.getPropertyValue(c.k).trim() || c.val);
         return `<button class="cp-bsw" data-c="${val}" title="${c.label}"><span style="background:${val}"></span>${c.label}</button>`;
       }).join("");
-      panel.querySelectorAll(".cp-bsw").forEach((sw) => sw.addEventListener("click", () => {
-        const c = parseColor(sw.dataset.c); a = c.a; const hsv = rgbToHsv(c.r, c.g, c.b); h = hsv.h; s = hsv.s; v = hsv.v; render();
-      }));
+      panel.querySelectorAll(".cp-bsw").forEach((sw) => sw.addEventListener("click", () => { loadColor(sw.dataset.c); render(); }));
       panel.dataset.built = "1";
     }
   });
   $(".cp-scrim").addEventListener("click", closeColorPicker);
   $(".cp-done").addEventListener("click", closeColorPicker);
-  render(false);
+  paintGradUI(); render(false);
 }
 
 /* ---- Studio hub ---- */
@@ -1082,7 +1246,7 @@ function renderStudioHome() {
 function posterGroups() {
   return [
     { name: "Poster card", items: [
-      { k: "--pc-radius", label: "Corner radius", val: 8, step: 1, min: 0 },
+      { k: "--pc-radius", label: "Corner radius", type: "radius", val: 8, step: 1, min: 0 },
       { k: "--pc-bw", label: "Border width", val: 1, step: 0.5, min: 0 },
       { k: "--pc-bc", label: "Border colour", type: "color", val: "#f0c469" },
       { k: "--pc-shadow", label: "Drop shadow", type: "shadow" },
@@ -1091,18 +1255,22 @@ function posterGroups() {
       { k: "--b-inset", label: "Corner inset", val: 1, step: 1, min: 0 },
       { k: "--b-pad", label: "Padding", val: 3, step: 1, min: 0 },
       { k: "--b-gap", label: "Tile–label gap", val: 4, step: 1, min: 0 },
-      { k: "--b-chipr", label: "Chip radius", val: 8, step: 1, min: 0 },
+      { k: "--b-chipr", label: "Chip radius", type: "radius", val: 8, step: 1, min: 0 },
       { k: "--b-chip", label: "Chip fill", type: "color", val: "rgba(11,13,19,0.62)" },
       { k: "--b-shadow", label: "Chip shadow", type: "shadow" },
     ] },
     { name: "Score tile", items: [
       { k: "--b-sq", label: "Square size", val: 20, step: 1, min: 6 },
-      { k: "--b-numfs", label: "Number font", val: 12, step: 1, min: 6 },
-      { k: "--b-tiler", label: "Tile radius", val: 6, step: 1, min: 0 },
+      { k: "--b-numfs", label: "Number font size", val: 12, step: 1, min: 6 },
+      { k: "--b-numff", label: "Number typeface", type: "select", val: "var(--font-display)" },
+      { k: "--b-numls", label: "Number spacing", val: 0, step: 0.5, min: -5 },
+      { k: "--b-tiler", label: "Tile radius", type: "radius", val: 6, step: 1, min: 0 },
       { k: "--b-gold", label: "Tile gold", type: "color", val: "#f0c469" },
     ] },
     { name: "Label", items: [
-      { k: "--b-labfs", label: "Label font", val: 8, step: 0.5, min: 5 },
+      { k: "--b-labfs", label: "Label font size", val: 8, step: 0.5, min: 5 },
+      { k: "--b-labff", label: "Label typeface", type: "select", val: "var(--font-display)" },
+      { k: "--b-labls", label: "Label spacing", val: 0, step: 0.5, min: -5 },
       { k: "--b-lab", label: "Label colour", type: "color", val: "#f0c469" },
     ] },
   ];
@@ -1130,7 +1298,7 @@ function renderStudioPoster() {
   const groups = posterGroups();
   const init = [];
   groups.forEach((g) => g.items.forEach((it) => {
-    if (it.type === "color") init.push(`${it.k}:${it.val}`);
+    if (it.type === "color" || it.type === "select") init.push(`${it.k}:${it.val}`);
     else if (it.type !== "shadow") init.push(`${it.k}:${it.val}px`);
   }));
   const initStyle = init.join(";");
@@ -1144,13 +1312,14 @@ function renderStudioPoster() {
           <h1>PosterCard</h1>
         </div>
         <div class="st-stage st-compare">
-          <figure class="st-cmp"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Current</figcaption></figure>
+          <button class="rand-btn" data-rand aria-label="Random example">${ICON.shuffle}</button>
+          <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before</figcaption></figure>
           <figure class="st-cmp">
             <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
-            <figcaption>Candidate <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
+            <figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
           </figure>
         </div>
-        <div id="st-controls-root">${groups.map(groupHTML).join("")}</div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
@@ -1164,12 +1333,28 @@ function renderStudioPoster() {
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
+  app.querySelector("[data-rand]").addEventListener("click", () => {
+    const it = CATALOG[Math.floor(Math.random() * CATALOG.length)];
+    const num = scoreItem(it).synth ?? "—", bg = posterBg(it);
+    ["#cur", "#cand"].forEach((sel) => {
+      const el = app.querySelector(sel); if (!el) return;
+      el.style.background = bg;
+      el.querySelectorAll(".sb-num, .sb2-num").forEach((n) => (n.textContent = num));
+    });
+  });
 
   app.querySelector("#st-export").addEventListener("click", () => {
     const out = {};
     groups.forEach((g) => g.items.forEach((it) => {
       if (it.type === "color") out[it.k] = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val;
       else if (it.type === "shadow") out[it.k] = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : "none";
+      else if (it.type === "select") out[it.k] = app.querySelector(`.st-select[data-var="${it.k}"]`).value;
+      else if (it.type === "radius") {
+        const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
+        out[it.k] = rc.classList.contains("expanded")
+          ? [...rc.querySelectorAll(".rad-quad .step-val")].map((i) => (parseFloat(i.value) || 0) + "px").join(" ")
+          : (parseFloat(rc.querySelector(".rad-main .step-val").value) || 0) + "px";
+      }
       else out[it.k] = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + "px";
     }));
     const text = JSON.stringify({ PosterCard: out }, null, 2);
@@ -1197,7 +1382,7 @@ function renderStudioBrand() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>Brand Tokens</h1>
         </div>
-        <div id="st-controls-root">${groupHTML(group)}</div>
+        <div id="st-controls-root">${groupHTML(group, true)}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
