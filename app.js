@@ -36,6 +36,9 @@ const ICON = {
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
   studio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M8 14h8"/></svg>`,
   hand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V6a1.5 1.5 0 0 1 3 0v7.5c0 3.6-2.3 6.5-6 6.5s-5-2.4-5.6-4.2L5 13.6a1.4 1.4 0 0 1 2.3-1.6L8.5 13"/></svg>`,
+  finger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 11V7a1.5 1.5 0 0 1 3 0v4"/><path d="M15 11.5a1.5 1.5 0 0 1 3 0V15c0 3.3-2 5.5-5.2 5.5-2.1 0-3.4-.8-4.4-2.3l-2.6-3.9a1.5 1.5 0 0 1 2.5-1.7L9.5 14V11"/></svg>`,
+  zoom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7M10.5 7.8v5.4M7.8 10.5h5.4"/></svg>`,
+  toolbox: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5h18V19a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19z"/><path d="M8 8.5V6a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 6v2.5"/><path d="M3 13h6v2h6v-2h6"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -126,23 +129,41 @@ function applyArtwork(root) {
 /* =====================================================================
  * SHARED HEADER: wordmark (home link) + slide-out search; floating controls
  * ===================================================================== */
-// Floating control stack: a TEMPORARY tap-highlight debug toggle (to be removed later).
-function fabStack() {
-  return `<div class="fab-stack">
-    <button class="debug-toggle ${state.debugTap ? "on" : ""}" title="Tap-highlight (debug)" aria-label="Toggle tap highlight">${ICON.debug}</button>
+/* Bottom-right toolbox: collapsed to one icon; tap to expand the tools upward
+ * (each with a label); auto-collapses after a while. */
+function toolbox() {
+  const tools = [
+    { t: "studio", label: "Studio", ic: ICON.studio },
+    { t: "pick", label: "Pick", ic: ICON.finger, on: state.pickMode },
+    { t: "zoom", label: "Zoom", ic: ICON.zoom },
+    { t: "debug", label: "Debug", ic: ICON.debug, on: state.debugTap },
+  ];
+  return `<div class="toolbox" data-toolbox>
+    <div class="tools">
+      ${tools.map((x) => `<button class="tool ${x.on ? "on" : ""}" data-tool="${x.t}"><span class="tool-label">${x.label}</span><span class="tool-ic">${x.ic}</span></button>`).join("")}
+    </div>
+    <button class="tb-btn" data-tb aria-label="Tools">${ICON.toolbox}</button>
   </div>`;
 }
-// Bottom-left floating controls: pick-mode (finger) + Studio entry.
-function leftFabs() {
-  return `<div class="fab-left-stack">
-    <button class="fab-left pick-toggle ${state.pickMode ? "on" : ""}" data-pick title="Pick a component to edit" aria-label="Pick a component to edit">${ICON.hand}</button>
-    <a class="fab-left" href="#/studio" title="Open Studio" aria-label="Open Studio">${ICON.studio}</a>
-  </div>`;
+let tbTimer = null;
+function wireToolbox(root) {
+  const box = root.querySelector(".toolbox");
+  if (!box) return;
+  const arm = () => { clearTimeout(tbTimer); tbTimer = setTimeout(() => box.classList.remove("open"), 10000); };
+  box.querySelector("[data-tb]").addEventListener("click", () => { box.classList.toggle("open"); if (box.classList.contains("open")) arm(); });
+  box.querySelectorAll("[data-tool]").forEach((b) => b.addEventListener("click", () => {
+    arm();
+    const t = b.dataset.tool;
+    if (t === "studio") location.hash = "#/studio";
+    else if (t === "pick") { togglePick(); box.classList.remove("open"); }
+    else if (t === "zoom") { openLoupe(); box.classList.remove("open"); }
+    else if (t === "debug") toggleDebug();
+  }));
 }
 function togglePick() {
   state.pickMode = !state.pickMode;
   document.documentElement.classList.toggle("pick-mode", state.pickMode);
-  document.querySelectorAll(".pick-toggle").forEach((b) => b.classList.toggle("on", state.pickMode));
+  document.querySelectorAll('.tool[data-tool="pick"]').forEach((b) => b.classList.toggle("on", state.pickMode));
 }
 
 function applyDebug() {
@@ -152,7 +173,109 @@ function toggleDebug() {
   state.debugTap = !state.debugTap;
   localStorage.setItem("debug.tap", state.debugTap ? "1" : "0");
   applyDebug();
-  document.querySelectorAll(".debug-toggle").forEach((b) => b.classList.toggle("on", state.debugTap));
+  document.querySelectorAll('.tool[data-tool="debug"]').forEach((b) => b.classList.toggle("on", state.debugTap));
+}
+
+/* =====================================================================
+ * ZOOM LOUPE — a movable magnifier. Mirrors the current screen (DOM clone) so
+ * text stays vector-sharp ("Sharp"); a "Pixel" mode shows raster pixels. It
+ * floats (stays on screen) by default, or locks to the page and scrolls away.
+ * ===================================================================== */
+let loupeTimer = null;
+function closeLoupe() { app.querySelector(".loupe")?.remove(); clearTimeout(loupeTimer); loupeTimer = null; }
+function openLoupe() {
+  if (app.querySelector(".loupe")) return;
+  const lp = document.createElement("div");
+  lp.className = "loupe";
+  lp.innerHTML = `
+    <div class="loupe-bar" data-drag>
+      <span class="loupe-title">Zoom</span>
+      <div class="loupe-tools">
+        <button data-z="-1" aria-label="Zoom out">−</button>
+        <span class="loupe-z">2.0×</span>
+        <button data-z="1" aria-label="Zoom in">+</button>
+        <button data-mode class="loupe-tg">Sharp</button>
+        <button data-lock class="loupe-tg" aria-label="Lock">Float</button>
+        <button data-close aria-label="Close">${ICON.close}</button>
+      </div>
+    </div>
+    <div class="loupe-view"><div class="loupe-clone"></div></div>
+    <div class="loupe-size" data-size aria-hidden="true"></div>`;
+  app.appendChild(lp);
+  const view = lp.querySelector(".loupe-view");
+  const cloneHost = lp.querySelector(".loupe-clone");
+  const ar = app.getBoundingClientRect();
+  const S = { z: 2, w: 250, h: 200, locked: false, mode: "sharp", x: Math.max(8, (ar.width - 250) / 2), y: Math.round(ar.height * 0.32), lockBaseY: 0, lockBaseScroll: 0 };
+
+  const setSize = () => { lp.style.width = S.w + "px"; view.style.height = S.h + "px"; };
+  const setPos = () => { lp.style.left = S.x + "px"; lp.style.top = S.y + "px"; };
+  setSize(); setPos();
+
+  function position() {
+    const screen = app.querySelector(".screen"); if (!screen) return;
+    const sr = screen.getBoundingClientRect();
+    const vr = view.getBoundingClientRect();
+    const cx = (vr.left + vr.width / 2) - sr.left;
+    const cy = (vr.top + vr.height / 2) - sr.top;
+    cloneHost.style.transformOrigin = "0 0";
+    cloneHost.style.transform = `translate(${vr.width / 2 - cx * S.z}px, ${vr.height / 2 - cy * S.z}px) scale(${S.z})`;
+  }
+  function refresh() {
+    const screen = app.querySelector(".screen"); if (!screen) return;
+    const sr = screen.getBoundingClientRect();
+    const c = screen.cloneNode(true);
+    c.querySelectorAll(".loupe, .toolbox, .cp, .shed, .toast").forEach((n) => n.remove());
+    c.style.width = sr.width + "px"; c.style.height = sr.height + "px";
+    const realScroll = screen.querySelector(".scroll"), cloneScroll = c.querySelector(".scroll");
+    cloneHost.innerHTML = ""; cloneHost.style.width = sr.width + "px"; cloneHost.appendChild(c);
+    if (realScroll && cloneScroll) cloneScroll.scrollTop = realScroll.scrollTop;
+    position();
+  }
+  const loop = () => { refresh(); loupeTimer = setTimeout(loop, 300); };
+  loop();
+
+  // zoom / mode / lock / close
+  lp.querySelectorAll("[data-z]").forEach((b) => b.addEventListener("click", () => {
+    S.z = Math.max(1, Math.min(8, S.z + (+b.dataset.z) * 0.5));
+    lp.querySelector(".loupe-z").textContent = S.z.toFixed(1) + "×"; position();
+  }));
+  lp.querySelector("[data-mode]").addEventListener("click", (e) => {
+    S.mode = S.mode === "sharp" ? "pixel" : "sharp";
+    cloneHost.classList.toggle("pixel", S.mode === "pixel");
+    e.target.textContent = S.mode === "sharp" ? "Sharp" : "Pixel";
+  });
+  const lockBtn = lp.querySelector("[data-lock]");
+  lockBtn.addEventListener("click", () => {
+    S.locked = !S.locked;
+    lockBtn.textContent = S.locked ? "Locked" : "Float";
+    lockBtn.classList.toggle("on", S.locked);
+    lp.classList.toggle("locked", S.locked);
+    const sc = app.querySelector(".scroll");
+    S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0;
+  });
+  lp.querySelector("[data-close]").addEventListener("click", closeLoupe);
+
+  // when locked, scroll with the page content
+  const onScroll = () => {
+    if (!S.locked) return;
+    const sc = app.querySelector(".scroll"); if (!sc) return;
+    S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll);
+    setPos(); position();
+  };
+  app.addEventListener("scroll", onScroll, true);
+
+  // drag the bar to move; drag the corner to resize
+  const drag = (handle, onMove) => {
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); handle.setPointerCapture(e.pointerId);
+      const sx = e.clientX, sy = e.clientY, ox = S.x, oy = S.y, ow = S.w, oh = S.h;
+      const move = (ev) => { onMove(ev.clientX - sx, ev.clientY - sy, ox, oy, ow, oh); setPos(); setSize(); position(); };
+      handle.onpointermove = move;
+      handle.onpointerup = () => { handle.onpointermove = null; if (S.locked) { const sc = app.querySelector(".scroll"); S.lockBaseY = S.y; S.lockBaseScroll = sc ? sc.scrollTop : 0; } };
+    });
+  };
+  drag(lp.querySelector("[data-drag]"), (dx, dy, ox, oy) => { S.x = ox + dx; S.y = oy + dy; });
+  drag(lp.querySelector("[data-size]"), (dx, dy, ox, oy, ow, oh) => { S.w = Math.max(140, ow + dx); S.h = Math.max(110, oh + dy); });
 }
 function headSearch() {
   return `
@@ -264,12 +387,11 @@ function wireHeadSearch(root) {
 }
 
 function wireHeader(root) {
-  root.querySelector(".debug-toggle")?.addEventListener("click", toggleDebug);
   root.querySelectorAll("[data-home]").forEach((el) =>
     el.addEventListener("click", goHome));
   root.querySelectorAll("[data-back]").forEach((el) =>
     el.addEventListener("click", () => { if (history.length > 1) history.back(); else location.hash = "#/"; }));
-  root.querySelectorAll("[data-pick]").forEach((el) => el.addEventListener("click", togglePick));
+  wireToolbox(root);
   wireHeadSearch(root);
 }
 
@@ -436,8 +558,7 @@ function renderLanding() {
           <div class="rise d2" id="results-area"></div>
         </div>
       </div>
-      ${fabStack()}
-      ${leftFabs()}
+      ${toolbox()}
     </div>`;
 
   renderResultsArea();
@@ -605,8 +726,7 @@ function renderDetail(item) {
         ${similar.length ? `<div class="sec-head rise d4"><h2>More Like This</h2></div>
         <div class="lists cards layout-horizontal rise d4">${listColumn("", similar)}</div>` : ""}
       </div>
-      ${fabStack()}
-      ${leftFabs()}
+      ${toolbox()}
     </div>`;
 
   const wire = () => {
@@ -768,7 +888,7 @@ const SHADOWS = {};
 function shadowCss(s) {
   const r = (s.angle * Math.PI) / 180;
   const ox = +(Math.cos(r) * s.distance).toFixed(1), oy = +(Math.sin(r) * s.distance).toFixed(1);
-  const c = parseColor(s.color), a = Math.max(0, Math.min(100, s.opacity)) / 100;
+  const c = parseColor(s.color), a = 1 - Math.max(0, Math.min(100, s.transparency)) / 100;
   return `${ox}px ${oy}px ${Math.max(0, s.blur)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
 }
 function wireGroupControls(root, applyVar) {
@@ -785,7 +905,7 @@ function wireGroupControls(root, applyVar) {
 function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
 function openShadowEditor(v, applyVar) {
   closeShadowEditor();
-  const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", opacity: 55, angle: 90, distance: 6, blur: 14 });
+  const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 });
   const stepF = (label, f, step, min, max) =>
     `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
   const wrap = document.createElement("div");
@@ -798,7 +918,7 @@ function openShadowEditor(v, applyVar) {
       ${stepF("Angle°", "angle", 5, -100000)}
       ${stepF("Distance", "distance", 1, 0)}
       ${stepF("Blur", "blur", 1, 0)}
-      ${stepF("Opacity %", "opacity", 5, 0, 100)}
+      ${stepF("Transparency %", "transparency", 5, 0, 100)}
     </div>`;
   app.appendChild(wrap);
   const upd = () => applyVar(v, shadowCss(s));
@@ -909,7 +1029,7 @@ function renderStudioHome() {
             </a>`).join("")}
         </div>
       </div>
-      ${fabStack()}
+      ${toolbox()}
     </div>`;
   wireHeader(app);
 }
@@ -976,7 +1096,7 @@ function renderStudioPoster() {
           <textarea class="st-out" id="st-out" readonly rows="10" placeholder="Values appear here…"></textarea>
         </section>
       </div>
-      ${fabStack()}
+      ${toolbox()}
     </div>`;
 
   const cands = ["#cand", "#candZoom"].map((s) => app.querySelector(s)).filter(Boolean);
@@ -1022,7 +1142,7 @@ function renderStudioBrand() {
           <textarea class="st-out" id="st-out" readonly rows="7" placeholder="Values appear here…"></textarea>
         </section>
       </div>
-      ${fabStack()}
+      ${toolbox()}
     </div>`;
   const applyVar = (v, val) => document.documentElement.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
