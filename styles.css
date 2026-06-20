@@ -720,7 +720,18 @@ body::before {
 .loupe-tools button svg { width: 14px; height: 14px; }
 .loupe-view { position: relative; overflow: hidden; background: var(--bg); }
 .loupe-clone { position: absolute; top: 0; left: 0; }
+/* The mirror must never animate — otherwise re-cloning replays the page's
+ * entrance animation (the flicker / "scrolls up" effect). */
+.loupe-clone, .loupe-clone * , .loupe-clone *::before, .loupe-clone *::after {
+  animation: none !important; transition: none !important;
+}
 .loupe-clone.pixel { image-rendering: pixelated; }
+.loupe-x {
+  position: absolute; top: 5px; right: 5px; z-index: 4; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--gold); color: #1a1206; display: grid; place-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.loupe-x svg { width: 14px; height: 14px; display: block; }
 .loupe.locked { border-color: var(--teal); }
 .loupe-size { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none; background: linear-gradient(135deg, transparent 50%, var(--gold) 50%); border-bottom-right-radius: 12px; }
 

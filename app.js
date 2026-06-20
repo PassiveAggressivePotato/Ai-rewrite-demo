@@ -181,8 +181,8 @@ function toggleDebug() {
  * text stays vector-sharp ("Sharp"); a "Pixel" mode shows raster pixels. It
  * floats (stays on screen) by default, or locks to the page and scrolls away.
  * ===================================================================== */
-let loupeTimer = null;
-function closeLoupe() { app.querySelector(".loupe")?.remove(); clearTimeout(loupeTimer); loupeTimer = null; }
+let loupeTimer = null, loupeAbort = null;
+function closeLoupe() { app.querySelector(".loupe")?.remove(); clearTimeout(loupeTimer); loupeTimer = null; loupeAbort?.abort(); loupeAbort = null; }
 function openLoupe() {
   if (app.querySelector(".loupe")) return;
   const lp = document.createElement("div");
@@ -196,9 +196,9 @@ function openLoupe() {
         <button data-z="1" aria-label="Zoom in">+</button>
         <button data-mode class="loupe-tg">Sharp</button>
         <button data-lock class="loupe-tg" aria-label="Lock">Float</button>
-        <button data-close aria-label="Close">${ICON.close}</button>
       </div>
     </div>
+    <button class="loupe-x" data-close aria-label="Close">${ICON.close}</button>
     <div class="loupe-view"><div class="loupe-clone"></div></div>
     <div class="loupe-size" data-size aria-hidden="true"></div>`;
   app.appendChild(lp);
@@ -231,8 +231,9 @@ function openLoupe() {
     if (realScroll && cloneScroll) cloneScroll.scrollTop = realScroll.scrollTop;
     position();
   }
-  const loop = () => { refresh(); loupeTimer = setTimeout(loop, 300); };
-  loop();
+  // Clone once on open; re-clone only on demand (scroll) — a constant loop made
+  // it flicker and replay the page's entrance animation.
+  refresh();
 
   // zoom / mode / lock / close
   lp.querySelectorAll("[data-z]").forEach((b) => b.addEventListener("click", () => {
@@ -255,14 +256,17 @@ function openLoupe() {
   });
   lp.querySelector("[data-close]").addEventListener("click", closeLoupe);
 
-  // when locked, scroll with the page content
-  const onScroll = () => {
-    if (!S.locked) return;
-    const sc = app.querySelector(".scroll"); if (!sc) return;
-    S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll);
-    setPos(); position();
-  };
-  app.addEventListener("scroll", onScroll, true);
+  // On scroll: keep a locked loupe pinned to the page, reposition the magnified
+  // view, and re-clone (debounced) so content stays current — without flicker.
+  loupeAbort = new AbortController();
+  app.addEventListener("scroll", () => {
+    if (S.locked) {
+      const sc = app.querySelector(".scroll");
+      if (sc) { S.y = S.lockBaseY - (sc.scrollTop - S.lockBaseScroll); setPos(); }
+    }
+    position();
+    clearTimeout(loupeTimer); loupeTimer = setTimeout(refresh, 140);
+  }, { capture: true, signal: loupeAbort.signal });
 
   // drag the bar to move; drag the corner to resize
   const drag = (handle, onMove) => {
