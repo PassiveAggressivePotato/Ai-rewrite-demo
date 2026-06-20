@@ -306,7 +306,10 @@ function listColumn(title, rows, featured = false) {
         </div>
       </button>`).join("")
     : `<div class="empty">—</div>`;
-  return `<div class="list-col ${featured ? "featured" : ""}"><h3>${title}</h3><div class="col-items">${items}</div></div>`;
+  const seeAll = rows.length
+    ? `<button class="see-all" data-seeall aria-label="See all"><span class="sa-ic">${ICON.back}</span><span class="sa-t">See<br>all</span></button>`
+    : "";
+  return `<div class="list-col">${title ? `<h3>${title}</h3>` : ""}<div class="col-items">${items}${seeAll}</div></div>`;
 }
 
 const listsClass = () => "lists cards layout-horizontal";
@@ -528,6 +531,10 @@ function renderDetail(item) {
     .join('<span class="dot">•</span>');
   const credits = Object.entries(item.credits)
     .map(([k, v]) => `<div class="row"><span class="k">${k}:</span>${v}</div>`).join("");
+  const similar = itemsByCategory(item.category)
+    .filter((x) => x.slug !== item.slug)
+    .map((x) => ({ it: x, s: scoreItem(x) }))
+    .sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0)).slice(0, 10);
 
   const hasArt = !!item.poster;
   app.innerHTML = `
@@ -594,6 +601,9 @@ function renderDetail(item) {
 
         <div class="sec-head rise d3"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
         <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
+
+        ${similar.length ? `<div class="sec-head rise d4"><h2>More Like This</h2></div>
+        <div class="lists cards layout-horizontal rise d4">${listColumn("", similar)}</div>` : ""}
       </div>
       ${fabStack()}
       ${leftFabs()}
@@ -667,6 +677,8 @@ function renderDetail(item) {
     }
   });
 
+  wireCardClicks(app);
+  applyArtwork(app);
   wireHeader(app);
   animateDials(app);
 }
@@ -674,12 +686,21 @@ function renderDetail(item) {
 /* =====================================================================
  * ROUTER
  * ===================================================================== */
+function toast(msg) {
+  app.querySelector(".toast")?.remove();
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg; app.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 1800);
+}
 function wireCardClicks(root) {
   root.querySelectorAll("[data-slug]").forEach((c) =>
     c.addEventListener("click", () => {
       if (state.pickMode) { togglePick(); location.hash = "#/studio/poster"; return; }
       location.hash = `#/item/${c.dataset.slug}`;
     }));
+  root.querySelectorAll("[data-seeall]").forEach((b) =>
+    b.addEventListener("click", (e) => { e.stopPropagation(); toast("Full listing — coming soon"); }));
 }
 
 /* =====================================================================
@@ -729,9 +750,9 @@ function groupHTML(g) {
 /* Accelerating stepper: tap = one step; hold ramps up; value tappable to type. */
 function attachStepper(step, onValue) {
   const input = step.querySelector(".step-val");
-  const min = parseFloat(step.dataset.min), size = parseFloat(step.dataset.step);
+  const min = parseFloat(step.dataset.min), max = parseFloat(step.dataset.max), size = parseFloat(step.dataset.step);
   const get = () => (parseFloat(input.value) || 0);
-  const set = (n) => { if (!isNaN(min) && n < min) n = min; n = Math.round(n * 100) / 100; input.value = n; onValue(n); };
+  const set = (n) => { if (!isNaN(min) && n < min) n = min; if (!isNaN(max) && n > max) n = max; n = Math.round(n * 100) / 100; input.value = n; onValue(n); };
   input.addEventListener("change", () => set(get()));
   step.querySelectorAll(".step-btn").forEach((btn) => {
     const dir = parseFloat(btn.dataset.dir); let timer = null, delay = 0, count = 0;
@@ -765,8 +786,8 @@ function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
 function openShadowEditor(v, applyVar) {
   closeShadowEditor();
   const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", opacity: 55, angle: 90, distance: 6, blur: 14 });
-  const stepF = (label, f, step, min) =>
-    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
+  const stepF = (label, f, step, min, max) =>
+    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-step="${step}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn" data-dir="-1">−</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-dir="1">+</button></div></div>`;
   const wrap = document.createElement("div");
   wrap.className = "shed";
   wrap.innerHTML = `
@@ -777,7 +798,7 @@ function openShadowEditor(v, applyVar) {
       ${stepF("Angle°", "angle", 5, -100000)}
       ${stepF("Distance", "distance", 1, 0)}
       ${stepF("Blur", "blur", 1, 0)}
-      ${stepF("Opacity %", "opacity", 5, 0)}
+      ${stepF("Opacity %", "opacity", 5, 0, 100)}
     </div>`;
   app.appendChild(wrap);
   const upd = () => applyVar(v, shadowCss(s));
