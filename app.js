@@ -602,18 +602,22 @@ function renderDetail(item) {
     if (!item.backdrop) app.querySelectorAll(".backdrop .art").forEach((a) => { a.style.backgroundImage = `url('${url}')`; });
   });
 
-  // Trailer / Review → 16:9 player that grows over the title area, pushing
-  // content down. Plays the item's YouTube id when known, else a search embed.
+  // Trailer / Review → 16:9 player that pins beneath the sticky header; page
+  // content scrolls underneath it (like the header). Plays the item's YouTube id
+  // when known, else a search embed. Minimal YouTube chrome.
   const stage = app.querySelector("#video-stage");
+  const scroller = app.querySelector(".scroll");
+  stage.style.top = app.querySelector(".detail-head").offsetHeight + "px";
   const closePlayer = () => { stage.classList.remove("playing"); stage.innerHTML = ""; };
   app.querySelectorAll("[data-play]").forEach((btn) =>
     btn.addEventListener("click", () => {
       const kind = btn.dataset.play;
       const id = kind === "trailer" ? item.trailer : item.review;
       const q = kind === "trailer" ? `${item.title} ${item.year} official trailer` : `${item.title} ${item.year} review`;
+      const params = "autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&color=white";
       const src = id
-        ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`
-        : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q)}&autoplay=1&rel=0`;
+        ? `https://www.youtube-nocookie.com/embed/${id}?${params}`
+        : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(q)}&${params}`;
       stage.innerHTML = `
         <div class="video-frame">
           <iframe src="${src}" title="${kind}" frameborder="0"
@@ -622,9 +626,8 @@ function renderDetail(item) {
         </div>`;
       stage.classList.add("playing");
       stage.querySelector(".player-close").addEventListener("click", closePlayer);
-      // Wait for the grow transition, then scroll it clear of the sticky header
-      // (scroll-margin-top on .video-stage reserves the header's height).
-      requestAnimationFrame(() => stage.scrollIntoView({ behavior: "smooth", block: "start" }));
+      // Bring the header + pinned player to the top; content then scrolls beneath.
+      requestAnimationFrame(() => scroller.scrollTo({ top: 0, behavior: "smooth" }));
     }));
 
   // Read more / less for the synopsis when it overflows the 2-line clamp.
