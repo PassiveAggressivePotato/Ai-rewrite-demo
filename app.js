@@ -44,6 +44,7 @@ const ICON = {
   pixel: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3.5" width="6" height="5"/><rect x="15" y="9" width="5" height="6"/><rect x="9" y="15.5" width="6" height="5"/><rect x="3.5" y="9" width="5" height="6"/></svg>`,
   shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
   chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
+  reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v5h5"/><path d="M3.5 10a8 8 0 1 1-1 5"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -1004,17 +1005,19 @@ const FONT_OPTS = [
 function selectHTML(v, val, opts) {
   return `<select class="st-select" data-var="${v}">${opts.map((o) => `<option value="${o.v}"${o.v === val ? " selected" : ""}>${o.l}</option>`).join("")}</select>`;
 }
-/* Corner-radius control: one stepper for all corners + ⊞ to expand to TL/TR/BR/BL. */
+/* Corner-radius control: a single all-corners stepper + ⊞ (by the label) to
+ * expand into four vertical per-corner steppers (the single one then hides). */
 function radiusRow(it) {
   const step = it.step || 1, min = it.min == null ? 0 : it.min;
-  const corners = ["TL", "TR", "BR", "BL"];
-  return `<div class="ctl ctl-radius" data-var="${it.k}" data-step="${step}" data-min="${min}">
+  const corners = ["Top-left", "Top-right", "Bottom-right", "Bottom-left"];
+  return `<div class="ctl ctl-radius" data-var="${it.k}" data-step="${step}" data-min="${min}" data-default="${it.val}">
     <div class="ctl-top">
-      <span class="ctl-l">${it.label}</span>
-      <div class="rad-main">${stepperHTML("", it.val, step, min)}<button class="rad-exp" data-rad-exp aria-label="Per-corner">⊞</button></div>
+      <span class="ctl-l">${it.label} <button class="rad-exp" data-rad-exp aria-label="Per-corner">⊞</button></span>
+      <div class="rad-main">${stepperHTML("", it.val, step, min)}</div>
+      <button class="ctl-reset" data-reset-main aria-label="Reset">${ICON.reset}</button>
     </div>
     <div class="rad-quad hidden">
-      ${corners.map((c) => `<div class="rq"><span>${c}</span>${stepperHTML("", it.val, step, min)}</div>`).join("")}
+      ${corners.map((c) => `<div class="rq"><span class="rq-l">${c}</span>${stepperHTML("", it.val, step, min)}<button class="ctl-reset" data-reset-corner aria-label="Reset">${ICON.reset}</button></div>`).join("")}
     </div>
   </div>`;
 }
@@ -1025,7 +1028,8 @@ function controlRow(it) {
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min);
-  return `<div class="ctl"><span class="ctl-l">${it.label}</span>${ctrl}</div>`;
+  const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
+  return `<div class="ctl"${def}><span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
 function groupHTML(g, open) {
   return `<section class="st-sec ${open ? "" : "collapsed"}">
@@ -1053,6 +1057,7 @@ function attachStepper(step, onValue) {
 }
 
 const SHADOWS = {};
+const SHADOW_DEFAULT = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 };
 function shadowCss(s) {
   const r = (s.angle * Math.PI) / 180;
   const ox = +(Math.cos(r) * s.distance).toFixed(1), oy = +(Math.sin(r) * s.distance).toFixed(1);
@@ -1073,7 +1078,7 @@ function wireGroupControls(root, applyVar) {
     sel.addEventListener("change", () => applyVar(sel.dataset.var, sel.value)));
   // per-corner radius: single value, or 4-value shorthand when expanded
   root.querySelectorAll(".ctl-radius").forEach((rc) => {
-    const vvar = rc.dataset.var;
+    const vvar = rc.dataset.var, def = parseFloat(rc.dataset.default) || 0;
     const mainStep = rc.querySelector(".rad-main .step");
     const quad = rc.querySelector(".rad-quad");
     const quadSteps = [...quad.querySelectorAll(".step")];
@@ -1090,14 +1095,49 @@ function wireGroupControls(root, applyVar) {
       if (exp) quadSteps.forEach((s) => (s.querySelector(".step-val").value = sval(mainStep)));
       apply();
     });
+    rc.querySelector("[data-reset-main]").addEventListener("click", () => { mainStep.querySelector(".step-val").value = def; apply(); });
+    rc.querySelectorAll("[data-reset-corner]").forEach((btn, i) =>
+      btn.addEventListener("click", () => { quadSteps[i].querySelector(".step-val").value = def; apply(); }));
   });
   root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
+  // per-property reset (every standard .ctl row carries its default value)
+  root.querySelectorAll(".ctl:not(.ctl-radius) > [data-reset]").forEach((btn) => {
+    const ctl = btn.closest(".ctl"), def = ctl.dataset.default;
+    btn.addEventListener("click", () => {
+      const step = ctl.querySelector(":scope > .step[data-var]");
+      const sw = ctl.querySelector(":scope > .swatch");
+      const sel = ctl.querySelector(":scope > .st-select");
+      const sh = ctl.querySelector(":scope > .shadow-btn");
+      if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + "px"); }
+      else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, def); }
+      else if (sel) { sel.value = def; applyVar(sel.dataset.var, def); }
+      else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
+    });
+  });
+}
+
+/* Read the current value of every control in a group set (for export). */
+function readGroupValues(groups) {
+  const out = {};
+  groups.forEach((g) => g.items.forEach((it) => {
+    if (it.type === "color") out[it.k] = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val;
+    else if (it.type === "shadow") out[it.k] = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : "none";
+    else if (it.type === "select") out[it.k] = app.querySelector(`.st-select[data-var="${it.k}"]`).value;
+    else if (it.type === "radius") {
+      const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
+      out[it.k] = rc.classList.contains("expanded")
+        ? [...rc.querySelectorAll(".rad-quad .step-val")].map((i) => (parseFloat(i.value) || 0) + "px").join(" ")
+        : (parseFloat(rc.querySelector(".rad-main .step-val").value) || 0) + "px";
+    }
+    else out[it.k] = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + "px";
+  }));
+  return out;
 }
 
 function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
 function openShadowEditor(v, applyVar) {
   closeShadowEditor();
-  const s = SHADOWS[v] || (SHADOWS[v] = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 });
+  const s = SHADOWS[v] || (SHADOWS[v] = { ...SHADOW_DEFAULT });
   const stepF = (label, f, step, min, max) =>
     `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn big" data-d="${-step}">«</button><button class="step-btn" data-d="-0.1">‹</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-d="0.1">›</button><button class="step-btn big" data-d="${step}">»</button></div></div>`;
   const wrap = document.createElement("div");
@@ -1272,8 +1312,12 @@ function openColorPicker(initial, onChange) {
 
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
-  { id: "poster", name: "PosterCard", desc: "List poster + score badge" },
-  { id: "brand", name: "Brand Tokens", desc: "Site-wide colours" },
+  { id: "poster", name: "PosterCard", desc: "List poster + score badge",
+    thumb: `<span class="sc-thumb" style="background:url('assets/poor-things-poster.webp') center/cover"></span>` },
+  { id: "tab", name: "Active Tab", desc: "Landing category tab",
+    thumb: `<span class="sc-thumb sc-thumb-pad"><img src="assets/icons/movie.svg" alt=""></span>` },
+  { id: "brand", name: "Brand Tokens", desc: "Site-wide colours",
+    thumb: `<span class="sc-thumb sc-thumb-brand"><i style="background:#f0c469"></i><i style="background:#c98f30"></i><i style="background:#4fd0c8"></i><i style="background:#2c97a8"></i></span>` },
 ];
 function renderStudioHome() {
   app.innerHTML = `
@@ -1287,8 +1331,11 @@ function renderStudioHome() {
         <div class="studio-grid">
           ${STUDIO_COMPONENTS.map((c) => `
             <a class="studio-card" href="#/studio/${c.id}">
-              <span class="sc-name">${c.name}</span>
-              <span class="sc-desc">${c.desc}</span>
+              ${c.thumb || ""}
+              <span class="sc-text">
+                <span class="sc-name">${c.name}</span>
+                <span class="sc-desc">${c.desc}</span>
+              </span>
             </a>`).join("")}
         </div>
       </div>
@@ -1399,20 +1446,7 @@ function renderStudioPoster() {
   });
 
   app.querySelector("#st-export").addEventListener("click", () => {
-    const out = {};
-    groups.forEach((g) => g.items.forEach((it) => {
-      if (it.type === "color") out[it.k] = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val;
-      else if (it.type === "shadow") out[it.k] = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : "none";
-      else if (it.type === "select") out[it.k] = app.querySelector(`.st-select[data-var="${it.k}"]`).value;
-      else if (it.type === "radius") {
-        const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
-        out[it.k] = rc.classList.contains("expanded")
-          ? [...rc.querySelectorAll(".rad-quad .step-val")].map((i) => (parseFloat(i.value) || 0) + "px").join(" ")
-          : (parseFloat(rc.querySelector(".rad-main .step-val").value) || 0) + "px";
-      }
-      else out[it.k] = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + "px";
-    }));
-    const text = JSON.stringify({ PosterCard: out }, null, 2);
+    const text = JSON.stringify({ PosterCard: readGroupValues(groups) }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -1459,10 +1493,70 @@ function renderStudioBrand() {
   });
   wireHeader(app);
 }
+
+/* ---- Studio: Active Tab (category tab on the landing page) ---- */
+function tabGroups() {
+  return [
+    { name: "Tab", items: [
+      { k: "--tab-radius", label: "Corner radius", type: "radius", val: 16, step: 1, min: 0 },
+      { k: "--tab-pad-y", label: "Vertical padding", val: 14, step: 1, min: 0 },
+      { k: "--tab-gap", label: "Icon–label gap", val: 8, step: 1, min: 0 },
+      { k: "--tab-fill1", label: "Fill (top)", type: "color", val: "#16161f" },
+      { k: "--tab-fill2", label: "Fill (bottom)", type: "color", val: "#0e0f16" },
+    ] },
+    { name: "Icon", items: [
+      { k: "--tab-icon", label: "Icon size", val: 40, step: 1, min: 12 },
+    ] },
+    { name: "Label", items: [
+      { k: "--tab-labfs", label: "Label size", val: 13, step: 0.5, min: 6 },
+      { k: "--tab-lab", label: "Label colour", type: "color", val: "#f0c469" },
+    ] },
+  ];
+}
+function renderStudioActiveTab() {
+  const groups = tabGroups();
+  const cats = CATEGORIES.slice(0, 3);
+  const tab = (c, active) => `<button class="tab ${active ? "active" : ""}">
+      <span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`;
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>Active Tab</h1>
+        </div>
+        <div class="st-stage">
+          <div class="tabs has-sel" id="tabprev" style="grid-template-columns:repeat(3,1fr);max-width:300px;margin:0 auto;">
+            ${tab(cats[0], true)}${tab(cats[1], false)}${tab(cats[2], false)}
+          </div>
+        </div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
+        <section class="st-sec">
+          <h2>Export</h2>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="9" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+  const prev = app.querySelector("#tabprev");
+  const applyVar = (v, val) => prev.style.setProperty(v, val);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ ActiveTab: readGroupValues(groups) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+  wireHeader(app);
+}
 function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
+  if (hash === "#/studio/tab") { renderStudioActiveTab(); return; }
   if (hash === "#/studio/brand") { renderStudioBrand(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {

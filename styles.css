@@ -255,23 +255,23 @@ body::before {
 .prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: 24px 0 12px; letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
 .tab {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-  padding: 14px 5px;
-  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
+  padding: var(--tab-pad-y, 14px) 5px;
+  border-radius: var(--tab-radius, 16px);
   color: var(--gold);
   /* Gold gradient outline (drawn as a border-box gradient under a solid fill). */
   border: 1.5px solid transparent;
   background:
-    linear-gradient(180deg, #16161f, #0e0f16) padding-box,
+    linear-gradient(180deg, var(--tab-fill1, #16161f), var(--tab-fill2, #0e0f16)) padding-box,
     linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22)) border-box;
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
 /* Fixed-height icon zone: every icon is vertically centred within it, so all the
  * icons line up horizontally regardless of their individual heights — and the
  * labels below then share a common baseline. */
-.tab .tab-icon { height: 40px; display: flex; align-items: center; justify-content: center; line-height: 0; }
-.tab .cat-ic { width: 40px; height: auto; display: block; transition: filter .25s, transform .25s; }
-.tab .tab-label { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); }
+.tab .tab-icon { height: var(--tab-icon, 40px); display: flex; align-items: center; justify-content: center; line-height: 0; }
+.tab .cat-ic { width: var(--tab-icon, 40px); height: auto; display: block; transition: filter .25s, transform .25s; }
+.tab .tab-label { font-size: var(--tab-labfs, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-lab, var(--gold)); }
 /* No selection yet → every tab bright. Once one is selected the others recede
  * (visible, but dimmed and shrunk) — exactly as before. */
 .tabs.has-sel .tab:not(.active) {
@@ -928,10 +928,14 @@ body::before {
 
 /* Controls: label on the left, control on the right (extra row spacing to avoid mis-taps) */
 .st-controls { display: grid; gap: 14px; }
-.ctl { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
+.ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; }
 .ctl-l { font-size: 12px; color: var(--text-dim); flex: 1; min-width: 0; }
 .shadow-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
 .shadow-btn:active { background: rgba(240,196,105,.16); }
+/* Per-property reset button (sits to the right of every adjuster). */
+.ctl-reset { flex: none; width: 28px; height: 28px; display: grid; place-items: center; color: var(--text-faint); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.ctl-reset:active { background: rgba(240,196,105,.16); color: var(--gold); }
+.ctl-reset svg { width: 15px; height: 15px; display: block; }
 
 /* Stepper: « ‹ [value] › » — outer (.big) = whole step, inner = 0.1.
  * Accelerating press; value tappable to type. */
@@ -957,14 +961,19 @@ body::before {
 
 /* Per-corner radius control (single value, ⊞ expands to 4 corners) */
 .ctl-radius { display: block; }
-.ctl-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
+.ctl-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; }
 .rad-main { display: inline-flex; align-items: center; gap: 8px; flex: none; }
-.rad-exp { width: 30px; height: 30px; display: grid; place-items: center; font-size: 16px; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
-.ctl-radius.expanded .rad-exp { background: rgba(240,196,105,.16); }
-.rad-quad { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+/* ⊞ sits inline right after the label; toggles the per-corner editors. */
+.rad-exp { display: inline-grid; place-items: center; width: 22px; height: 22px; vertical-align: middle; margin-left: 5px; font-size: 13px; color: var(--gold); border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.ctl-radius.expanded .rad-exp { background: rgba(240,196,105,.18); }
+/* When expanded the single all-corners adjuster (and its reset) is hidden. */
+.ctl-radius.expanded .rad-main,
+.ctl-radius.expanded [data-reset-main] { display: none; }
+/* Four per-corner adjusters, stacked vertically, each with its own reset. */
+.rad-quad { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
 .rad-quad.hidden { display: none; }
-.rq { display: flex; align-items: center; gap: 8px; }
-.rq > span { font-size: 10px; letter-spacing: .08em; color: var(--text-faint); width: 20px; }
+.rq { display: flex; align-items: center; gap: 10px; }
+.rq .rq-l { flex: 1; font-size: 11px; color: var(--text-dim); }
 
 /* Colour swatch trigger */
 .swatch { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 4px 8px 4px 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
@@ -979,11 +988,23 @@ body::before {
 /* Studio hub grid */
 .studio-grid { display: grid; gap: 10px; margin-top: 14px; }
 .studio-card {
-  display: block; padding: 14px; border-radius: var(--radius); text-decoration: none;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: var(--radius); text-decoration: none;
   border: 1px solid var(--border); background: var(--surface);
   transition: transform .15s var(--ease), border-color .15s;
 }
 .studio-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+/* Preview thumbnail of what you're about to edit. */
+.sc-thumb {
+  flex: none; width: 48px; height: 64px; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); background-color: var(--surface-2);
+  display: grid; place-items: center;
+}
+.sc-thumb-pad { padding: 9px; }
+.sc-thumb-pad img { width: 100%; height: auto; display: block; }
+.sc-thumb-brand { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0; }
+.sc-thumb-brand i { display: block; width: 100%; height: 100%; }
+.sc-text { min-width: 0; }
 .sc-name { display: block; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--text); }
 .sc-desc { display: block; font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 
