@@ -291,22 +291,15 @@ body::before {
  * the (unmasked) icon zone so they aren't clipped by the icon's own mask. The
  * silhouette respects holes, so the outline traces the holes too. Width 0 /
  * transparent = no outline. The soft icon shadow is chained after it. */
+/* Icon zone: outline (feMorphology ring via SVG filter, coloured by `color`) +
+ * the soft icon shadow, chained. Outline off = filter `none`. */
 .tab .tab-icon {
   height: var(--tab-icon-size, 40px); display: flex; align-items: center; justify-content: center; line-height: 0;
-  --ic-ol-w: var(--tab-idle-icon-ol-w, 0px); --ic-ol-col: var(--tab-idle-icon-ol-col, transparent);
-  --ic-outline:
-    drop-shadow(var(--ic-ol-w,0px) 0 0 var(--ic-ol-col,transparent))
-    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) 0 0 var(--ic-ol-col,transparent))
-    drop-shadow(0 var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
-    drop-shadow(0 calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent))
-    drop-shadow(var(--ic-ol-w,0px) var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
-    drop-shadow(var(--ic-ol-w,0px) calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent))
-    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
-    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent));
-  filter: var(--ic-outline) drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent));
+  color: var(--tab-idle-icon-ol-col, transparent);
+  filter: var(--tab-idle-icon-ol-filter, none) drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent));
 }
-.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transition: transform .25s; }
-.tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); }
+.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transform: scale(var(--tab-idle-icon-sx, 1), var(--tab-idle-icon-sy, 1)); transition: transform .25s; }
+.tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); transform: scale(var(--tab-idle-label-sx, 1), var(--tab-idle-label-sy, 1)); }
 .tab:hover { transform: translateY(-1px); }
 
 /* Inactive: a non-selected tab while another is active — faded + shrunk.
@@ -320,9 +313,9 @@ body::before {
     var(--tab-dim-outline, linear-gradient(#2c3844, #2c3844)) border-box;
   box-shadow: var(--tab-dim-shadow, none);
 }
-.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, #1f2933); }
-.tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { --ic-ol-w: var(--tab-dim-icon-ol-w, 0px); --ic-ol-col: var(--tab-dim-icon-ol-col, transparent); filter: var(--ic-outline) drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
-.tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, #1f2933); text-shadow: var(--tab-dim-label-shadow, none); }
+.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, #1f2933); transform: scale(var(--tab-dim-icon-sx, 1), var(--tab-dim-icon-sy, 1)); }
+.tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { color: var(--tab-dim-icon-ol-col, transparent); filter: var(--tab-dim-icon-ol-filter, none) drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
+.tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, #1f2933); text-shadow: var(--tab-dim-label-shadow, none); transform: scale(var(--tab-dim-label-sx, 1), var(--tab-dim-label-sy, 1)); }
 
 /* Active (selected) tab. */
 .tab.active {
@@ -336,9 +329,9 @@ body::before {
   position: relative; z-index: 3;
   box-shadow: var(--tab-act-shadow, none);
 }
-.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)); }
-.tab.active .tab-icon { --ic-ol-w: var(--tab-act-icon-ol-w, 0px); --ic-ol-col: var(--tab-act-icon-ol-col, transparent); filter: var(--ic-outline) drop-shadow(var(--tab-act-icon-shadow, 0px -5px 15px rgba(206, 164, 81, 1))); }
-.tab.active .tab-label { color: var(--tab-act-label, #ddb75d); text-shadow: var(--tab-act-label-shadow, 0px 0px 5px rgba(179, 102, 0, 0.55)); }
+.tab.active .cat-ic { background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)); transform: scale(var(--tab-act-icon-sx, 1.06), var(--tab-act-icon-sy, 1.06)); }
+.tab.active .tab-icon { color: var(--tab-act-icon-ol-col, transparent); filter: var(--tab-act-icon-ol-filter, none) drop-shadow(var(--tab-act-icon-shadow, 0px -5px 15px rgba(206, 164, 81, 1))); }
+.tab.active .tab-label { color: var(--tab-act-label, #ddb75d); text-shadow: var(--tab-act-label-shadow, 0px 0px 5px rgba(179, 102, 0, 0.55)); transform: scale(var(--tab-act-label-sx, 1), var(--tab-act-label-sy, 1)); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
 .tabs .tab:first-child.active { transform-origin: left center; }
 .tabs .tab:last-child.active { transform-origin: right center; }
@@ -455,9 +448,9 @@ body::before {
   display: flex; flex-direction: column; justify-content: center;
   font-size: var(--b-labfs); font-weight: 800; line-height: 1.05; letter-spacing: .02em; color: var(--b-lab);
 }
-.li-text { min-width: 0; display: flex; flex-direction: column; }
-.li-title { font-weight: 600; color: var(--text); line-height: 1.15; overflow: hidden; }
-.li-year { color: var(--text-dim); }
+.li-text { min-width: 0; display: flex; flex-direction: column; transform: scale(var(--li-sx, 1), var(--li-sy, 1)); transform-origin: top center; }
+.li-title { font-family: var(--li-title-ff, inherit); font-weight: var(--li-title-w, 600); font-size: var(--li-title-fs, 13px); color: var(--li-title-col, var(--text)); line-height: 1.15; overflow: hidden; }
+.li-year { font-size: var(--li-year-fs, 11px); color: var(--li-year-col, var(--text-dim)); }
 
 /* HORIZONTAL — each list is one sideways-scrolling row of poster cards.
  * Block layout (not flex) so each row is bounded to the viewport width and the
@@ -915,6 +908,14 @@ body::before {
   font-family: var(--font-display); font-size: 13px; font-weight: 800;
   letter-spacing: .06em; text-transform: uppercase; color: var(--gold);
 }
+.acc-right { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.grp-scale {
+  display: grid; place-items: center; width: 30px; height: 30px;
+  border: 1px solid var(--border); border-radius: 8px; color: var(--gold);
+  background: var(--surface); cursor: pointer;
+}
+.grp-scale:active { background: rgba(240,196,105,.16); }
+.grp-scale svg { width: 16px; height: 16px; }
 .acc-ic { display: grid; place-items: center; color: var(--text-faint); }
 .acc-ic svg { width: 18px; height: 18px; transition: transform .2s var(--ease); transform: rotate(-90deg); }
 .st-sec.collapsed .acc-ic svg { transform: rotate(0deg); }
@@ -924,7 +925,7 @@ body::before {
 /* Before/After previews stay pinned to the top while you scroll the controls. */
 .st-stage {
   position: sticky; top: 0; z-index: 410;   /* above the shadow/colour sheets (400/402), below inspect (420) */
-  overflow: hidden; border-radius: var(--radius-sm); margin: 0 -2px 14px; padding: 16px 10px;
+  border-radius: var(--radius-sm); margin: 0 -2px 14px; padding: 16px 10px;
   border: 1px solid var(--border);
   background:
     linear-gradient(0deg, rgba(255,255,255,.03), rgba(255,255,255,.03)),
@@ -952,12 +953,16 @@ body::before {
 .cyc-next svg { transform: scaleX(1); }
 
 /* Preview PosterCard + the candidate ScoreBadge (driven by --pc-* / --b-* tokens) */
+.li2 { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 88px; }
+.li2 .li-text { width: 100%; align-items: center; text-align: center; }
+.li2 .li-title { white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pc2 {
   position: relative; width: 88px; height: 132px; overflow: hidden;
   background-size: cover; background-position: center;
   border-radius: var(--pc-radius, 8px);
   border: var(--pc-bw, 1px) solid var(--pc-bc, var(--gold));
   box-shadow: var(--pc-shadow, var(--shadow-dir-sm));
+  transform: scale(var(--pc-sx, 1), var(--pc-sy, 1));
 }
 .sb2 {
   position: absolute; left: var(--b-inset); bottom: var(--b-inset);
@@ -966,6 +971,7 @@ body::before {
   background: var(--b-chip);
   border: 1px solid var(--b-gold);
   box-shadow: var(--b-shadow, none);
+  transform: scale(var(--b-chip-sx, 1), var(--b-chip-sy, 1)); transform-origin: bottom left;
 }
 .sb2-num {
   width: var(--b-sq); height: var(--b-sq); flex: none;
@@ -973,12 +979,14 @@ body::before {
   background: linear-gradient(180deg, var(--b-gold), color-mix(in srgb, var(--b-gold) 68%, #000));
   color: #241a05; font-family: var(--b-numff, var(--font-display)); font-weight: 800;
   font-size: var(--b-numfs); line-height: 1; letter-spacing: var(--b-numls, 0);
+  transform: scale(var(--b-tile-sx, 1), var(--b-tile-sy, 1));
 }
 .sb2-lab {
   display: flex; flex-direction: column; justify-content: center;
   font-family: var(--b-labff, var(--font-display));
   font-size: var(--b-labfs); font-weight: 800; line-height: 1.05; letter-spacing: var(--b-labls, .02em);
   color: var(--b-lab);
+  transform: scale(var(--b-lab-sx, 1), var(--b-lab-sy, 1)); transform-origin: left center;
 }
 
 /* Controls: label on the left, control on the right (extra row spacing to avoid mis-taps) */
@@ -1120,17 +1128,27 @@ body::before {
 .cp-grad-tog input { width: 16px; height: 16px; accent-color: var(--gold); }
 .cp-grad.hidden { display: none; }
 .cp-grad { margin-bottom: 12px; }
-.cp-grad-prev { height: 30px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+.cp-grad-prev { position: relative; height: 30px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+/* Stop markers: a small circle at each stop's position; active one filled. */
+.cp-grad-marks { position: absolute; inset: 0; pointer-events: none; }
+.cp-mark {
+  position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: rgba(0,0,0,.35);
+  border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5);
+}
+.cp-mark.on { background: var(--mk, #fff); border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,196,105,.55); }
 .cp-stops { display: flex; gap: 8px; margin-bottom: 10px; }
 .cp-stop { width: 34px; height: 26px; border-radius: 7px; border: 2px solid var(--border); }
 .cp-stop.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,196,105,.3); }
 .cp-grow { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cp-grow:has(.cp-val) { grid-template-columns: 92px 1fr 42px; }
 .cp-grow > span { font-size: 11px; color: var(--text-dim); }
+.cp-val { font-size: 11px; font-weight: 700; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
 .cp-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .cp-seg button { flex: 1; padding: 6px 0; font-size: 12px; font-weight: 700; color: var(--text-dim); background: var(--surface); }
 .cp-seg button.on { background: rgba(240,196,105,.16); color: var(--gold); }
-.cp-angle, .cp-stoppos { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
-.cp-angle::-webkit-slider-thumb, .cp-stoppos::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; }
+.cp-angle, .cp-offy, .cp-stoppos { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
+.cp-angle::-webkit-slider-thumb, .cp-offy::-webkit-slider-thumb, .cp-stoppos::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; }
 
 .st-note { font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.45; }
 .st-export {

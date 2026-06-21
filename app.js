@@ -46,6 +46,7 @@ const ICON = {
   chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
   reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v5h5"/><path d="M3.5 10a8 8 0 1 1-1 5"/></svg>`,
   next: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
+  scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -958,7 +959,7 @@ function splitTop(s) {
 function gradCss(g) {
   const stops = g.stops.map((s) => `${s.color} ${Math.round(s.pos)}%`).join(", ");
   return g.type === "radial"
-    ? `radial-gradient(circle at ${Math.round(g.off)}% 50%, ${stops})`
+    ? `radial-gradient(circle at ${Math.round(g.off)}% ${Math.round(g.offY == null ? 50 : g.offY)}%, ${stops})`
     : `linear-gradient(${Math.round(g.angle)}deg, ${stops})`;
 }
 /* Parse any colour-or-gradient string into a uniform editor model. */
@@ -967,19 +968,19 @@ function parseValue(str) {
   const m = str.match(/^(linear|radial)-gradient\((.*)\)$/i);
   if (m) {
     const type = m[1].toLowerCase();
-    let parts = splitTop(m[2]); let angle = 90, off = 50;
+    let parts = splitTop(m[2]); let angle = 90, off = 50, offY = 50;
     if (type === "linear") { const a = (parts[0] || "").match(/(-?\d+(?:\.\d+)?)deg/); if (a) { angle = +a[1]; parts = parts.slice(1); } }
-    else { const o = (parts[0] || "").match(/at\s+(-?\d+(?:\.\d+)?)%/); if (o) { off = +o[1]; parts = parts.slice(1); } }
+    else { const o = (parts[0] || "").match(/at\s+(-?\d+(?:\.\d+)?)%(?:\s+(-?\d+(?:\.\d+)?)%)?/); if (o) { off = +o[1]; if (o[2] != null) offY = +o[2]; parts = parts.slice(1); } }
     const stops = parts.map((p) => {
       const t = p.trim(); const pm = t.match(/\s(-?\d+(?:\.\d+)?)%\s*$/);
       return { color: (pm ? t.slice(0, pm.index) : t).trim() || "#888888", pos: pm ? +pm[1] : null };
     });
     stops.forEach((s, i) => { if (s.pos == null) s.pos = stops.length > 1 ? Math.round((i / (stops.length - 1)) * 100) : 0; });
     while (stops.length < 2) stops.push({ color: "#000000", pos: 100 });
-    return { mode: "grad", color: stops[0].color, grad: { type, angle, off, stops } };
+    return { mode: "grad", color: stops[0].color, grad: { type, angle, off, offY, stops } };
   }
   const c = str || "#888888";
-  return { mode: "solid", color: c, grad: { type: "linear", angle: 90, off: 50, stops: [{ color: c, pos: 0 }, { color: "#000000", pos: 100 }] } };
+  return { mode: "solid", color: c, grad: { type: "linear", angle: 90, off: 50, offY: 50, stops: [{ color: c, pos: 0 }, { color: "#000000", pos: 100 }] } };
 }
 
 /* ---- control builders + shadow sub-editor ---- */
@@ -1004,6 +1005,7 @@ function swatchHTML(v, val, layer) {
 function asImage(v) { return /gradient\(/i.test(v) ? v : `linear-gradient(${v}, ${v})`; }
 const FONT_OPTS = [
   { v: "var(--font-display)", l: "Display" },
+  { v: "var(--font)", l: "Body" },
   { v: "system-ui, sans-serif", l: "System" },
   { v: "Georgia, 'Times New Roman', serif", l: "Serif" },
   { v: "ui-monospace, Menlo, Consolas, monospace", l: "Mono" },
@@ -1044,8 +1046,9 @@ function controlRow(it) {
   return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
 function groupHTML(g, open) {
+  const scaleBtn = g.scale ? `<button class="grp-scale" data-grp-scale="${g.scale}" aria-label="Scale ${g.name}">${ICON.scale}</button>` : "";
   return `<section class="st-sec ${open ? "" : "collapsed"}">
-    <button class="st-h" data-acc><h2>${g.name}</h2><span class="acc-ic">${ICON.back}</span></button>
+    <div class="st-h" data-acc><h2>${g.name}</h2><span class="acc-right">${scaleBtn}<span class="acc-ic">${ICON.back}</span></span></div>
     <div class="st-body"><div class="st-controls">${g.items.map(controlRow).join("")}</div></div>
   </section>`;
 }
@@ -1082,6 +1085,8 @@ function shadowCss(s) {
 function wireGroupControls(root, applyVar) {
   root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
     h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
+  root.querySelectorAll("[data-grp-scale]").forEach((btn) =>
+    btn.addEventListener("click", (e) => { e.stopPropagation(); openScaleEditor(btn.dataset.grpScale, applyVar); }));
   root.querySelectorAll(".st-controls .step[data-var]:not([data-noauto])").forEach((step) =>
     attachStepper(step, (n) => applyVar(step.dataset.var, n + (step.dataset.unit ?? "px"))));
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
@@ -1160,6 +1165,8 @@ function readGroupValues(groups, changedOnly = true) {
     // Disabled (unticked) controls are always emitted so the "off" reaches us.
     if (off || !changedOnly || cur !== def) out[it.k] = cur;
   }));
+  // Per-section scale (set via the Scale popup) — only emit when not 1.
+  groups.forEach((g) => { const s = g.scale && SCALES[g.scale]; if (s) { if (s.sx !== 1) out[g.scale + "-sx"] = s.sx; if (s.sy !== 1) out[g.scale + "-sy"] = s.sy; } });
   return out;
 }
 
@@ -1181,6 +1188,18 @@ function applyCtlToggle(ctl, on, applyVar) {
 }
 
 function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
+/* Position a bottom sheet so its top sits just below the sticky preview stage
+ * (whose height varies per editor), then let its own content scroll. */
+function sheetTopOffset() {
+  const stage = app.querySelector(".st-stage");
+  if (!stage) return 0;
+  const ar = app.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+  return Math.max(0, Math.round(sr.bottom - ar.top) + 8);
+}
+function placeSheet(wrap) {
+  const sheet = wrap.querySelector(".cp-sheet");
+  if (sheet) { sheet.style.top = sheetTopOffset() + "px"; sheet.style.maxHeight = "none"; }
+}
 function openShadowEditor(v, applyVar) {
   closeShadowEditor();
   const s = SHADOWS[v] || (SHADOWS[v] = { ...SHADOW_DEFAULT });
@@ -1202,6 +1221,7 @@ function openShadowEditor(v, applyVar) {
       ${stepF("Scale", "scale", 0.1, 0, null, 0.05)}
     </div>`;
   app.appendChild(wrap);
+  placeSheet(wrap);
   const upd = () => applyVar(v, shadowCss(s));
   wrap.querySelectorAll(".step[data-field]").forEach((step) => attachStepper(step, (n) => { s[step.dataset.field] = n; upd(); }));
   const sw = wrap.querySelector(".swatch");
@@ -1211,6 +1231,39 @@ function openShadowEditor(v, applyVar) {
   wrap.querySelector(".cp-scrim").addEventListener("click", closeShadowEditor);
   wrap.querySelector(".cp-done").addEventListener("click", closeShadowEditor);
   upd();
+}
+
+/* Reusable Scale popup — sets `${prefix}-sx` / `${prefix}-sy` on the candidate.
+ * Used for the whole component and each section (the group's `scale` prefix).
+ * Lock mirrors X/Y both on edit and on reset. */
+const SCALES = {};
+function closeScaleEditor() { app.querySelector(".scaleed")?.remove(); }
+function openScaleEditor(prefix, applyVar) {
+  closeScaleEditor();
+  const st = SCALES[prefix] || (SCALES[prefix] = { sx: 1, sy: 1, lock: true });
+  const row = (label, key) =>
+    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-skey="${key}" data-min="0.3" data-max="3" data-unit=""><button class="step-btn big" data-d="-0.05">«</button><button class="step-btn" data-d="-0.01">‹</button><input class="step-val" type="text" inputmode="decimal" value="${st[key]}"><button class="step-btn" data-d="0.01">›</button><button class="step-btn big" data-d="0.05">»</button></div><button class="ctl-reset" data-skreset="${key}" aria-label="Reset">${ICON.reset}</button></div>`;
+  const wrap = document.createElement("div");
+  wrap.className = "shed scaleed";
+  wrap.innerHTML = `
+    <div class="cp-scrim"></div>
+    <div class="cp-sheet">
+      <div class="cp-head"><span>Scale</span><button class="cp-done">Done</button></div>
+      ${row("Scale X", "sx")}
+      ${row("Scale Y", "sy")}
+      <div class="ctl"><span class="ctl-l">Lock aspect</span><input type="checkbox" class="scale-lock"${st.lock ? " checked" : ""}></div>
+    </div>`;
+  app.appendChild(wrap); placeSheet(wrap);
+  const lock = wrap.querySelector(".scale-lock");
+  const steps = { sx: wrap.querySelector('.step[data-skey="sx"]'), sy: wrap.querySelector('.step[data-skey="sy"]') };
+  const setField = (key, n) => { steps[key].querySelector(".step-val").value = n; st[key] = n; applyVar(prefix + "-" + key, n); };
+  const onVal = (key) => (n) => { setField(key, n); if (lock.checked) setField(key === "sx" ? "sy" : "sx", n); };
+  attachStepper(steps.sx, onVal("sx"));
+  attachStepper(steps.sy, onVal("sy"));
+  wrap.querySelectorAll("[data-skreset]").forEach((btn) => btn.addEventListener("click", () => onVal(btn.dataset.skreset)(1)));
+  lock.addEventListener("change", () => { st.lock = lock.checked; if (lock.checked) onVal("sx")(st.sx); });
+  wrap.querySelector(".cp-scrim").addEventListener("click", closeScaleEditor);
+  wrap.querySelector(".cp-done").addEventListener("click", closeScaleEditor);
 }
 /* Brand swatches shown in the colour picker (current :root values, else these). */
 const BRAND_COL = [
@@ -1235,7 +1288,7 @@ function openColorPicker(initial, onChange) {
       <div class="cp-head"><span>Colour</span><button class="cp-done">Done</button></div>
       <label class="cp-grad-tog"><input class="cp-grad-on" type="checkbox"> Gradient</label>
       <div class="cp-grad hidden">
-        <div class="cp-grad-prev"></div>
+        <div class="cp-grad-prev"><div class="cp-grad-marks"></div></div>
         <div class="cp-stops"></div>
         <div class="cp-grow">
           <span>Stops</span>
@@ -1250,9 +1303,11 @@ function openColorPicker(initial, onChange) {
           </div>
         </div>
         <div class="cp-grow cp-grow-angle"><span class="cp-anglab">Angle°</span>
-          <input class="cp-angle" type="range" min="0" max="360" step="1"></div>
+          <input class="cp-angle" type="range" min="0" max="360" step="1"><span class="cp-val cp-angle-v"></span></div>
+        <div class="cp-grow cp-grow-cy hidden"><span>Centre Y %</span>
+          <input class="cp-offy" type="range" min="0" max="100" step="1"><span class="cp-val cp-offy-v"></span></div>
         <div class="cp-grow"><span>Stop offset %</span>
-          <input class="cp-stoppos" type="range" min="0" max="100" step="1"></div>
+          <input class="cp-stoppos" type="range" min="0" max="100" step="1"><span class="cp-val cp-stoppos-v"></span></div>
       </div>
       <div class="cp-sv"><div class="cp-sv-thumb"></div></div>
       <div class="cp-row"><span>Hue</span><input class="cp-hue" type="range" min="0" max="360" step="1"></div>
@@ -1270,6 +1325,7 @@ function openColorPicker(initial, onChange) {
       <div class="cp-brand hidden"></div>
     </div>`;
   app.appendChild(wrap);
+  placeSheet(wrap);
   const $ = (s) => wrap.querySelector(s);
   const sv = $(".cp-sv"), thumb = $(".cp-sv-thumb"), hue = $(".cp-hue"), alpha = $(".cp-alpha");
   const sat = $(".cp-sat"), bri = $(".cp-bri");
@@ -1282,6 +1338,11 @@ function openColorPicker(initial, onChange) {
 
   function emit() { onChange(mode === "grad" ? gradCss(grad) : colorStr(r, g, b, a)); }
 
+  function paintMarks() {
+    // Small circle per stop along the preview; the active one filled/highlighted.
+    $(".cp-grad-marks").innerHTML = grad.stops.map((st, i) =>
+      `<span class="cp-mark ${i === active ? "on" : ""}" style="left:${Math.round(st.pos)}%;--mk:${st.color}"></span>`).join("");
+  }
   function paintGradUI() {
     gradBox.classList.toggle("hidden", mode !== "grad");
     gradOn.checked = mode === "grad";
@@ -1294,10 +1355,18 @@ function openColorPicker(initial, onChange) {
     }));
     wrap.querySelectorAll('[data-seg="count"] button').forEach((bt) => bt.classList.toggle("on", +bt.dataset.n === grad.stops.length));
     wrap.querySelectorAll('[data-seg="type"] button').forEach((bt) => bt.classList.toggle("on", bt.dataset.t === grad.type));
-    const angRow = $(".cp-grow-angle"), angLab = $(".cp-anglab"), ang = $(".cp-angle");
-    angLab.textContent = grad.type === "radial" ? "Centre %" : "Angle°";
-    ang.value = grad.type === "radial" ? grad.off : grad.angle;
+    const isRadial = grad.type === "radial";
+    const angLab = $(".cp-anglab"), ang = $(".cp-angle");
+    angLab.textContent = isRadial ? "Centre X %" : "Angle°";
+    ang.value = isRadial ? grad.off : grad.angle;
+    $(".cp-angle-v").textContent = isRadial ? Math.round(grad.off) + "%" : Math.round(grad.angle) + "°";
+    $(".cp-grow-cy").classList.toggle("hidden", !isRadial);
+    if (grad.offY == null) grad.offY = 50;
+    $(".cp-offy").value = Math.round(grad.offY);
+    $(".cp-offy-v").textContent = Math.round(grad.offY) + "%";
     $(".cp-stoppos").value = Math.round(grad.stops[active].pos);
+    $(".cp-stoppos-v").textContent = Math.round(grad.stops[active].pos) + "%";
+    paintMarks();
   }
 
   function render(emitNow = true) {
@@ -1309,7 +1378,7 @@ function openColorPicker(initial, onChange) {
     sat.value = Math.round(s * 100); bri.value = Math.round(v * 100);
     alpha.style.setProperty("--cp-solid", hx);
     hex.value = hx; Ri.value = Math.round(r); Gi.value = Math.round(g); Bi.value = Math.round(b); Ai.value = Math.round(a * 100);
-    if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); $(".cp-grad-prev").style.background = gradCss(grad); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; }
+    if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); $(".cp-grad-prev").style.background = gradCss(grad); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; const mk = $(`.cp-mark.on`); if (mk) mk.style.setProperty("--mk", grad.stops[active].color); }
     if (emitNow) emit();
   }
   function fromRgb() { const hsv = rgbToHsv(+Ri.value || 0, +Gi.value || 0, +Bi.value || 0); h = hsv.h; s = hsv.s; v = hsv.v; render(); }
@@ -1350,8 +1419,9 @@ function openColorPicker(initial, onChange) {
     const bt = e.target.closest("button"); if (!bt) return;
     grad.type = bt.dataset.t; paintGradUI(); render();
   });
-  $(".cp-angle").addEventListener("input", (e) => { if (grad.type === "radial") grad.off = +e.target.value; else grad.angle = +e.target.value; $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
-  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; paintGradUI(); $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
+  $(".cp-angle").addEventListener("input", (e) => { const val = +e.target.value; if (grad.type === "radial") { grad.off = val; $(".cp-angle-v").textContent = val + "%"; } else { grad.angle = val; $(".cp-angle-v").textContent = val + "°"; } $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
+  $(".cp-offy").addEventListener("input", (e) => { grad.offY = +e.target.value; $(".cp-offy-v").textContent = grad.offY + "%"; $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
+  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; $(".cp-stoppos-v").textContent = e.target.value + "%"; paintMarks(); $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
 
   // brand swatches (current values from :root, fall back to defaults)
   $(".cp-brand-btn").addEventListener("click", () => {
@@ -1413,13 +1483,13 @@ function renderStudioHome() {
 /* PosterCard editor: the whole list item (poster + score badge). */
 function posterGroups() {
   return [
-    { name: "Poster card", items: [
+    { name: "Poster card", scale: "--pc", items: [
       { k: "--pc-radius", label: "Corner radius", type: "radius", val: 8, step: 1, min: 0 },
       { k: "--pc-bw", label: "Border width", val: 1, step: 0.5, min: 0 },
       { k: "--pc-bc", label: "Border colour", type: "color", val: "#f0c469" },
       { k: "--pc-shadow", label: "Drop shadow", type: "shadow" },
     ] },
-    { name: "Score chip", items: [
+    { name: "Score chip", scale: "--b-chip", items: [
       { k: "--b-inset", label: "Corner inset", val: 1, step: 1, min: 0 },
       { k: "--b-pad", label: "Padding", val: 3, step: 1, min: 0 },
       { k: "--b-gap", label: "Tile–label gap", val: 4, step: 1, min: 0 },
@@ -1427,7 +1497,7 @@ function posterGroups() {
       { k: "--b-chip", label: "Chip fill", type: "color", val: "rgba(11,13,19,0.62)" },
       { k: "--b-shadow", label: "Chip shadow", type: "shadow" },
     ] },
-    { name: "Score tile", items: [
+    { name: "Score tile", scale: "--b-tile", items: [
       { k: "--b-sq", label: "Square size", val: 20, step: 1, min: 6 },
       { k: "--b-numfs", label: "Number font size", val: 12, step: 1, min: 6 },
       { k: "--b-numff", label: "Number typeface", type: "select", val: "var(--font-display)" },
@@ -1435,11 +1505,19 @@ function posterGroups() {
       { k: "--b-tiler", label: "Tile radius", type: "radius", val: 6, step: 1, min: 0 },
       { k: "--b-gold", label: "Tile gold", type: "color", val: "#f0c469" },
     ] },
-    { name: "Label", items: [
+    { name: "Label", scale: "--b-lab", items: [
       { k: "--b-labfs", label: "Label font size", val: 8, step: 0.5, min: 5 },
       { k: "--b-labff", label: "Label typeface", type: "select", val: "var(--font-display)" },
       { k: "--b-labls", label: "Label spacing", val: 0, step: 0.5, min: -5 },
       { k: "--b-lab", label: "Label colour", type: "color", val: "#f0c469" },
+    ] },
+    { name: "Title", scale: "--li", items: [
+      { k: "--li-title-fs", label: "Title font size", val: 13, step: 0.5, min: 6 },
+      { k: "--li-title-ff", label: "Title typeface", type: "select", val: "var(--font)" },
+      { k: "--li-title-w", label: "Title weight", val: 600, step: 100, min: 100, max: 900, unit: "" },
+      { k: "--li-title-col", label: "Title colour", type: "color", val: "#f3f4f8" },
+      { k: "--li-year-fs", label: "Year font size", val: 11, step: 0.5, min: 6 },
+      { k: "--li-year-col", label: "Year colour", type: "color", val: "#9aa1b0" },
     ] },
   ];
 }
@@ -1520,6 +1598,7 @@ function renderStudioPoster() {
   const initStyle = init.join(";");
   const curBadge = `<span class="score-badge"><span class="sb-num">${sc.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>`;
   const candBadge = `<span class="sb2"><span class="sb2-num">${sc.synth ?? "—"}</span><span class="sb2-lab"><span>Critikl</span><span>Score</span></span></span>`;
+  const titleText = (it) => `<div class="li-text"><span class="li-title">${it.title}</span><span class="li-year">${it.year}</span></div>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
@@ -1529,9 +1608,9 @@ function renderStudioPoster() {
         </div>
         <div class="st-stage st-compare">
           ${cycleArrows()}
-          <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp"><div class="li2" id="cur"><div class="pc2" style="background:${posterBg(sample)}">${curBadge}</div>${titleText(sample)}</div><figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
           <figure class="st-cmp">
-            <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
+            <div class="li2" id="cand" style="${initStyle}"><div class="pc2" style="background:${posterBg(sample)}">${candBadge}</div>${titleText(sample)}</div>
             <figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
           </figure>
         </div>
@@ -1553,8 +1632,10 @@ function renderStudioPoster() {
     const it = CATALOG[i], num = scoreItem(it).synth ?? "—", bg = posterBg(it);
     ["#cur", "#cand"].forEach((sel) => {
       const el = app.querySelector(sel); if (!el) return;
-      el.style.background = bg;
+      const pc = el.querySelector(".pc2"); if (pc) pc.style.background = bg;
       el.querySelectorAll(".sb-num, .sb2-num").forEach((n) => (n.textContent = num));
+      const t = el.querySelector(".li-title"); if (t) t.textContent = it.title;
+      const y = el.querySelector(".li-year"); if (y) y.textContent = it.year;
     });
   });
 
@@ -1625,20 +1706,24 @@ const TAB_STATES = {
   dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", sx: 1, sy: 1,
     d: { fill: "#374a57", bg: "transparent", outline: "#2c3844", outlineW: 2.5, icon: "#1f2933", iconShadow: "none", label: "#1f2933", labelShadow: "none" } },
 };
+// Discrete icon-outline widths (feMorphology filters defined in index.html).
+// Capped at radius 2 — beyond that the ring overwhelms the small icons.
+const ICON_OL_OPTS = [
+  { v: "none", l: "Off" },
+  { v: "url(#io-05)", l: "Subtle" },
+  { v: "url(#io-1)", l: "Medium" },
+  { v: "url(#io-15)", l: "Bold" },
+  { v: "url(#io-2)", l: "Heavy" },
+];
 function tabGroups(prefix, cfg) {
   const d = cfg.d;
   return [
-    { name: "Layout", items: [
+    { name: "Layout", scale: `--tab-${prefix}`, items: [
       { k: "--tab-radius", label: "Corner radius", type: "radius", val: 15, step: 1, min: 0 },
       { k: "--tab-pad", label: "Vertical padding", val: 14, step: 1, min: 0 },
       { k: "--tab-gap", label: "Icon–label gap", val: 8, step: 1, min: 0 },
       { k: "--tab-icon-size", label: "Icon size", val: 40, step: 1, min: 12 },
       { k: "--tab-label-size", label: "Label size", val: 13, step: 0.5, min: 6 },
-    ] },
-    { name: "Size", items: [
-      { k: `--tab-${prefix}-sx`, label: "Scale X", val: cfg.sx, step: 0.05, min: 0.3, max: 2, unit: "", fine: 0.01, noauto: true },
-      { k: `--tab-${prefix}-sy`, label: "Scale Y", val: cfg.sy, step: 0.05, min: 0.3, max: 2, unit: "", fine: 0.01, noauto: true },
-      { type: "lock", label: "Lock aspect", on: true },
     ] },
     { name: "Tab", items: [
       { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill, layer: true },
@@ -1647,13 +1732,13 @@ function tabGroups(prefix, cfg) {
       { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: d.outlineW, step: 0.5, min: 0 },
       { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
     ] },
-    { name: "Icon", items: [
+    { name: "Icon", scale: `--tab-${prefix}-icon`, items: [
       { k: `--tab-${prefix}-icon`, label: "Icon colour", type: "color", val: d.icon },
       { k: `--tab-${prefix}-icon-ol-col`, label: "Icon outline", type: "color", val: "transparent" },
-      { k: `--tab-${prefix}-icon-ol-w`, label: "Icon outline width", val: 0, step: 0.5, min: 0 },
+      { k: `--tab-${prefix}-icon-ol-filter`, label: "Icon outline width", type: "select", val: "none", opts: ICON_OL_OPTS },
       { k: `--tab-${prefix}-icon-shadow`, label: "Icon shadow", type: "shadow", def: d.iconShadow },
     ] },
-    { name: "Label", items: [
+    { name: "Label", scale: `--tab-${prefix}-label`, items: [
       { k: `--tab-${prefix}-label`, label: "Label colour", type: "color", val: d.label },
       { k: `--tab-${prefix}-label-shadow`, label: "Label shadow", type: "shadow", def: d.labelShadow },
     ] },
@@ -1689,13 +1774,6 @@ function renderStudioTab(state) {
   const cand = app.querySelector("#tabcand");
   const applyVar = (v, val) => cand.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
-  // Scale X/Y with optional aspect lock (these steppers are data-noauto).
-  const sxStep = app.querySelector(`.step[data-var="--tab-${cfg.prefix}-sx"]`);
-  const syStep = app.querySelector(`.step[data-var="--tab-${cfg.prefix}-sy"]`);
-  const lock = app.querySelector(".scale-lock");
-  const setVal = (step, n) => { step.querySelector(".step-val").value = n; };
-  attachStepper(sxStep, (n) => { applyVar(sxStep.dataset.var, n); if (lock && lock.checked) { setVal(syStep, n); applyVar(syStep.dataset.var, n); } });
-  attachStepper(syStep, (n) => { applyVar(syStep.dataset.var, n); if (lock && lock.checked) { setVal(sxStep, n); applyVar(sxStep.dataset.var, n); } });
   app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
   wireCycle(CATEGORIES.length, start, (i) => {
     const c = CATEGORIES[i];
