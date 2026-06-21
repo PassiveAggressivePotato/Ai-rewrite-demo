@@ -269,41 +269,55 @@ body::before {
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
-  padding: var(--tab-pad-y, 14px) 5px;
+  padding: var(--tab-pad, 14px) 5px;
   border-radius: var(--tab-radius, 20px);
   color: var(--gold);
-  /* Gold gradient outline (drawn as a border-box gradient under a solid fill). */
   border: 1.5px solid transparent;
+  /* Three stacked layers: fill (front) over background over outline (border). */
   background:
-    linear-gradient(180deg, #16161f, #0e0f16) padding-box,
-    linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22)) border-box;
+    var(--tab-idle-fill, transparent) padding-box,
+    var(--tab-idle-bg, linear-gradient(180deg, #16161f, #0e0f16)) padding-box,
+    var(--tab-idle-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
+  box-shadow: var(--tab-idle-shadow, none);
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
 /* Fixed-height icon zone: every icon is vertically centred within it, so all the
- * icons line up horizontally regardless of their individual heights — and the
- * labels below then share a common baseline. */
-.tab .tab-icon { height: var(--tab-icon, 40px); display: flex; align-items: center; justify-content: center; line-height: 0; }
-.tab .cat-ic { width: var(--tab-icon, 40px); height: auto; display: block; transition: filter .25s, transform .25s; }
-.tab .tab-label { font-size: var(--tab-labfs, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-lab, var(--gold)); }
-/* No selection yet → every tab bright. Once one is selected the others recede
- * (visible, but dimmed and shrunk) — exactly as before. */
-.tabs.has-sel .tab:not(.active) {
-  opacity: .5; transform: scale(.95);
-}
-.tabs.has-sel .tab:not(.active) .cat-ic { filter: brightness(.7) saturate(.8); }
+ * icons line up horizontally regardless of height; the icon shadow lives here (on
+ * the zone, not the masked icon, so it actually renders). */
+.tab .tab-icon { height: var(--tab-icon-size, 40px); display: flex; align-items: center; justify-content: center; line-height: 0; filter: drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent)); }
+.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transition: transform .25s; }
+.tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); }
 .tab:hover { transform: translateY(-1px); }
-/* Active tab — fill / outline / shadow are all tokenised (editable in Studio). */
+
+/* Inactive: a non-selected tab while another is active — faded + shrunk.
+ * (.tab.is-dim is the same look applied directly, for the Studio preview.) */
+.tabs.has-sel .tab:not(.active), .tab.is-dim {
+  opacity: var(--tab-dim-opacity, .5);
+  transform: scale(var(--tab-dim-scale, .95));
+  background:
+    var(--tab-dim-fill, transparent) padding-box,
+    var(--tab-dim-bg, linear-gradient(180deg, #16161f, #0e0f16)) padding-box,
+    var(--tab-dim-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
+  box-shadow: var(--tab-dim-shadow, none);
+}
+.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, var(--icon-default)); }
+.tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { filter: drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
+.tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, var(--gold)); text-shadow: var(--tab-dim-label-shadow, none); }
+
+/* Active (selected) tab. */
 .tab.active {
   color: var(--text);
   background:
-    var(--tab-fill, linear-gradient(180deg, rgba(14, 5, 94, 0.64) 0%, #14151d 100%)) padding-box,
-    var(--tab-bord, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) border-box;
+    var(--tab-act-fill, linear-gradient(180deg, rgba(14, 5, 94, 0.64) 0%, #14151d 100%)) padding-box,
+    var(--tab-act-bg, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) padding-box,
+    var(--tab-act-outline, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) border-box;
   transform: scale(1.04);
   position: relative; z-index: 3;
-  box-shadow: var(--tab-shadow, none);
+  box-shadow: var(--tab-act-shadow, none);
 }
-.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-icon-col, radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)); filter: drop-shadow(var(--tab-icon-shadow, 0px 6px 14px rgba(0, 0, 0, 0.55))); }
-.tab.active .tab-label { text-shadow: var(--tab-lab-shadow, none); }
+.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)); }
+.tab.active .tab-icon { filter: drop-shadow(var(--tab-act-icon-shadow, 0px 6px 14px rgba(0, 0, 0, 0.55))); }
+.tab.active .tab-label { color: var(--tab-act-label, var(--gold)); text-shadow: var(--tab-act-label-shadow, none); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
 .tabs .tab:first-child.active { transform-origin: left center; }
 .tabs .tab:last-child.active { transform-origin: right center; }
@@ -903,15 +917,18 @@ body::before {
 .st-cmp { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .st-cmp figcaption { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
 
-/* Randomise which catalog item the previews use */
-.rand-btn {
-  position: absolute; top: 8px; right: 8px; z-index: 2;
+/* Prev / Next arrows that flank the Before/After stage to cycle examples. */
+.cyc-btn {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
   width: 34px; height: 34px; display: grid; place-items: center;
   border: 1px solid var(--border); border-radius: 9px; color: var(--gold);
   background: rgba(11,13,19,.6); backdrop-filter: blur(6px);
 }
-.rand-btn:active { background: rgba(240,196,105,.2); }
-.rand-btn svg { width: 17px; height: 17px; }
+.cyc-btn:active { background: rgba(240,196,105,.2); }
+.cyc-btn svg { width: 18px; height: 18px; }
+.cyc-prev { left: 6px; }
+.cyc-next { right: 6px; }
+.cyc-next svg { transform: scaleX(1); }
 
 /* Preview PosterCard + the candidate ScoreBadge (driven by --pc-* / --b-* tokens) */
 .pc2 {
@@ -1115,7 +1132,11 @@ body::before {
 .inspect-btn { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: var(--gold); border: 1px solid var(--border); background: var(--surface); vertical-align: middle; margin-left: 6px; }
 .inspect-btn svg { width: 13px; height: 13px; display: block; }
 .inspect { position: absolute; inset: 0; z-index: 420; }
-.inspect-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.82); }
-.inspect-stage { position: absolute; inset: 0; display: grid; place-items: center; }
+.inspect-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.82); pointer-events: none; }
+.inspect-stage { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; }
+.inspect-pan { transform-origin: center; will-change: transform; }
+.inspect-zoom { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; flex-direction: column; gap: 8px; }
+.iz-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(20,20,28,.92); border: 1px solid var(--border-strong); color: var(--gold); font-size: 24px; font-weight: 700; line-height: 1; display: grid; place-items: center; box-shadow: 0 3px 10px rgba(0,0,0,.5); }
+.iz-btn:active { background: rgba(240,196,105,.2); }
 .inspect-x { position: absolute; top: 12px; right: 12px; z-index: 2; width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: #1a1206; display: grid; place-items: center; box-shadow: 0 3px 10px rgba(0,0,0,.5); }
 .inspect-x svg { width: 18px; height: 18px; display: block; }
