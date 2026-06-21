@@ -993,11 +993,14 @@ function stepperHTML(v, val, step, min, max, unit) {
       <button class="step-btn big" data-d="${step}" aria-label="plus ${step}">»</button>
     </div>`;
 }
-function swatchHTML(v, val) {
-  return `<button class="swatch" data-var="${v}" data-val="${val}">
+function swatchHTML(v, val, layer) {
+  return `<button class="swatch" data-var="${v}" data-val="${val}"${layer ? ' data-layer="1"' : ""}>
       <span class="swatch-chip"><span style="background:${val}"></span></span>
       <span class="swatch-val">${val}</span></button>`;
 }
+/* A bare colour is illegal in a non-final CSS background layer, so colours bound
+ * to a background layer are coerced to a (degenerate) gradient when applied. */
+function asImage(v) { return /gradient\(/i.test(v) ? v : `linear-gradient(${v}, ${v})`; }
 const FONT_OPTS = [
   { v: "var(--font-display)", l: "Display" },
   { v: "system-ui, sans-serif", l: "System" },
@@ -1026,7 +1029,7 @@ function radiusRow(it) {
 function controlRow(it) {
   if (it.type === "radius") return radiusRow(it);
   let ctrl;
-  if (it.type === "color") ctrl = swatchHTML(it.k, it.val);
+  if (it.type === "color") ctrl = swatchHTML(it.k, it.val, it.layer);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit);
@@ -1074,7 +1077,8 @@ function wireGroupControls(root, applyVar) {
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
     openColorPicker(sw.dataset.val, (val) => {
       sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
-      sw.querySelector(".swatch-val").textContent = val; applyVar(sw.dataset.var, val);
+      sw.querySelector(".swatch-val").textContent = val;
+      applyVar(sw.dataset.var, sw.dataset.layer ? asImage(val) : val);
     })));
   root.querySelectorAll(".st-select").forEach((sel) =>
     sel.addEventListener("change", () => applyVar(sel.dataset.var, sel.value)));
@@ -1111,7 +1115,7 @@ function wireGroupControls(root, applyVar) {
       const sel = ctl.querySelector(":scope > .st-select");
       const sh = ctl.querySelector(":scope > .shadow-btn");
       if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + (step.dataset.unit ?? "px")); }
-      else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, def); }
+      else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, sw.dataset.layer ? asImage(def) : def); }
       else if (sel) { sel.value = def; applyVar(sel.dataset.var, def); }
       else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
     });
@@ -1569,9 +1573,10 @@ const TAB_STATES = {
 function tabGroups(prefix, cfg) {
   const d = cfg.d;
   const tab = [
-    { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill },
-    { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg },
-    { k: `--tab-${prefix}-outline`, label: "Outline", type: "color", val: d.outline },
+    { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill, layer: true },
+    { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg, layer: true },
+    { k: `--tab-${prefix}-outline`, label: "Outline colour", type: "color", val: d.outline, layer: true },
+    { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: 1.5, step: 0.5, min: 0 },
     { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
   ];
   if (cfg.dim) {
@@ -1589,6 +1594,8 @@ function tabGroups(prefix, cfg) {
     { name: "Tab", items: tab },
     { name: "Icon", items: [
       { k: `--tab-${prefix}-icon`, label: "Icon colour", type: "color", val: d.icon },
+      { k: `--tab-${prefix}-icon-ol-col`, label: "Icon outline", type: "color", val: "transparent" },
+      { k: `--tab-${prefix}-icon-ol-w`, label: "Icon outline width", val: 0, step: 0.5, min: 0 },
       { k: `--tab-${prefix}-icon-shadow`, label: "Icon shadow", type: "shadow", def: d.iconShadow },
     ] },
     { name: "Label", items: [
