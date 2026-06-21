@@ -1029,12 +1029,16 @@ function radiusRow(it) {
 function controlRow(it) {
   if (it.type === "radius") return radiusRow(it);
   let ctrl;
+  // Colours & shadows can be switched off entirely (off = transparent / no shadow).
+  const toggleable = it.type === "color" || it.type === "shadow";
+  const startOff = !!it.off;
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val, it.layer);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit);
   const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
-  return `<div class="ctl"${def}><span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
+  const tog = toggleable ? `<input type="checkbox" class="ctl-tog"${startOff ? "" : " checked"} aria-label="Enable ${it.label}">` : "";
+  return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
 function groupHTML(g, open) {
   return `<section class="st-sec ${open ? "" : "collapsed"}">
@@ -1106,6 +1110,12 @@ function wireGroupControls(root, applyVar) {
       btn.addEventListener("click", () => { quadSteps[i].querySelector(".step-val").value = def; apply(); }));
   });
   root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
+  // Enable/disable toggles (colours & shadows). Off = transparent / no shadow.
+  root.querySelectorAll(".ctl-tog").forEach((cb) => {
+    const ctl = cb.closest(".ctl");
+    if (cb.checked === false) applyCtlToggle(ctl, false, applyVar);
+    cb.addEventListener("change", () => { ctl.classList.toggle("off", !cb.checked); applyCtlToggle(ctl, cb.checked, applyVar); });
+  });
   // per-property reset (every standard .ctl row carries its default value)
   root.querySelectorAll(".ctl:not(.ctl-radius) > [data-reset]").forEach((btn) => {
     const ctl = btn.closest(".ctl"), def = ctl.dataset.default;
@@ -1126,11 +1136,12 @@ function wireGroupControls(root, applyVar) {
  * default are skipped (so the export only carries what actually changed). */
 function readGroupValues(groups, changedOnly = true) {
   const out = {};
+  const isOff = (sel) => { const c = app.querySelector(sel)?.closest(".ctl"); return !!c && c.classList.contains("off"); };
   groups.forEach((g) => g.items.forEach((it) => {
     let cur, def;
-    if (it.type === "color") { cur = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
+    if (it.type === "color") { cur = isOff(`.swatch[data-var="${it.k}"]`) ? "transparent" : app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
     else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
-    else if (it.type === "shadow") { def = it.def || "none"; cur = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def; }
+    else if (it.type === "shadow") { def = it.def || "none"; cur = isOff(`.shadow-btn[data-var="${it.k}"]`) ? "none" : (SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def); }
     else if (it.type === "radius") {
       const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
       cur = rc.classList.contains("expanded")
@@ -1142,6 +1153,21 @@ function readGroupValues(groups, changedOnly = true) {
     if (!changedOnly || cur !== def) out[it.k] = cur;
   }));
   return out;
+}
+
+/* Apply a control's enabled/disabled state (off = transparent fill / no shadow). */
+function applyCtlToggle(ctl, on, applyVar) {
+  const sw = ctl.querySelector(".swatch");
+  const sh = ctl.querySelector(".shadow-btn");
+  if (sw) {
+    const val = on ? sw.dataset.val : "transparent";
+    applyVar(sw.dataset.var, sw.dataset.layer ? asImage(val) : val);
+  } else if (sh) {
+    const v = sh.dataset.var;
+    if (!on) applyVar(v, "none");
+    else if (SHADOWS[v]) applyVar(v, shadowCss(SHADOWS[v]));
+    else applyVar(v, "");   // re-enabled, untouched → fall back to the CSS default
+  }
 }
 
 function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
@@ -1563,12 +1589,12 @@ const DARK_FILL = "linear-gradient(180deg, #16161f, #0e0f16)";
 const ICON_GOLD = "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)";
 const TAB_STATES = {
   active: { title: "Active Tab", key: "ActiveTab", prefix: "act", cls: "tab active",
-    d: { fill: "linear-gradient(180deg, rgba(14,5,94,0.64) 0%, #14151d 100%)", bg: GOLD_GRAD, outline: GOLD_GRAD,
-         icon: "radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)", iconShadow: "0px 6px 14px rgba(0, 0, 0, 0.55)" } },
+    d: { fill: "linear-gradient(180deg, rgba(14,5,94,0.64) 0%, #14151d 100%)", bg: GOLD_GRAD, outline: GOLD_GRAD, outlineW: 1.5,
+         icon: "radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)", iconShadow: "0px 6px 14px rgba(0, 0, 0, 0.55)", label: "#f0c469" } },
   idle: { title: "Idle Tab", key: "IdleTab", prefix: "idle", cls: "tab",
-    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, icon: ICON_GOLD, iconShadow: "none" } },
+    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, outlineW: 1.5, icon: ICON_GOLD, iconShadow: "none", label: "#f0c469" } },
   dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", dim: true,
-    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, icon: ICON_GOLD, iconShadow: "none" } },
+    d: { fill: "#3f3d4a", bg: "#1f1fba", outline: "#2c2b32", outlineW: 2.5, opacity: 1, icon: "#2c2b32", iconShadow: "none", label: "#2c2b32" } },
 };
 function tabGroups(prefix, cfg) {
   const d = cfg.d;
@@ -1576,11 +1602,11 @@ function tabGroups(prefix, cfg) {
     { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill, layer: true },
     { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg, layer: true },
     { k: `--tab-${prefix}-outline`, label: "Outline colour", type: "color", val: d.outline, layer: true },
-    { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: 1.5, step: 0.5, min: 0 },
+    { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: d.outlineW, step: 0.5, min: 0 },
     { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
   ];
   if (cfg.dim) {
-    tab.push({ k: "--tab-dim-opacity", label: "Opacity", val: 0.5, step: 0.05, min: 0, max: 1, unit: "" });
+    tab.push({ k: "--tab-dim-opacity", label: "Opacity", val: d.opacity, step: 0.05, min: 0, max: 1, unit: "" });
     tab.push({ k: "--tab-dim-scale", label: "Scale", val: 0.95, step: 0.05, min: 0.5, max: 1.2, unit: "" });
   }
   return [
@@ -1599,7 +1625,7 @@ function tabGroups(prefix, cfg) {
       { k: `--tab-${prefix}-icon-shadow`, label: "Icon shadow", type: "shadow", def: d.iconShadow },
     ] },
     { name: "Label", items: [
-      { k: `--tab-${prefix}-label`, label: "Label colour", type: "color", val: "#f0c469" },
+      { k: `--tab-${prefix}-label`, label: "Label colour", type: "color", val: d.label },
       { k: `--tab-${prefix}-label-shadow`, label: "Label shadow", type: "shadow" },
     ] },
   ];
