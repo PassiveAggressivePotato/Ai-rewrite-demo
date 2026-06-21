@@ -983,13 +983,14 @@ function parseValue(str) {
 }
 
 /* ---- control builders + shadow sub-editor ---- */
-function stepperHTML(v, val, step, min, max, unit) {
+function stepperHTML(v, val, step, min, max, unit, fine, noauto) {
   const u = unit == null ? "px" : unit;
-  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-min="${min}"${max != null ? ` data-max="${max}"` : ""} data-unit="${u}">
+  const f = fine == null ? 0.1 : fine;
+  return `<div class="step"${v ? ` data-var="${v}"` : ""}${noauto ? " data-noauto" : ""} data-min="${min}"${max != null ? ` data-max="${max}"` : ""} data-unit="${u}">
       <button class="step-btn big" data-d="${-step}" aria-label="minus ${step}">«</button>
-      <button class="step-btn" data-d="-0.1" aria-label="minus 0.1">‹</button>
+      <button class="step-btn" data-d="${-f}" aria-label="minus ${f}">‹</button>
       <input class="step-val" type="text" inputmode="decimal" value="${val}">
-      <button class="step-btn" data-d="0.1" aria-label="plus 0.1">›</button>
+      <button class="step-btn" data-d="${f}" aria-label="plus ${f}">›</button>
       <button class="step-btn big" data-d="${step}" aria-label="plus ${step}">»</button>
     </div>`;
 }
@@ -1028,6 +1029,8 @@ function radiusRow(it) {
 }
 function controlRow(it) {
   if (it.type === "radius") return radiusRow(it);
+  // "lock" = a plain checkbox (e.g. lock aspect), no token, no reset.
+  if (it.type === "lock") return `<div class="ctl"><span class="ctl-l">${it.label}</span><input type="checkbox" class="scale-lock"${it.on ? " checked" : ""} aria-label="${it.label}"></div>`;
   let ctrl;
   // Colours & shadows can be switched off entirely (off = transparent / no shadow).
   const toggleable = it.type === "color" || it.type === "shadow";
@@ -1035,7 +1038,7 @@ function controlRow(it) {
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val, it.layer);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
-  else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit);
+  else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit, it.fine, it.noauto);
   const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
   const tog = toggleable ? `<input type="checkbox" class="ctl-tog"${startOff ? "" : " checked"} aria-label="Enable ${it.label}">` : "";
   return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
@@ -1066,17 +1069,20 @@ function attachStepper(step, onValue) {
 }
 
 const SHADOWS = {};
-const SHADOW_DEFAULT = { color: "#000000", transparency: 45, angle: 90, distance: 6, blur: 14 };
+const SHADOW_DEFAULT = { color: "rgba(0,0,0,0.55)", angle: 90, distance: 6, blur: 14, scale: 1 };
+/* Opacity comes from the colour's own alpha; `scale` multiplies offset + blur
+ * (an overall size multiplier that works for box- and drop-shadows alike). */
 function shadowCss(s) {
+  const sc = s.scale == null ? 1 : s.scale;
   const r = (s.angle * Math.PI) / 180;
-  const ox = +(Math.cos(r) * s.distance).toFixed(1), oy = +(Math.sin(r) * s.distance).toFixed(1);
-  const c = parseColor(s.color), a = 1 - Math.max(0, Math.min(100, s.transparency)) / 100;
-  return `${ox}px ${oy}px ${Math.max(0, s.blur)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
+  const ox = +(Math.cos(r) * s.distance * sc).toFixed(1), oy = +(Math.sin(r) * s.distance * sc).toFixed(1);
+  const c = parseColor(s.color), a = c.a == null ? 1 : c.a;
+  return `${ox}px ${oy}px ${Math.max(0, s.blur * sc).toFixed(1)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
 }
 function wireGroupControls(root, applyVar) {
   root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
     h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
-  root.querySelectorAll(".st-controls .step[data-var]").forEach((step) =>
+  root.querySelectorAll(".st-controls .step[data-var]:not([data-noauto])").forEach((step) =>
     attachStepper(step, (n) => applyVar(step.dataset.var, n + (step.dataset.unit ?? "px"))));
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
     openColorPicker(sw.dataset.val, (val) => {
@@ -1138,10 +1144,11 @@ function readGroupValues(groups, changedOnly = true) {
   const out = {};
   const isOff = (sel) => { const c = app.querySelector(sel)?.closest(".ctl"); return !!c && c.classList.contains("off"); };
   groups.forEach((g) => g.items.forEach((it) => {
-    let cur, def;
-    if (it.type === "color") { cur = isOff(`.swatch[data-var="${it.k}"]`) ? "transparent" : app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
+    if (it.type === "lock") return;
+    let cur, def, off = false;
+    if (it.type === "color") { off = isOff(`.swatch[data-var="${it.k}"]`); cur = off ? "transparent" : app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
     else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
-    else if (it.type === "shadow") { def = it.def || "none"; cur = isOff(`.shadow-btn[data-var="${it.k}"]`) ? "none" : (SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def); }
+    else if (it.type === "shadow") { off = isOff(`.shadow-btn[data-var="${it.k}"]`); def = it.def || "none"; cur = off ? "none" : (SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def); }
     else if (it.type === "radius") {
       const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
       cur = rc.classList.contains("expanded")
@@ -1150,7 +1157,8 @@ function readGroupValues(groups, changedOnly = true) {
       def = it.val + "px";
     }
     else { const u = it.unit == null ? "px" : it.unit; cur = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + u; def = it.val + u; }
-    if (!changedOnly || cur !== def) out[it.k] = cur;
+    // Disabled (unticked) controls are always emitted so the "off" reaches us.
+    if (off || !changedOnly || cur !== def) out[it.k] = cur;
   }));
   return out;
 }
@@ -1164,7 +1172,9 @@ function applyCtlToggle(ctl, on, applyVar) {
     applyVar(sw.dataset.var, sw.dataset.layer ? asImage(val) : val);
   } else if (sh) {
     const v = sh.dataset.var;
-    if (!on) applyVar(v, "none");
+    // A no-op shadow that's valid in box-shadow, text-shadow AND drop-shadow()
+    // (drop-shadow(none) is invalid and would void a whole filter chain).
+    if (!on) applyVar(v, "0 0 0 transparent");
     else if (SHADOWS[v]) applyVar(v, shadowCss(SHADOWS[v]));
     else applyVar(v, "");   // re-enabled, untouched → fall back to the CSS default
   }
@@ -1174,8 +1184,11 @@ function closeShadowEditor() { app.querySelector(".shed")?.remove(); }
 function openShadowEditor(v, applyVar) {
   closeShadowEditor();
   const s = SHADOWS[v] || (SHADOWS[v] = { ...SHADOW_DEFAULT });
-  const stepF = (label, f, step, min, max) =>
-    `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn big" data-d="${-step}">«</button><button class="step-btn" data-d="-0.1">‹</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-d="0.1">›</button><button class="step-btn big" data-d="${step}">»</button></div></div>`;
+  if (s.scale == null) s.scale = 1;
+  const stepF = (label, f, step, min, max, fine) => {
+    const d = fine == null ? 0.1 : fine;
+    return `<div class="ctl"><span class="ctl-l">${label}</span><div class="step" data-field="${f}" data-min="${min}"${max != null ? ` data-max="${max}"` : ""}><button class="step-btn big" data-d="${-step}">«</button><button class="step-btn" data-d="${-d}">‹</button><input class="step-val" type="text" inputmode="decimal" value="${s[f]}"><button class="step-btn" data-d="${d}">›</button><button class="step-btn big" data-d="${step}">»</button></div></div>`;
+  };
   const wrap = document.createElement("div");
   wrap.className = "shed";
   wrap.innerHTML = `
@@ -1186,7 +1199,7 @@ function openShadowEditor(v, applyVar) {
       ${stepF("Angle°", "angle", 5, -100000)}
       ${stepF("Distance", "distance", 1, 0)}
       ${stepF("Blur", "blur", 1, 0)}
-      ${stepF("Transparency %", "transparency", 5, 0, 100)}
+      ${stepF("Scale", "scale", 0.1, 0, null, 0.05)}
     </div>`;
   app.appendChild(wrap);
   const upd = () => applyVar(v, shadowCss(s));
@@ -1199,6 +1212,13 @@ function openShadowEditor(v, applyVar) {
   wrap.querySelector(".cp-done").addEventListener("click", closeShadowEditor);
   upd();
 }
+/* Brand swatches shown in the colour picker (current :root values, else these). */
+const BRAND_COL = [
+  { k: "--gold-1", val: "#f0c469", label: "Gold 1" },
+  { k: "--gold-2", val: "#c98f30", label: "Gold 2" },
+  { k: "--teal-1", val: "#4fd0c8", label: "Teal 1" },
+  { k: "--teal-2", val: "#2c97a8", label: "Teal 2" },
+];
 function closeColorPicker() { app.querySelector(".cp")?.remove(); }
 function openColorPicker(initial, onChange) {
   closeColorPicker();
@@ -1236,6 +1256,8 @@ function openColorPicker(initial, onChange) {
       </div>
       <div class="cp-sv"><div class="cp-sv-thumb"></div></div>
       <div class="cp-row"><span>Hue</span><input class="cp-hue" type="range" min="0" max="360" step="1"></div>
+      <div class="cp-row"><span>Sat</span><input class="cp-sat" type="range" min="0" max="100" step="1"></div>
+      <div class="cp-row"><span>Bright</span><input class="cp-bri" type="range" min="0" max="100" step="1"></div>
       <div class="cp-row"><span>Alpha</span><input class="cp-alpha" type="range" min="0" max="100" step="1"></div>
       <div class="cp-fields">
         <label class="cp-f cp-f-hex">HEX<input class="cp-hex" type="text" autocomplete="off" spellcheck="false"></label>
@@ -1250,6 +1272,7 @@ function openColorPicker(initial, onChange) {
   app.appendChild(wrap);
   const $ = (s) => wrap.querySelector(s);
   const sv = $(".cp-sv"), thumb = $(".cp-sv-thumb"), hue = $(".cp-hue"), alpha = $(".cp-alpha");
+  const sat = $(".cp-sat"), bri = $(".cp-bri");
   const hex = $(".cp-hex"), Ri = $(".cp-r"), Gi = $(".cp-g"), Bi = $(".cp-b"), Ai = $(".cp-a");
   const gradBox = $(".cp-grad"), gradOn = $(".cp-grad-on");
 
@@ -1283,6 +1306,7 @@ function openColorPicker(initial, onChange) {
     sv.style.setProperty("--cp-hue", `hsl(${h} 100% 50%)`);
     thumb.style.left = (s * 100) + "%"; thumb.style.top = ((1 - v) * 100) + "%"; thumb.style.background = hx;
     hue.value = Math.round(h); alpha.value = Math.round(a * 100);
+    sat.value = Math.round(s * 100); bri.value = Math.round(v * 100);
     alpha.style.setProperty("--cp-solid", hx);
     hex.value = hx; Ri.value = Math.round(r); Gi.value = Math.round(g); Bi.value = Math.round(b); Ai.value = Math.round(a * 100);
     if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); $(".cp-grad-prev").style.background = gradCss(grad); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; }
@@ -1299,6 +1323,8 @@ function openColorPicker(initial, onChange) {
   sv.addEventListener("pointerdown", (e) => { sv.setPointerCapture(e.pointerId); svMove(e); sv.onpointermove = svMove; });
   sv.addEventListener("pointerup", () => { sv.onpointermove = null; });
   hue.addEventListener("input", () => { h = +hue.value; render(); });
+  sat.addEventListener("input", () => { s = +sat.value / 100; render(); });
+  bri.addEventListener("input", () => { v = +bri.value / 100; render(); });
   alpha.addEventListener("input", () => { a = +alpha.value / 100; render(); });
   hex.addEventListener("change", () => { loadColor(hex.value); render(); });
   [Ri, Gi, Bi].forEach((i) => i.addEventListener("input", fromRgb));
@@ -1503,10 +1529,10 @@ function renderStudioPoster() {
         </div>
         <div class="st-stage st-compare">
           ${cycleArrows()}
-          <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before</figcaption></figure>
+          <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
           <figure class="st-cmp">
             <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
-            <figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
+            <figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
           </figure>
         </div>
         <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
@@ -1522,7 +1548,7 @@ function renderStudioPoster() {
   const cands = [app.querySelector("#cand")].filter(Boolean);
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
-  app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
   wireCycle(CATALOG.length, Math.max(0, CATALOG.indexOf(sample)), (i) => {
     const it = CATALOG[i], num = scoreItem(it).synth ?? "—", bg = posterBg(it);
     ["#cur", "#cand"].forEach((sel) => {
@@ -1587,37 +1613,40 @@ const GOLD_GRAD = "linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%,
 const FAINT_GOLD = "linear-gradient(160deg, rgba(243,205,118,0.55), rgba(140,100,40,0.22))";
 const DARK_FILL = "linear-gradient(180deg, #16161f, #0e0f16)";
 const ICON_GOLD = "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)";
+const ACT_FILL = "radial-gradient(circle at 50% 50%, #222b35 0%, #222b35 56%, #161b1f 100%)";
+const ACT_OUTLINE = "linear-gradient(164deg, #dfb24b 0%, #fff0cf 90%)";
+const ACT_ICON = "radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)";
 const TAB_STATES = {
-  active: { title: "Active Tab", key: "ActiveTab", prefix: "act", cls: "tab active",
-    d: { fill: "linear-gradient(180deg, rgba(14,5,94,0.64) 0%, #14151d 100%)", bg: GOLD_GRAD, outline: GOLD_GRAD, outlineW: 1.5,
-         icon: "radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)", iconShadow: "0px 6px 14px rgba(0, 0, 0, 0.55)", label: "#f0c469" } },
-  idle: { title: "Idle Tab", key: "IdleTab", prefix: "idle", cls: "tab",
-    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, outlineW: 1.5, icon: ICON_GOLD, iconShadow: "none", label: "#f0c469" } },
-  dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", dim: true,
-    d: { fill: "#3f3d4a", bg: "#1f1fba", outline: "#2c2b32", outlineW: 2.5, opacity: 1, icon: "#2c2b32", iconShadow: "none", label: "#2c2b32" } },
+  active: { title: "Active Tab", key: "ActiveTab", prefix: "act", cls: "tab active", sx: 1.04, sy: 1.04,
+    d: { fill: ACT_FILL, bg: "transparent", outline: ACT_OUTLINE, outlineW: 1.5,
+         icon: ACT_ICON, iconShadow: "0px -5px 15px rgba(206, 164, 81, 1.00)", label: "#ddb75d", labelShadow: "0px 0px 5px rgba(179, 102, 0, 0.55)" } },
+  idle: { title: "Idle Tab", key: "IdleTab", prefix: "idle", cls: "tab", sx: 1, sy: 1,
+    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, outlineW: 1.5, icon: ICON_GOLD, iconShadow: "none", label: "#f0c469", labelShadow: "none" } },
+  dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", sx: 1, sy: 1,
+    d: { fill: "#374a57", bg: "transparent", outline: "#2c3844", outlineW: 2.5, icon: "#1f2933", iconShadow: "none", label: "#1f2933", labelShadow: "none" } },
 };
 function tabGroups(prefix, cfg) {
   const d = cfg.d;
-  const tab = [
-    { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill, layer: true },
-    { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg, layer: true },
-    { k: `--tab-${prefix}-outline`, label: "Outline colour", type: "color", val: d.outline, layer: true },
-    { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: d.outlineW, step: 0.5, min: 0 },
-    { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
-  ];
-  if (cfg.dim) {
-    tab.push({ k: "--tab-dim-opacity", label: "Opacity", val: d.opacity, step: 0.05, min: 0, max: 1, unit: "" });
-    tab.push({ k: "--tab-dim-scale", label: "Scale", val: 0.95, step: 0.05, min: 0.5, max: 1.2, unit: "" });
-  }
   return [
     { name: "Layout", items: [
-      { k: "--tab-radius", label: "Corner radius", type: "radius", val: 20, step: 1, min: 0 },
+      { k: "--tab-radius", label: "Corner radius", type: "radius", val: 15, step: 1, min: 0 },
       { k: "--tab-pad", label: "Vertical padding", val: 14, step: 1, min: 0 },
       { k: "--tab-gap", label: "Icon–label gap", val: 8, step: 1, min: 0 },
       { k: "--tab-icon-size", label: "Icon size", val: 40, step: 1, min: 12 },
       { k: "--tab-label-size", label: "Label size", val: 13, step: 0.5, min: 6 },
     ] },
-    { name: "Tab", items: tab },
+    { name: "Size", items: [
+      { k: `--tab-${prefix}-sx`, label: "Scale X", val: cfg.sx, step: 0.05, min: 0.3, max: 2, unit: "", fine: 0.01, noauto: true },
+      { k: `--tab-${prefix}-sy`, label: "Scale Y", val: cfg.sy, step: 0.05, min: 0.3, max: 2, unit: "", fine: 0.01, noauto: true },
+      { type: "lock", label: "Lock aspect", on: true },
+    ] },
+    { name: "Tab", items: [
+      { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill, layer: true },
+      { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg, layer: true },
+      { k: `--tab-${prefix}-outline`, label: "Outline colour", type: "color", val: d.outline, layer: true },
+      { k: `--tab-${prefix}-outline-w`, label: "Outline width", val: d.outlineW, step: 0.5, min: 0 },
+      { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
+    ] },
     { name: "Icon", items: [
       { k: `--tab-${prefix}-icon`, label: "Icon colour", type: "color", val: d.icon },
       { k: `--tab-${prefix}-icon-ol-col`, label: "Icon outline", type: "color", val: "transparent" },
@@ -1626,7 +1655,7 @@ function tabGroups(prefix, cfg) {
     ] },
     { name: "Label", items: [
       { k: `--tab-${prefix}-label`, label: "Label colour", type: "color", val: d.label },
-      { k: `--tab-${prefix}-label-shadow`, label: "Label shadow", type: "shadow" },
+      { k: `--tab-${prefix}-label-shadow`, label: "Label shadow", type: "shadow", def: d.labelShadow },
     ] },
   ];
 }
@@ -1645,8 +1674,8 @@ function renderStudioTab(state) {
         </div>
         <div class="st-stage st-compare">
           ${cycleArrows()}
-          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcur")}<figcaption>Before</figcaption></figure>
-          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcand")}<figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcur")}<figcaption>Before <button class="inspect-btn" data-inspect="#tabcur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcand")}<figcaption>After <button class="inspect-btn" data-inspect="#tabcand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
         </div>
         <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
         <section class="st-sec">
@@ -1660,7 +1689,14 @@ function renderStudioTab(state) {
   const cand = app.querySelector("#tabcand");
   const applyVar = (v, val) => cand.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
-  app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#tabcand"));
+  // Scale X/Y with optional aspect lock (these steppers are data-noauto).
+  const sxStep = app.querySelector(`.step[data-var="--tab-${cfg.prefix}-sx"]`);
+  const syStep = app.querySelector(`.step[data-var="--tab-${cfg.prefix}-sy"]`);
+  const lock = app.querySelector(".scale-lock");
+  const setVal = (step, n) => { step.querySelector(".step-val").value = n; };
+  attachStepper(sxStep, (n) => { applyVar(sxStep.dataset.var, n); if (lock && lock.checked) { setVal(syStep, n); applyVar(syStep.dataset.var, n); } });
+  attachStepper(syStep, (n) => { applyVar(syStep.dataset.var, n); if (lock && lock.checked) { setVal(sxStep, n); applyVar(sxStep.dataset.var, n); } });
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
   wireCycle(CATEGORIES.length, start, (i) => {
     const c = CATEGORIES[i];
     ["#tabcur", "#tabcand"].forEach((sel) => {

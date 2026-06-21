@@ -239,18 +239,10 @@ body::before {
 /* Category icons rendered as masks — colour comes from `background` (gold by
  * default), the SVG only supplies the shape; aspect-ratio keeps proportions. */
 .cat-ic {
-  position: relative; z-index: 0; display: block;
+  display: block;
   -webkit-mask: var(--cat-src) center / contain no-repeat;
           mask: var(--cat-src) center / contain no-repeat;
   background: var(--icon-col, var(--icon-default));
-}
-/* Icon outline: the same silhouette, slightly larger, drawn behind in the outline
- * colour (width 0 / transparent by default = no outline). */
-.cat-ic::before {
-  content: ""; position: absolute; inset: calc(-1 * var(--ic-ol-w, 0px)); z-index: -1;
-  -webkit-mask: var(--cat-src) center / contain no-repeat;
-          mask: var(--cat-src) center / contain no-repeat;
-  background: var(--ic-ol-col, transparent);
 }
 .cat-movie { --cat-src: url("assets/icons/movie.svg"); aspect-ratio: 1215 / 1146; }
 .cat-tv    { --cat-src: url("assets/icons/tv.svg");    aspect-ratio: 1040 / 840; }
@@ -278,9 +270,10 @@ body::before {
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
   padding: var(--tab-pad, 14px) 5px;
-  border-radius: var(--tab-radius, 20px);
+  border-radius: var(--tab-radius, 15px);
   color: var(--gold);
   border: var(--tab-idle-outline-w, 1.5px) solid transparent;
+  transform: scale(var(--tab-idle-sx, 1), var(--tab-idle-sy, 1));
   /* Three stacked layers: fill (front) over background over outline (border).
    * Every layer must be an <image> — a bare colour is illegal in a non-final
    * background layer, so "no fill" is a transparent gradient, not `transparent`. */
@@ -294,42 +287,58 @@ body::before {
 /* Fixed-height icon zone: every icon is vertically centred within it, so all the
  * icons line up horizontally regardless of height; the icon shadow lives here (on
  * the zone, not the masked icon, so it actually renders). */
-.tab .tab-icon { height: var(--tab-icon-size, 40px); display: flex; align-items: center; justify-content: center; line-height: 0; filter: drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent)); }
-.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); --ic-ol-w: var(--tab-idle-icon-ol-w, 0px); --ic-ol-col: var(--tab-idle-icon-ol-col, transparent); transition: transform .25s; }
+/* Icon outline = 8 hard drop-shadow copies of the icon's silhouette, applied on
+ * the (unmasked) icon zone so they aren't clipped by the icon's own mask. The
+ * silhouette respects holes, so the outline traces the holes too. Width 0 /
+ * transparent = no outline. The soft icon shadow is chained after it. */
+.tab .tab-icon {
+  height: var(--tab-icon-size, 40px); display: flex; align-items: center; justify-content: center; line-height: 0;
+  --ic-ol-w: var(--tab-idle-icon-ol-w, 0px); --ic-ol-col: var(--tab-idle-icon-ol-col, transparent);
+  --ic-outline:
+    drop-shadow(var(--ic-ol-w,0px) 0 0 var(--ic-ol-col,transparent))
+    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) 0 0 var(--ic-ol-col,transparent))
+    drop-shadow(0 var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
+    drop-shadow(0 calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent))
+    drop-shadow(var(--ic-ol-w,0px) var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
+    drop-shadow(var(--ic-ol-w,0px) calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent))
+    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) var(--ic-ol-w,0px) 0 var(--ic-ol-col,transparent))
+    drop-shadow(calc(-1 * var(--ic-ol-w,0px)) calc(-1 * var(--ic-ol-w,0px)) 0 var(--ic-ol-col,transparent));
+  filter: var(--ic-outline) drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent));
+}
+.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transition: transform .25s; }
 .tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); }
 .tab:hover { transform: translateY(-1px); }
 
 /* Inactive: a non-selected tab while another is active — faded + shrunk.
  * (.tab.is-dim is the same look applied directly, for the Studio preview.) */
 .tabs.has-sel .tab:not(.active), .tab.is-dim {
-  opacity: var(--tab-dim-opacity, 1);
-  transform: scale(var(--tab-dim-scale, .95));
+  transform: scale(var(--tab-dim-sx, 1), var(--tab-dim-sy, 1));
   border-width: var(--tab-dim-outline-w, 2.5px);
   background:
-    var(--tab-dim-fill, linear-gradient(#3f3d4a, #3f3d4a)) padding-box,
-    var(--tab-dim-bg, linear-gradient(#1f1fba, #1f1fba)) padding-box,
-    var(--tab-dim-outline, linear-gradient(#2c2b32, #2c2b32)) border-box;
+    var(--tab-dim-fill, linear-gradient(#374a57, #374a57)) padding-box,
+    var(--tab-dim-bg, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
+    var(--tab-dim-outline, linear-gradient(#2c3844, #2c3844)) border-box;
   box-shadow: var(--tab-dim-shadow, none);
 }
-.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, #2c2b32); --ic-ol-w: var(--tab-dim-icon-ol-w, 0px); --ic-ol-col: var(--tab-dim-icon-ol-col, transparent); }
-.tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { filter: drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
-.tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, #2c2b32); text-shadow: var(--tab-dim-label-shadow, none); }
+.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, #1f2933); }
+.tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { --ic-ol-w: var(--tab-dim-icon-ol-w, 0px); --ic-ol-col: var(--tab-dim-icon-ol-col, transparent); filter: var(--ic-outline) drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
+.tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, #1f2933); text-shadow: var(--tab-dim-label-shadow, none); }
 
 /* Active (selected) tab. */
 .tab.active {
   color: var(--text);
   border-width: var(--tab-act-outline-w, 1.5px);
   background:
-    var(--tab-act-fill, linear-gradient(180deg, rgba(14, 5, 94, 0.64) 0%, #14151d 100%)) padding-box,
-    var(--tab-act-bg, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) padding-box,
-    var(--tab-act-outline, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) border-box;
-  transform: scale(1.04);
+    var(--tab-act-fill, radial-gradient(circle at 50% 50%, #222b35 0%, #222b35 56%, #161b1f 100%)) padding-box,
+    var(--tab-act-bg, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
+    var(--tab-act-outline, linear-gradient(164deg, #dfb24b 0%, #fff0cf 90%)) border-box;
+  transform: scale(var(--tab-act-sx, 1.04), var(--tab-act-sy, 1.04));
   position: relative; z-index: 3;
   box-shadow: var(--tab-act-shadow, none);
 }
-.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)); --ic-ol-w: var(--tab-act-icon-ol-w, 0px); --ic-ol-col: var(--tab-act-icon-ol-col, transparent); }
-.tab.active .tab-icon { filter: drop-shadow(var(--tab-act-icon-shadow, 0px 6px 14px rgba(0, 0, 0, 0.55))); }
-.tab.active .tab-label { color: var(--tab-act-label, var(--gold)); text-shadow: var(--tab-act-label-shadow, none); }
+.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)); }
+.tab.active .tab-icon { --ic-ol-w: var(--tab-act-icon-ol-w, 0px); --ic-ol-col: var(--tab-act-icon-ol-col, transparent); filter: var(--ic-outline) drop-shadow(var(--tab-act-icon-shadow, 0px -5px 15px rgba(206, 164, 81, 1))); }
+.tab.active .tab-label { color: var(--tab-act-label, #ddb75d); text-shadow: var(--tab-act-label-shadow, 0px 0px 5px rgba(179, 102, 0, 0.55)); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
 .tabs .tab:first-child.active { transform-origin: left center; }
 .tabs .tab:last-child.active { transform-origin: right center; }
@@ -914,7 +923,7 @@ body::before {
 
 /* Before/After previews stay pinned to the top while you scroll the controls. */
 .st-stage {
-  position: sticky; top: 0; z-index: 30;
+  position: sticky; top: 0; z-index: 410;   /* above the shadow/colour sheets (400/402), below inspect (420) */
   overflow: hidden; border-radius: var(--radius-sm); margin: 0 -2px 14px; padding: 16px 10px;
   border: 1px solid var(--border);
   background:
@@ -979,7 +988,7 @@ body::before {
 .shadow-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
 .shadow-btn:active { background: rgba(240,196,105,.16); }
 /* Enable/disable toggle (colours & shadows). Off dims + locks the control. */
-.ctl-tog { flex: none; width: 17px; height: 17px; margin: 0; accent-color: var(--gold); cursor: pointer; }
+.ctl-tog, .scale-lock { flex: none; width: 17px; height: 17px; margin: 0; accent-color: var(--gold); cursor: pointer; }
 .ctl.off .ctl-l, .ctl.off .swatch, .ctl.off .shadow-btn { opacity: .4; }
 .ctl.off .swatch, .ctl.off .shadow-btn { pointer-events: none; }
 /* Per-property reset button (sits to the right of every adjuster). */
@@ -1084,8 +1093,11 @@ body::before {
 .cp-sv-thumb { position: absolute; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); transform: translate(-50%,-50%); pointer-events: none; }
 .cp-row { display: grid; grid-template-columns: 46px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
 .cp-row span { font-size: 11px; color: var(--text-dim); }
-.cp-hue, .cp-alpha { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; }
+.cp-hue, .cp-alpha, .cp-sat, .cp-bri { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; }
 .cp-hue { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+.cp-sat { background: linear-gradient(90deg, #808080, var(--cp-hue, #f00)); }
+.cp-bri { background: linear-gradient(90deg, #000, var(--cp-hue, #f00)); }
+.cp-sat::-webkit-slider-thumb, .cp-bri::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,.4); cursor: pointer; }
 .cp-alpha {
   background:
     linear-gradient(90deg, transparent, var(--cp-solid,#fff)),
