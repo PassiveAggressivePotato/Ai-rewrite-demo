@@ -255,8 +255,8 @@ body::before {
 .prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: 24px 0 12px; letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
 .tab {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 16px 5px 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 5px;
   border-radius: 16px;
   color: var(--gold);
   /* Gold gradient outline (drawn as a border-box gradient under a solid fill). */
@@ -266,7 +266,10 @@ body::before {
     linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22)) border-box;
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
-.tab .tab-icon { line-height: 0; }
+/* Fixed-height icon zone: every icon is vertically centred within it, so all the
+ * icons line up horizontally regardless of their individual heights — and the
+ * labels below then share a common baseline. */
+.tab .tab-icon { height: 58px; display: flex; align-items: center; justify-content: center; line-height: 0; }
 .tab .cat-ic { width: 60px; height: auto; display: block; transition: filter .25s, transform .25s; }
 .tab .tab-label { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); }
 /* No selection yet → every tab bright. Once one is selected the others recede
