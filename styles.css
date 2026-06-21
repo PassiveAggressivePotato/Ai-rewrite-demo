@@ -276,7 +276,7 @@ body::before {
 }
 .tabs.has-sel .tab:not(.active) .cat-ic { filter: brightness(.7) saturate(.8); }
 .tab:hover { transform: translateY(-1px); }
-/* Active tab: bright, glowing, metallic gold gradient outline. */
+/* Active tab: metallic gold gradient outline + a small, subtle glow behind the icon. */
 .tab.active {
   color: var(--text);
   background:
@@ -284,10 +284,9 @@ body::before {
     linear-gradient(150deg, #fff0cf, #f3cd76 45%, #b9822b) border-box;
   transform: scale(1.04);
   position: relative; z-index: 3;
-  box-shadow: 0 0 18px -4px rgba(243,205,118,.55), 0 10px 24px -12px rgba(243,205,118,.7);
+  box-shadow: 0 8px 20px -14px rgba(0,0,0,.7);
 }
-.tab.active .cat-ic { transform: scale(1.08); filter: drop-shadow(0 0 7px rgba(243,205,118,.75)); }
-.tab.active .tab-label { text-shadow: 0 0 10px rgba(243,205,118,.45); }
+.tab.active .cat-ic { transform: scale(1.06); filter: drop-shadow(0 0 4px rgba(243,205,118,.4)); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
 .tabs .tab:first-child.active { transform-origin: left center; }
 .tabs .tab:last-child.active { transform-origin: right center; }
