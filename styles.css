@@ -235,7 +235,7 @@ body::before {
   transition: background .18s, filter .18s, opacity .18s;
   filter: grayscale(.7); opacity: .7;
 }
-.hsd-tab .cat-ic { width: 22px; height: 22px; display: block; flex: none; }
+.hsd-tab .cat-ic { width: 26px; height: auto; display: block; flex: none; }
 .hsd-tab:last-child { border-right: none; }
 .hsd-tab.empty { opacity: .3; padding: 0; font-size: 0; }
 .hsd-tab.active { background: rgba(240,196,105,.18); filter: none; opacity: 1; box-shadow: inset 0 -2px 0 var(--gold); }
@@ -267,7 +267,7 @@ body::before {
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
 .tab .tab-icon { line-height: 0; }
-.tab .cat-ic { width: 34px; height: 34px; display: block; transition: filter .25s, transform .25s; }
+.tab .cat-ic { width: 60px; height: auto; display: block; transition: filter .25s, transform .25s; }
 .tab .tab-label { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); }
 /* No selection yet → every tab bright. Once one is selected the others recede
  * (visible, but dimmed and shrunk) — exactly as before. */
@@ -525,8 +525,8 @@ body::before {
 .hero-fallback { font-size: 34px; }
 .hero-poster.has-art .hero-fallback { display: none; }
 /* Category icon as a missing-poster placeholder (matches the tab icons). */
-.poster-card .cat-ic, .thumb .cat-ic, .hero-fallback .cat-ic { width: 56%; height: 56%; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
-.hero-fallback .cat-ic { width: 52px; height: 52px; }
+.poster-card .cat-ic, .thumb .cat-ic, .hero-fallback .cat-ic { width: 58%; height: auto; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.hero-fallback .cat-ic { width: 56px; height: auto; }
 /* Trailer/Review bar — two frosted-glass halves, each a big play + label. */
 .media-bar {
   position: absolute; left: 0; right: 0; bottom: 0; height: 62px;

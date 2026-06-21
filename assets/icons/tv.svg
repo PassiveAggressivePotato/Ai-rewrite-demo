@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 840">
+  <defs><radialGradient id="g" cx="38%" cy="30%" r="85%">
+    <stop offset="0" stop-color="#fff0cf"/><stop offset="0.45" stop-color="#f3cd76"/>
+    <stop offset="0.8" stop-color="#dca63f"/><stop offset="1" stop-color="#a9761f"/>
+  </radialGradient></defs>
+  <path fill="url(#g)" fill-rule="evenodd" d="
+    M70 40 A40 40 0 0 1 110 0 H930 A40 40 0 0 1 970 40 V600 A40 40 0 0 1 930 640
+    H610 V700 H690 A30 30 0 0 1 720 730 V740 A30 30 0 0 1 690 770 H350
+    A30 30 0 0 1 320 740 V730 A30 30 0 0 1 350 700 H430 V640 H110
+    A40 40 0 0 1 70 600 Z M130 60 H910 V580 H130 Z"/>
+</svg>

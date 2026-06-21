@@ -55,16 +55,10 @@ function logo(cls = "") {
     </svg></span>`;
 }
 
-/* Polished gold category icons. All share the radial gold fill (#gi-gold, in
- * index.html) with cut-outs in near-black so they read as embossed metal. */
-const ICON_SVG = {
-  movie: `<circle cx="10.5" cy="10" r="7.1" fill="url(#gi-gold)"/><circle cx="10.5" cy="10" r="1.7" fill="#1b1205"/><circle cx="10.5" cy="5.3" r="1.5" fill="#1b1205"/><circle cx="10.5" cy="14.7" r="1.5" fill="#1b1205"/><circle cx="5.8" cy="10" r="1.5" fill="#1b1205"/><circle cx="15.2" cy="10" r="1.5" fill="#1b1205"/><path d="M9.2 16.7 q1.6 2.5 5.1 2.5 h4 a1.45 1.45 0 0 0 0-2.9 h-4" fill="url(#gi-gold)"/>`,
-  tv: `<rect x="2.4" y="4.2" width="19.2" height="12.4" rx="2.4" fill="url(#gi-gold)"/><rect x="4.7" y="6.3" width="14.6" height="8.2" rx="1.2" fill="#1b1205"/><rect x="10.6" y="16.4" width="2.8" height="2" fill="url(#gi-gold)"/><rect x="7.6" y="18.2" width="8.8" height="2" rx="1" fill="url(#gi-gold)"/>`,
-  game: `<path d="M8 7.6h8a5.6 5.6 0 0 1 5.4 7l-.9 3.3a2.5 2.5 0 0 1-4.5.6l-1.2-1.9a2 2 0 0 0-1.7-.9h-2.2a2 2 0 0 0-1.7.9l-1.2 1.9a2.5 2.5 0 0 1-4.5-.6l-.9-3.3A5.6 5.6 0 0 1 8 7.6z" fill="url(#gi-gold)"/><path d="M6.7 11.2v3M5.2 12.7h3" stroke="#1b1205" stroke-width="1.5" stroke-linecap="round"/><circle cx="15.6" cy="11.7" r="1.1" fill="#1b1205"/><circle cx="17.6" cy="13.6" r="1.1" fill="#1b1205"/>`,
-  book: `<rect x="3.4" y="4.8" width="15.2" height="3.8" rx="1.4" fill="url(#gi-gold)" transform="rotate(-4 11 6.7)"/><rect x="5.1" y="9.8" width="15.2" height="3.8" rx="1.4" fill="url(#gi-gold)" transform="rotate(4 12.7 11.7)"/><rect x="3.8" y="14.9" width="16" height="4" rx="1.4" fill="url(#gi-gold)"/>`,
-};
+/* Polished gold category icons — standalone SVGs (with their own gold radial
+ * gradient) referenced as images, sized via the .cat-ic CSS. */
 function catIconSvg(id) {
-  return `<svg class="cat-ic" viewBox="0 0 24 24" aria-hidden="true">${ICON_SVG[id] || ""}</svg>`;
+  return `<img class="cat-ic" src="assets/icons/${id}.svg" alt="" aria-hidden="true" draggable="false">`;
 }
 
 /* ---- Small helpers -------------------------------------------------------- */
