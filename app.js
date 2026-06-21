@@ -594,12 +594,14 @@ function renderLanding() {
           <div class="tabs rise d1 ${selected ? "has-sel" : ""}">${tabs}</div>
           <div class="searchbar-wrap ${state.searchOpen ? "" : "collapsed"}">
             <div class="searchbar">
-              <span class="search-ic">${ICON.search}</span>
-              <input id="search-input" type="search" autocomplete="off"
-                placeholder="${selected ? `Search ${(cat().plural || "").toLowerCase()}…` : ""}"
-                value="${escapeAttr(state.query)}" />
-              <button class="search-cleartext" ${hasText ? "" : "hidden"}>Clear</button>
-              <button class="search-clear" aria-label="Close search">${ICON.close}</button>
+              <div class="search-field">
+                <span class="search-ic">${ICON.search}</span>
+                <input id="search-input" type="search" autocomplete="off"
+                  placeholder="${selected ? `Search ${(cat().plural || "").toLowerCase()}…` : ""}"
+                  value="${escapeAttr(state.query)}" />
+                <button class="search-cleartext" ${hasText ? "" : "hidden"}>Clear</button>
+                <button class="search-clear" aria-label="Close search">${ICON.close}</button>
+              </div>
             </div>
           </div>
 
