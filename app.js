@@ -55,12 +55,13 @@ function logo(cls = "") {
     </svg></span>`;
 }
 
-/* Flat gradient category icons (replace the emoji). Gradients live in index.html. */
+/* Polished gold category icons. All share the radial gold fill (#gi-gold, in
+ * index.html) with cut-outs in near-black so they read as embossed metal. */
 const ICON_SVG = {
-  movie: `<rect x="3" y="8.4" width="18" height="12.6" rx="2.2" fill="url(#gi-movie)"/><path d="M3.4 6.1 L20.2 3.4 L20.8 6.8 L4 9.5 Z" fill="url(#gi-movie)"/><path d="M7.5 5.2 L6.1 8.6 M11.4 4.6 L10 8 M15.3 4 L13.9 7.4" stroke="#160f04" stroke-width="1.1" stroke-linecap="round"/>`,
-  tv: `<rect x="3" y="7.2" width="18" height="11.8" rx="2.4" fill="url(#gi-tv)"/><path d="M8.4 3.8 L12 7 L15.6 3.8" fill="none" stroke="url(#gi-tv)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="7.5" y="20" width="9" height="1.8" rx="0.9" fill="url(#gi-tv)"/>`,
-  game: `<rect x="2.5" y="8.4" width="19" height="9.4" rx="4.7" fill="url(#gi-game)"/><path d="M7 11.1 V14.1 M5.5 12.6 H8.5" stroke="#0d0916" stroke-width="1.5" stroke-linecap="round"/><circle cx="15.8" cy="11.9" r="1.15" fill="#0d0916"/><circle cx="17.7" cy="13.7" r="1.15" fill="#0d0916"/>`,
-  book: `<rect x="3.6" y="4.6" width="14" height="3.9" rx="1" fill="url(#gi-book)" transform="rotate(-5 10.6 6.5)"/><rect x="5.4" y="9.4" width="14" height="3.9" rx="1" fill="url(#gi-book)" transform="rotate(4 12.4 11.3)"/><rect x="4" y="14.2" width="15" height="4.1" rx="1" fill="url(#gi-book)"/>`,
+  movie: `<circle cx="10.5" cy="10" r="7.1" fill="url(#gi-gold)"/><circle cx="10.5" cy="10" r="1.7" fill="#1b1205"/><circle cx="10.5" cy="5.3" r="1.5" fill="#1b1205"/><circle cx="10.5" cy="14.7" r="1.5" fill="#1b1205"/><circle cx="5.8" cy="10" r="1.5" fill="#1b1205"/><circle cx="15.2" cy="10" r="1.5" fill="#1b1205"/><path d="M9.2 16.7 q1.6 2.5 5.1 2.5 h4 a1.45 1.45 0 0 0 0-2.9 h-4" fill="url(#gi-gold)"/>`,
+  tv: `<rect x="2.4" y="4.2" width="19.2" height="12.4" rx="2.4" fill="url(#gi-gold)"/><rect x="4.7" y="6.3" width="14.6" height="8.2" rx="1.2" fill="#1b1205"/><rect x="10.6" y="16.4" width="2.8" height="2" fill="url(#gi-gold)"/><rect x="7.6" y="18.2" width="8.8" height="2" rx="1" fill="url(#gi-gold)"/>`,
+  game: `<path d="M8 7.6h8a5.6 5.6 0 0 1 5.4 7l-.9 3.3a2.5 2.5 0 0 1-4.5.6l-1.2-1.9a2 2 0 0 0-1.7-.9h-2.2a2 2 0 0 0-1.7.9l-1.2 1.9a2.5 2.5 0 0 1-4.5-.6l-.9-3.3A5.6 5.6 0 0 1 8 7.6z" fill="url(#gi-gold)"/><path d="M6.7 11.2v3M5.2 12.7h3" stroke="#1b1205" stroke-width="1.5" stroke-linecap="round"/><circle cx="15.6" cy="11.7" r="1.1" fill="#1b1205"/><circle cx="17.6" cy="13.6" r="1.1" fill="#1b1205"/>`,
+  book: `<rect x="3.4" y="4.8" width="15.2" height="3.8" rx="1.4" fill="url(#gi-gold)" transform="rotate(-4 11 6.7)"/><rect x="5.1" y="9.8" width="15.2" height="3.8" rx="1.4" fill="url(#gi-gold)" transform="rotate(4 12.7 11.7)"/><rect x="3.8" y="14.9" width="16" height="4" rx="1.4" fill="url(#gi-gold)"/>`,
 };
 function catIconSvg(id) {
   return `<svg class="cat-ic" viewBox="0 0 24 24" aria-hidden="true">${ICON_SVG[id] || ""}</svg>`;
@@ -71,14 +72,13 @@ const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.co
 const posterBg = (item) => item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
 const backdropArt = (item) => item.backdrop || item.poster || "";
 const backdropBg = (item) => { const a = backdropArt(item); return a ? `url('${a}') center/cover` : gradient(item); };
-const catIcon = (item) => (CATEGORIES.find((x) => x.id === item.category) || {}).icon || "";
+const catIcon = (item) => catIconSvg(item.category);
 const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
 const cat = () => CATEGORIES.find((c) => c.id === state.category) || {};
 
 function posterBox(item, cls = "thumb") {
-  const c = CATEGORIES.find((x) => x.id === item.category);
   const bg = item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
-  return `<div class="${cls}" style="background:${bg}">${item.poster ? "" : (c?.icon || "")}</div>`;
+  return `<div class="${cls}" style="background:${bg}">${item.poster ? "" : catIconSvg(item.category)}</div>`;
 }
 
 function nativeText(row) {
