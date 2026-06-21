@@ -983,8 +983,9 @@ function parseValue(str) {
 }
 
 /* ---- control builders + shadow sub-editor ---- */
-function stepperHTML(v, val, step, min) {
-  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-min="${min}">
+function stepperHTML(v, val, step, min, max, unit) {
+  const u = unit == null ? "px" : unit;
+  return `<div class="step"${v ? ` data-var="${v}"` : ""} data-min="${min}"${max != null ? ` data-max="${max}"` : ""} data-unit="${u}">
       <button class="step-btn big" data-d="${-step}" aria-label="minus ${step}">«</button>
       <button class="step-btn" data-d="-0.1" aria-label="minus 0.1">‹</button>
       <input class="step-val" type="text" inputmode="decimal" value="${val}">
@@ -1028,7 +1029,7 @@ function controlRow(it) {
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
-  else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min);
+  else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit);
   const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
   return `<div class="ctl"${def}><span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
@@ -1069,7 +1070,7 @@ function wireGroupControls(root, applyVar) {
   root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
     h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
   root.querySelectorAll(".st-controls .step[data-var]").forEach((step) =>
-    attachStepper(step, (n) => applyVar(step.dataset.var, n + "px")));
+    attachStepper(step, (n) => applyVar(step.dataset.var, n + (step.dataset.unit ?? "px"))));
   root.querySelectorAll(".swatch").forEach((sw) => sw.addEventListener("click", () =>
     openColorPicker(sw.dataset.val, (val) => {
       sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
@@ -1109,7 +1110,7 @@ function wireGroupControls(root, applyVar) {
       const sw = ctl.querySelector(":scope > .swatch");
       const sel = ctl.querySelector(":scope > .st-select");
       const sh = ctl.querySelector(":scope > .shadow-btn");
-      if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + "px"); }
+      if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + (step.dataset.unit ?? "px")); }
       else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, def); }
       else if (sel) { sel.value = def; applyVar(sel.dataset.var, def); }
       else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
@@ -1117,20 +1118,24 @@ function wireGroupControls(root, applyVar) {
   });
 }
 
-/* Read the current value of every control in a group set (for export). */
-function readGroupValues(groups) {
+/* Read control values for export. With `changedOnly`, items still at their
+ * default are skipped (so the export only carries what actually changed). */
+function readGroupValues(groups, changedOnly = true) {
   const out = {};
   groups.forEach((g) => g.items.forEach((it) => {
-    if (it.type === "color") out[it.k] = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val;
-    else if (it.type === "shadow") out[it.k] = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : "none";
-    else if (it.type === "select") out[it.k] = app.querySelector(`.st-select[data-var="${it.k}"]`).value;
+    let cur, def;
+    if (it.type === "color") { cur = app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
+    else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
+    else if (it.type === "shadow") { def = it.def || "none"; cur = SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def; }
     else if (it.type === "radius") {
       const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
-      out[it.k] = rc.classList.contains("expanded")
+      cur = rc.classList.contains("expanded")
         ? [...rc.querySelectorAll(".rad-quad .step-val")].map((i) => (parseFloat(i.value) || 0) + "px").join(" ")
         : (parseFloat(rc.querySelector(".rad-main .step-val").value) || 0) + "px";
+      def = it.val + "px";
     }
-    else out[it.k] = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + "px";
+    else { const u = it.unit == null ? "px" : it.unit; cur = (parseFloat(app.querySelector(`.step[data-var="${it.k}"] .step-val`).value) || 0) + u; def = it.val + u; }
+    if (!changedOnly || cur !== def) out[it.k] = cur;
   }));
   return out;
 }
@@ -1313,10 +1318,14 @@ function openColorPicker(initial, onChange) {
 
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
-  { id: "poster", name: "PosterCard", desc: "List poster + score badge",
+  { id: "poster", name: "Poster Card", desc: "List poster + score badge",
     thumb: `<span class="sc-thumb" style="background:url('assets/poor-things-poster.webp') center/cover"></span>` },
-  { id: "tab", name: "Active Tab", desc: "Landing category tab",
+  { id: "tab", name: "Active Tab", desc: "Selected category tab",
     thumb: `<span class="sc-thumb sc-thumb-pad"><img src="assets/icons/movie.svg" alt=""></span>` },
+  { id: "tab-idle", name: "Idle Tab", desc: "Resting tab (no selection yet)",
+    thumb: `<span class="sc-thumb sc-thumb-pad"><img src="assets/icons/tv.svg" alt=""></span>` },
+  { id: "tab-dim", name: "Inactive Tab", desc: "Faded tab (while another is active)",
+    thumb: `<span class="sc-thumb sc-thumb-pad" style="opacity:.5"><img src="assets/icons/game.svg" alt=""></span>` },
   { id: "brand", name: "Brand Tokens", desc: "Site-wide colours",
     thumb: `<span class="sc-thumb sc-thumb-brand"><i style="background:#f0c469"></i><i style="background:#c98f30"></i><i style="background:#4fd0c8"></i><i style="background:#2c97a8"></i></span>` },
 ];
@@ -1378,21 +1387,69 @@ function posterGroups() {
     ] },
   ];
 }
-/* Tap-to-inspect: a near-fullscreen popup with a scaled-up copy of a component. */
+/* Tap-to-inspect: a popup with an enlarged copy of a component. The clone keeps
+ * the source's exact pixel size (so its ratio never changes), then is scaled to
+ * fit; +/- buttons, pinch, and drag let you zoom and pan around it. */
 function openInspect(srcSel) {
   const src = app.querySelector(srcSel); if (!src) return;
+  const cw = src.offsetWidth || 88, ch = src.offsetHeight || 132;
   const ov = document.createElement("div");
   ov.className = "inspect";
-  ov.innerHTML = `<div class="inspect-scrim"></div><div class="inspect-stage"></div><button class="inspect-x" aria-label="Close">${ICON.close}</button>`;
+  ov.innerHTML = `
+    <div class="inspect-scrim"></div>
+    <div class="inspect-stage"><div class="inspect-pan"></div></div>
+    <div class="inspect-zoom">
+      <button class="iz-btn" data-zin aria-label="Zoom in">+</button>
+      <button class="iz-btn" data-zout aria-label="Zoom out">−</button>
+    </div>
+    <button class="inspect-x" aria-label="Close">${ICON.close}</button>`;
   const clone = src.cloneNode(true); clone.removeAttribute("id");
-  ov.querySelector(".inspect-stage").appendChild(clone);
+  clone.style.width = cw + "px"; clone.style.height = ch + "px"; clone.style.flex = "none"; clone.style.margin = "0";
+  const pan = ov.querySelector(".inspect-pan");
+  pan.style.width = cw + "px"; pan.style.height = ch + "px";
+  pan.appendChild(clone);
   app.appendChild(ov);
-  const cw = src.offsetWidth || 88, ch = src.offsetHeight || 132;
-  const scale = Math.min((app.clientWidth * 0.92) / cw, (app.clientHeight * 0.82) / ch);
-  clone.style.transform = `scale(${scale})`; clone.style.transformOrigin = "center";
+
+  const fit = Math.min((app.clientWidth * 0.92) / cw, (app.clientHeight * 0.78) / ch);
+  const S = { z: fit, x: 0, y: 0 };
+  const clampZ = (z) => Math.max(fit * 0.5, Math.min(fit * 8, z));
+  const apply = () => { pan.style.transform = `translate(${S.x}px, ${S.y}px) scale(${S.z})`; };
+  apply();
+
+  const stage = ov.querySelector(".inspect-stage");
+  ov.querySelector("[data-zin]").addEventListener("click", (e) => { e.stopPropagation(); S.z = clampZ(S.z * 1.25); apply(); });
+  ov.querySelector("[data-zout]").addEventListener("click", (e) => { e.stopPropagation(); S.z = clampZ(S.z / 1.25); apply(); });
+
+  const ptrs = new Map(); let pinch = null, drag = null, moved = false;
+  stage.addEventListener("pointerdown", (e) => {
+    stage.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: S.z }; drag = null; }
+    else drag = { x: e.clientX, y: e.clientY, ox: S.x, oy: S.y };
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; S.z = clampZ(pinch.z * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d)); moved = true; apply(); }
+    else if (drag && ptrs.size === 1) { S.x = drag.ox + (e.clientX - drag.x); S.y = drag.oy + (e.clientY - drag.y); if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) moved = true; apply(); }
+  });
+  const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (ptrs.size === 0) drag = null; };
+  stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+
   const close = () => ov.remove();
-  ov.querySelector(".inspect-scrim").addEventListener("click", close);
+  stage.addEventListener("click", (e) => { if (e.target === stage && !moved) close(); });
   ov.querySelector(".inspect-x").addEventListener("click", close);
+}
+
+/* Prev/Next arrows that flank the Before/After stage, + a wiring helper that
+ * cycles an index through a fixed length in either direction. */
+function cycleArrows() {
+  return `<button class="cyc-btn cyc-prev" data-prev aria-label="Previous example">${ICON.back}</button>
+          <button class="cyc-btn cyc-next" data-next aria-label="Next example">${ICON.next}</button>`;
+}
+function wireCycle(len, start, onIdx) {
+  let i = ((start % len) + len) % len;
+  const go = (d) => { i = (i + d + len) % len; onIdx(i); };
+  app.querySelector("[data-prev]").addEventListener("click", () => go(-1));
+  app.querySelector("[data-next]").addEventListener("click", () => go(1));
 }
 
 function renderStudioPoster() {
@@ -1415,7 +1472,7 @@ function renderStudioPoster() {
           <h1>PosterCard</h1>
         </div>
         <div class="st-stage st-compare">
-          <button class="rand-btn" data-cycle aria-label="Next example">${ICON.next}</button>
+          ${cycleArrows()}
           <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before</figcaption></figure>
           <figure class="st-cmp">
             <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
@@ -1436,10 +1493,8 @@ function renderStudioPoster() {
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
-  let pIdx = Math.max(0, CATALOG.indexOf(sample));
-  app.querySelector("[data-cycle]").addEventListener("click", () => {
-    pIdx = (pIdx + 1) % CATALOG.length;
-    const it = CATALOG[pIdx], num = scoreItem(it).synth ?? "—", bg = posterBg(it);
+  wireCycle(CATALOG.length, Math.max(0, CATALOG.indexOf(sample)), (i) => {
+    const it = CATALOG[i], num = scoreItem(it).synth ?? "—", bg = posterBg(it);
     ["#cur", "#cand"].forEach((sel) => {
       const el = app.querySelector(sel); if (!el) return;
       el.style.background = bg;
@@ -1485,8 +1540,7 @@ function renderStudioBrand() {
   const applyVar = (v, val) => document.documentElement.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("#st-export").addEventListener("click", () => {
-    const out = Object.fromEntries(group.items.map((it) => [it.k, app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val]));
-    const text = JSON.stringify({ Brand: out }, null, 2);
+    const text = JSON.stringify({ Brand: readGroupValues([group]) }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -1496,54 +1550,76 @@ function renderStudioBrand() {
   wireHeader(app);
 }
 
-/* ---- Studio: Active Tab (the selected category tab on the landing page) ---- */
-function tabGroups() {
+/* ---- Studio: Tab states (Active / Idle / Inactive) ---------------------------
+ * One editor per state. Shared layout tokens (--tab-radius/pad/gap/icon-size/
+ * label-size) sit alongside that state's own visual tokens (--tab-<state>-*). */
+const GOLD_GRAD = "linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)";
+const FAINT_GOLD = "linear-gradient(160deg, rgba(243,205,118,0.55), rgba(140,100,40,0.22))";
+const DARK_FILL = "linear-gradient(180deg, #16161f, #0e0f16)";
+const ICON_GOLD = "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)";
+const TAB_STATES = {
+  active: { title: "Active Tab", key: "ActiveTab", prefix: "act", cls: "tab active",
+    d: { fill: "linear-gradient(180deg, rgba(14,5,94,0.64) 0%, #14151d 100%)", bg: GOLD_GRAD, outline: GOLD_GRAD,
+         icon: "radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)", iconShadow: "0px 6px 14px rgba(0, 0, 0, 0.55)" } },
+  idle: { title: "Idle Tab", key: "IdleTab", prefix: "idle", cls: "tab",
+    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, icon: ICON_GOLD, iconShadow: "none" } },
+  dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", dim: true,
+    d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, icon: ICON_GOLD, iconShadow: "none" } },
+};
+function tabGroups(prefix, cfg) {
+  const d = cfg.d;
+  const tab = [
+    { k: `--tab-${prefix}-fill`, label: "Fill", type: "color", val: d.fill },
+    { k: `--tab-${prefix}-bg`, label: "Background", type: "color", val: d.bg },
+    { k: `--tab-${prefix}-outline`, label: "Outline", type: "color", val: d.outline },
+    { k: `--tab-${prefix}-shadow`, label: "Shadow", type: "shadow" },
+  ];
+  if (cfg.dim) {
+    tab.push({ k: "--tab-dim-opacity", label: "Opacity", val: 0.5, step: 0.05, min: 0, max: 1, unit: "" });
+    tab.push({ k: "--tab-dim-scale", label: "Scale", val: 0.95, step: 0.05, min: 0.5, max: 1.2, unit: "" });
+  }
   return [
-    { name: "Tab", items: [
-      { k: "--tab-radius", label: "Corner radius", type: "radius", val: 16, step: 1, min: 0 },
-      { k: "--tab-pad-y", label: "Vertical padding", val: 14, step: 1, min: 0 },
+    { name: "Layout", items: [
+      { k: "--tab-radius", label: "Corner radius", type: "radius", val: 20, step: 1, min: 0 },
+      { k: "--tab-pad", label: "Vertical padding", val: 14, step: 1, min: 0 },
       { k: "--tab-gap", label: "Icon–label gap", val: 8, step: 1, min: 0 },
-      { k: "--tab-fill", label: "Fill", type: "color", val: "linear-gradient(180deg, rgba(243,205,118,0.16), #14151d)" },
-      { k: "--tab-bord", label: "Outline", type: "color", val: "linear-gradient(150deg, #fff0cf, #f3cd76 45%, #b9822b)" },
-      { k: "--tab-shadow", label: "Shadow", type: "shadow" },
+      { k: "--tab-icon-size", label: "Icon size", val: 40, step: 1, min: 12 },
+      { k: "--tab-label-size", label: "Label size", val: 13, step: 0.5, min: 6 },
     ] },
+    { name: "Tab", items: tab },
     { name: "Icon", items: [
-      { k: "--tab-icon", label: "Icon size", val: 40, step: 1, min: 12 },
-      { k: "--tab-icon-col", label: "Icon colour", type: "color", val: "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)" },
-      { k: "--tab-icon-shadow", label: "Icon shadow", type: "shadow" },
+      { k: `--tab-${prefix}-icon`, label: "Icon colour", type: "color", val: d.icon },
+      { k: `--tab-${prefix}-icon-shadow`, label: "Icon shadow", type: "shadow", def: d.iconShadow },
     ] },
     { name: "Label", items: [
-      { k: "--tab-labfs", label: "Label size", val: 13, step: 0.5, min: 6 },
-      { k: "--tab-lab", label: "Label colour", type: "color", val: "#f0c469" },
-      { k: "--tab-lab-shadow", label: "Label shadow", type: "shadow" },
+      { k: `--tab-${prefix}-label`, label: "Label colour", type: "color", val: "#f0c469" },
+      { k: `--tab-${prefix}-label-shadow`, label: "Label shadow", type: "shadow" },
     ] },
   ];
 }
-function renderStudioActiveTab() {
-  const groups = tabGroups();
-  let idx = Math.max(0, CATEGORIES.findIndex((c) => c.id === "movie"));
-  const tabHTML = (c, id) => `<button class="tab active" id="${id}">
-      <span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`;
+function renderStudioTab(state) {
+  const cfg = TAB_STATES[state];
+  const groups = tabGroups(cfg.prefix, cfg);
+  const start = Math.max(0, CATEGORIES.findIndex((c) => c.id === "movie"));
+  const tabHTML = (c, id) => `<div class="tabwrap"><button class="${cfg.cls}" id="${id}">
+      <span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button></div>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
         <div class="studio-head">
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
-          <h1>Active Tab</h1>
+          <h1>${cfg.title}</h1>
         </div>
         <div class="st-stage st-compare">
-          <button class="rand-btn" data-cycle aria-label="Next example">${ICON.next}</button>
-          <figure class="st-cmp"><div class="tabwrap">${tabHTML(CATEGORIES[idx], "tabcur")}</div><figcaption>Before</figcaption></figure>
-          <figure class="st-cmp">
-            <div class="tabwrap">${tabHTML(CATEGORIES[idx], "tabcand")}</div>
-            <figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
-          </figure>
+          ${cycleArrows()}
+          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcur")}<figcaption>Before</figcaption></figure>
+          <figure class="st-cmp">${tabHTML(CATEGORIES[start], "tabcand")}<figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
         </div>
         <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
         <section class="st-sec">
           <h2>Export</h2>
           <button class="st-export" id="st-export">Copy values for Claude</button>
-          <textarea class="st-out" id="st-out" readonly rows="9" placeholder="Values appear here…"></textarea>
+          <textarea class="st-out" id="st-out" readonly rows="9" placeholder="Changed values appear here…"></textarea>
         </section>
       </div>
       ${toolbox()}
@@ -1552,9 +1628,8 @@ function renderStudioActiveTab() {
   const applyVar = (v, val) => cand.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#tabcand"));
-  app.querySelector("[data-cycle]").addEventListener("click", () => {
-    idx = (idx + 1) % CATEGORIES.length;
-    const c = CATEGORIES[idx];
+  wireCycle(CATEGORIES.length, start, (i) => {
+    const c = CATEGORIES[i];
     ["#tabcur", "#tabcand"].forEach((sel) => {
       const el = app.querySelector(sel); if (!el) return;
       el.querySelector(".tab-icon").innerHTML = catIconSvg(c.id);
@@ -1562,7 +1637,7 @@ function renderStudioActiveTab() {
     });
   });
   app.querySelector("#st-export").addEventListener("click", () => {
-    const text = JSON.stringify({ ActiveTab: readGroupValues(groups) }, null, 2);
+    const text = JSON.stringify({ [cfg.key]: readGroupValues(groups) }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -1575,7 +1650,9 @@ function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
-  if (hash === "#/studio/tab") { renderStudioActiveTab(); return; }
+  if (hash === "#/studio/tab") { renderStudioTab("active"); return; }
+  if (hash === "#/studio/tab-idle") { renderStudioTab("idle"); return; }
+  if (hash === "#/studio/tab-dim") { renderStudioTab("dim"); return; }
   if (hash === "#/studio/brand") { renderStudioBrand(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {
