@@ -39,6 +39,12 @@
         <stop offset="0" stop-color="#fdecc0"/><stop offset="0.32" stop-color="#f4cf72"/>
         <stop offset="0.55" stop-color="#e3ad44"/><stop offset="1" stop-color="#b9791f"/>
       </linearGradient>
+      <!-- Icon outline: dilate the alpha, subtract the original to get a ring that
+           respects holes, flood it with the element's `color`, draw under the icon. -->
+      <filter id="io-05" x="-50%" y="-50%" width="200%" height="200%"><feMorphology in="SourceAlpha" operator="dilate" radius="0.5" result="d"/><feComposite in="d" in2="SourceAlpha" operator="out" result="ring"/><feFlood flood-color="currentColor"/><feComposite in2="ring" operator="in" result="ol"/><feMerge><feMergeNode in="ol"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="io-1" x="-50%" y="-50%" width="200%" height="200%"><feMorphology in="SourceAlpha" operator="dilate" radius="1" result="d"/><feComposite in="d" in2="SourceAlpha" operator="out" result="ring"/><feFlood flood-color="currentColor"/><feComposite in2="ring" operator="in" result="ol"/><feMerge><feMergeNode in="ol"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="io-15" x="-50%" y="-50%" width="200%" height="200%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.5" result="d"/><feComposite in="d" in2="SourceAlpha" operator="out" result="ring"/><feFlood flood-color="currentColor"/><feComposite in2="ring" operator="in" result="ol"/><feMerge><feMergeNode in="ol"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="io-2" x="-50%" y="-50%" width="200%" height="200%"><feMorphology in="SourceAlpha" operator="dilate" radius="2" result="d"/><feComposite in="d" in2="SourceAlpha" operator="out" result="ring"/><feFlood flood-color="currentColor"/><feComposite in2="ring" operator="in" result="ol"/><feMerge><feMergeNode in="ol"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
   </svg>
 
