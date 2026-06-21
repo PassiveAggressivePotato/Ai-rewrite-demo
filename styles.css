@@ -239,10 +239,18 @@ body::before {
 /* Category icons rendered as masks — colour comes from `background` (gold by
  * default), the SVG only supplies the shape; aspect-ratio keeps proportions. */
 .cat-ic {
-  display: block;
+  position: relative; z-index: 0; display: block;
   -webkit-mask: var(--cat-src) center / contain no-repeat;
           mask: var(--cat-src) center / contain no-repeat;
   background: var(--icon-col, var(--icon-default));
+}
+/* Icon outline: the same silhouette, slightly larger, drawn behind in the outline
+ * colour (width 0 / transparent by default = no outline). */
+.cat-ic::before {
+  content: ""; position: absolute; inset: calc(-1 * var(--ic-ol-w, 0px)); z-index: -1;
+  -webkit-mask: var(--cat-src) center / contain no-repeat;
+          mask: var(--cat-src) center / contain no-repeat;
+  background: var(--ic-ol-col, transparent);
 }
 .cat-movie { --cat-src: url("assets/icons/movie.svg"); aspect-ratio: 1215 / 1146; }
 .cat-tv    { --cat-src: url("assets/icons/tv.svg");    aspect-ratio: 1040 / 840; }
@@ -272,10 +280,12 @@ body::before {
   padding: var(--tab-pad, 14px) 5px;
   border-radius: var(--tab-radius, 20px);
   color: var(--gold);
-  border: 1.5px solid transparent;
-  /* Three stacked layers: fill (front) over background over outline (border). */
+  border: var(--tab-idle-outline-w, 1.5px) solid transparent;
+  /* Three stacked layers: fill (front) over background over outline (border).
+   * Every layer must be an <image> — a bare colour is illegal in a non-final
+   * background layer, so "no fill" is a transparent gradient, not `transparent`. */
   background:
-    var(--tab-idle-fill, transparent) padding-box,
+    var(--tab-idle-fill, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
     var(--tab-idle-bg, linear-gradient(180deg, #16161f, #0e0f16)) padding-box,
     var(--tab-idle-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
   box-shadow: var(--tab-idle-shadow, none);
@@ -285,7 +295,7 @@ body::before {
  * icons line up horizontally regardless of height; the icon shadow lives here (on
  * the zone, not the masked icon, so it actually renders). */
 .tab .tab-icon { height: var(--tab-icon-size, 40px); display: flex; align-items: center; justify-content: center; line-height: 0; filter: drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent)); }
-.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transition: transform .25s; }
+.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); --ic-ol-w: var(--tab-idle-icon-ol-w, 0px); --ic-ol-col: var(--tab-idle-icon-ol-col, transparent); transition: transform .25s; }
 .tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); }
 .tab:hover { transform: translateY(-1px); }
 
@@ -294,19 +304,21 @@ body::before {
 .tabs.has-sel .tab:not(.active), .tab.is-dim {
   opacity: var(--tab-dim-opacity, .5);
   transform: scale(var(--tab-dim-scale, .95));
+  border-width: var(--tab-dim-outline-w, 1.5px);
   background:
-    var(--tab-dim-fill, transparent) padding-box,
+    var(--tab-dim-fill, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
     var(--tab-dim-bg, linear-gradient(180deg, #16161f, #0e0f16)) padding-box,
     var(--tab-dim-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
   box-shadow: var(--tab-dim-shadow, none);
 }
-.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, var(--icon-default)); }
+.tabs.has-sel .tab:not(.active) .cat-ic, .tab.is-dim .cat-ic { background: var(--tab-dim-icon, var(--icon-default)); --ic-ol-w: var(--tab-dim-icon-ol-w, 0px); --ic-ol-col: var(--tab-dim-icon-ol-col, transparent); }
 .tabs.has-sel .tab:not(.active) .tab-icon, .tab.is-dim .tab-icon { filter: drop-shadow(var(--tab-dim-icon-shadow, 0 0 0 transparent)); }
 .tabs.has-sel .tab:not(.active) .tab-label, .tab.is-dim .tab-label { color: var(--tab-dim-label, var(--gold)); text-shadow: var(--tab-dim-label-shadow, none); }
 
 /* Active (selected) tab. */
 .tab.active {
   color: var(--text);
+  border-width: var(--tab-act-outline-w, 1.5px);
   background:
     var(--tab-act-fill, linear-gradient(180deg, rgba(14, 5, 94, 0.64) 0%, #14151d 100%)) padding-box,
     var(--tab-act-bg, linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)) padding-box,
@@ -315,7 +327,7 @@ body::before {
   position: relative; z-index: 3;
   box-shadow: var(--tab-act-shadow, none);
 }
-.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)); }
+.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #ede4d0 0%, #d7ac48 77%)); --ic-ol-w: var(--tab-act-icon-ol-w, 0px); --ic-ol-col: var(--tab-act-icon-ol-col, transparent); }
 .tab.active .tab-icon { filter: drop-shadow(var(--tab-act-icon-shadow, 0px 6px 14px rgba(0, 0, 0, 0.55))); }
 .tab.active .tab-label { color: var(--tab-act-label, var(--gold)); text-shadow: var(--tab-act-label-shadow, none); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
