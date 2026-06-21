@@ -45,6 +45,7 @@ const ICON = {
   shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>`,
   chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
   reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v5h5"/><path d="M3.5 10a8 8 0 1 1-1 5"/></svg>`,
+  next: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
 };
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
@@ -56,10 +57,10 @@ function logo(cls = "") {
     </svg></span>`;
 }
 
-/* Polished gold category icons — standalone SVGs (with their own gold radial
- * gradient) referenced as images, sized via the .cat-ic CSS. */
+/* Polished category icons — rendered as CSS masks so their colour/gradient is
+ * controllable (default = gold). Each variant supplies its source + aspect ratio. */
 function catIconSvg(id) {
-  return `<img class="cat-ic" src="assets/icons/${id}.svg" alt="" aria-hidden="true" draggable="false">`;
+  return `<span class="cat-ic cat-${id}" role="img" aria-hidden="true"></span>`;
 }
 
 /* ---- Small helpers -------------------------------------------------------- */
@@ -1414,7 +1415,7 @@ function renderStudioPoster() {
           <h1>PosterCard</h1>
         </div>
         <div class="st-stage st-compare">
-          <button class="rand-btn" data-rand aria-label="Random example">${ICON.shuffle}</button>
+          <button class="rand-btn" data-cycle aria-label="Next example">${ICON.next}</button>
           <figure class="st-cmp"><div class="pc2" id="cur" style="background:${posterBg(sample)}">${curBadge}</div><figcaption>Before</figcaption></figure>
           <figure class="st-cmp">
             <div class="pc2" id="cand" style="background:${posterBg(sample)};${initStyle}">${candBadge}</div>
@@ -1435,9 +1436,10 @@ function renderStudioPoster() {
   const applyVar = (v, val) => cands.forEach((el) => el.style.setProperty(v, val));
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
   app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#cand"));
-  app.querySelector("[data-rand]").addEventListener("click", () => {
-    const it = CATALOG[Math.floor(Math.random() * CATALOG.length)];
-    const num = scoreItem(it).synth ?? "—", bg = posterBg(it);
+  let pIdx = Math.max(0, CATALOG.indexOf(sample));
+  app.querySelector("[data-cycle]").addEventListener("click", () => {
+    pIdx = (pIdx + 1) % CATALOG.length;
+    const it = CATALOG[pIdx], num = scoreItem(it).synth ?? "—", bg = posterBg(it);
     ["#cur", "#cand"].forEach((sel) => {
       const el = app.querySelector(sel); if (!el) return;
       el.style.background = bg;
@@ -1494,29 +1496,33 @@ function renderStudioBrand() {
   wireHeader(app);
 }
 
-/* ---- Studio: Active Tab (category tab on the landing page) ---- */
+/* ---- Studio: Active Tab (the selected category tab on the landing page) ---- */
 function tabGroups() {
   return [
     { name: "Tab", items: [
       { k: "--tab-radius", label: "Corner radius", type: "radius", val: 16, step: 1, min: 0 },
       { k: "--tab-pad-y", label: "Vertical padding", val: 14, step: 1, min: 0 },
       { k: "--tab-gap", label: "Icon–label gap", val: 8, step: 1, min: 0 },
-      { k: "--tab-fill1", label: "Fill (top)", type: "color", val: "#16161f" },
-      { k: "--tab-fill2", label: "Fill (bottom)", type: "color", val: "#0e0f16" },
+      { k: "--tab-fill", label: "Fill", type: "color", val: "linear-gradient(180deg, rgba(243,205,118,0.16), #14151d)" },
+      { k: "--tab-bord", label: "Outline", type: "color", val: "linear-gradient(150deg, #fff0cf, #f3cd76 45%, #b9822b)" },
+      { k: "--tab-shadow", label: "Shadow", type: "shadow" },
     ] },
     { name: "Icon", items: [
       { k: "--tab-icon", label: "Icon size", val: 40, step: 1, min: 12 },
+      { k: "--tab-icon-col", label: "Icon colour", type: "color", val: "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)" },
+      { k: "--tab-icon-shadow", label: "Icon shadow", type: "shadow" },
     ] },
     { name: "Label", items: [
       { k: "--tab-labfs", label: "Label size", val: 13, step: 0.5, min: 6 },
       { k: "--tab-lab", label: "Label colour", type: "color", val: "#f0c469" },
+      { k: "--tab-lab-shadow", label: "Label shadow", type: "shadow" },
     ] },
   ];
 }
 function renderStudioActiveTab() {
   const groups = tabGroups();
-  const cats = CATEGORIES.slice(0, 3);
-  const tab = (c, active) => `<button class="tab ${active ? "active" : ""}">
+  let idx = Math.max(0, CATEGORIES.findIndex((c) => c.id === "movie"));
+  const tabHTML = (c, id) => `<button class="tab active" id="${id}">
       <span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`;
   app.innerHTML = `
     <div class="screen studio">
@@ -1525,10 +1531,13 @@ function renderStudioActiveTab() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>Active Tab</h1>
         </div>
-        <div class="st-stage">
-          <div class="tabs has-sel" id="tabprev" style="grid-template-columns:repeat(3,1fr);max-width:300px;margin:0 auto;">
-            ${tab(cats[0], true)}${tab(cats[1], false)}${tab(cats[2], false)}
-          </div>
+        <div class="st-stage st-compare">
+          <button class="rand-btn" data-cycle aria-label="Next example">${ICON.next}</button>
+          <figure class="st-cmp"><div class="tabwrap">${tabHTML(CATEGORIES[idx], "tabcur")}</div><figcaption>Before</figcaption></figure>
+          <figure class="st-cmp">
+            <div class="tabwrap">${tabHTML(CATEGORIES[idx], "tabcand")}</div>
+            <figcaption>After <button class="inspect-btn" data-inspect aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption>
+          </figure>
         </div>
         <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
         <section class="st-sec">
@@ -1539,9 +1548,19 @@ function renderStudioActiveTab() {
       </div>
       ${toolbox()}
     </div>`;
-  const prev = app.querySelector("#tabprev");
-  const applyVar = (v, val) => prev.style.setProperty(v, val);
+  const cand = app.querySelector("#tabcand");
+  const applyVar = (v, val) => cand.style.setProperty(v, val);
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelector("[data-inspect]").addEventListener("click", () => openInspect("#tabcand"));
+  app.querySelector("[data-cycle]").addEventListener("click", () => {
+    idx = (idx + 1) % CATEGORIES.length;
+    const c = CATEGORIES[idx];
+    ["#tabcur", "#tabcand"].forEach((sel) => {
+      const el = app.querySelector(sel); if (!el) return;
+      el.querySelector(".tab-icon").innerHTML = catIconSvg(c.id);
+      el.querySelector(".tab-label").textContent = c.plural;
+    });
+  });
   app.querySelector("#st-export").addEventListener("click", () => {
     const text = JSON.stringify({ ActiveTab: readGroupValues(groups) }, null, 2);
     app.querySelector("#st-out").value = text;
