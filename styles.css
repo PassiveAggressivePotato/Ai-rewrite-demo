@@ -269,8 +269,8 @@ body::before {
 /* Fixed-height icon zone: every icon is vertically centred within it, so all the
  * icons line up horizontally regardless of their individual heights — and the
  * labels below then share a common baseline. */
-.tab .tab-icon { height: 58px; display: flex; align-items: center; justify-content: center; line-height: 0; }
-.tab .cat-ic { width: 60px; height: auto; display: block; transition: filter .25s, transform .25s; }
+.tab .tab-icon { height: 40px; display: flex; align-items: center; justify-content: center; line-height: 0; }
+.tab .cat-ic { width: 40px; height: auto; display: block; transition: filter .25s, transform .25s; }
 .tab .tab-label { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--gold); }
 /* No selection yet → every tab bright. Once one is selected the others recede
  * (visible, but dimmed and shrunk) — exactly as before. */
