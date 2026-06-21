@@ -16,6 +16,7 @@
   --gold-2: #c98f30;
   --teal-1: #4fd0c8;
   --teal-2: #2c97a8;
+  --icon-default: radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f);
   --radius: 18px;
   --radius-sm: 12px;
   --gut: 10px;            /* page side margin / list gutter (Home + Title pages) */
@@ -235,6 +236,18 @@ body::before {
   transition: background .18s, filter .18s, opacity .18s;
   filter: grayscale(.7); opacity: .7;
 }
+/* Category icons rendered as masks — colour comes from `background` (gold by
+ * default), the SVG only supplies the shape; aspect-ratio keeps proportions. */
+.cat-ic {
+  display: block;
+  -webkit-mask: var(--cat-src) center / contain no-repeat;
+          mask: var(--cat-src) center / contain no-repeat;
+  background: var(--icon-col, var(--icon-default));
+}
+.cat-movie { --cat-src: url("assets/icons/movie.svg"); aspect-ratio: 1215 / 1146; }
+.cat-tv    { --cat-src: url("assets/icons/tv.svg");    aspect-ratio: 1040 / 840; }
+.cat-game  { --cat-src: url("assets/icons/game.svg");  aspect-ratio: 1274 / 895; }
+.cat-book  { --cat-src: url("assets/icons/book.svg");  aspect-ratio: 1377 / 1121; }
 .hsd-tab .cat-ic { width: 26px; height: auto; display: block; flex: none; }
 .hsd-tab:last-child { border-right: none; }
 .hsd-tab.empty { opacity: .3; padding: 0; font-size: 0; }
@@ -262,7 +275,7 @@ body::before {
   /* Gold gradient outline (drawn as a border-box gradient under a solid fill). */
   border: 1.5px solid transparent;
   background:
-    linear-gradient(180deg, var(--tab-fill1, #16161f), var(--tab-fill2, #0e0f16)) padding-box,
+    linear-gradient(180deg, #16161f, #0e0f16) padding-box,
     linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22)) border-box;
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
 }
@@ -279,17 +292,18 @@ body::before {
 }
 .tabs.has-sel .tab:not(.active) .cat-ic { filter: brightness(.7) saturate(.8); }
 .tab:hover { transform: translateY(-1px); }
-/* Active tab: metallic gold gradient outline + a small, subtle glow behind the icon. */
+/* Active tab — fill / outline / shadow are all tokenised (editable in Studio). */
 .tab.active {
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(243,205,118,.16), #14151d) padding-box,
-    linear-gradient(150deg, #fff0cf, #f3cd76 45%, #b9822b) border-box;
+    var(--tab-fill, linear-gradient(180deg, rgba(243,205,118,.16), #14151d)) padding-box,
+    var(--tab-bord, linear-gradient(150deg, #fff0cf, #f3cd76 45%, #b9822b)) border-box;
   transform: scale(1.04);
   position: relative; z-index: 3;
-  box-shadow: 0 8px 20px -14px rgba(0,0,0,.7);
+  box-shadow: var(--tab-shadow, 0 8px 20px -14px rgba(0,0,0,.7));
 }
-.tab.active .cat-ic { transform: scale(1.06); filter: drop-shadow(0 0 4px rgba(243,205,118,.4)); }
+.tab.active .cat-ic { transform: scale(1.06); background: var(--tab-icon-col, var(--icon-col, var(--icon-default))); filter: drop-shadow(var(--tab-icon-shadow, 0 0 4px rgba(243,205,118,.4))); }
+.tab.active .tab-label { text-shadow: var(--tab-lab-shadow, none); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
 .tabs .tab:first-child.active { transform-origin: left center; }
 .tabs .tab:last-child.active { transform-origin: right center; }
@@ -883,6 +897,9 @@ body::before {
   box-shadow: 0 8px 18px rgba(0,0,0,.45);
 }
 .st-compare { display: flex; justify-content: center; align-items: flex-start; gap: 30px; }
+/* Active-tab preview: a single tab at a realistic width. */
+.tabwrap { width: 96px; }
+.tabwrap .tab { width: 100%; }
 .st-cmp { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .st-cmp figcaption { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
 
