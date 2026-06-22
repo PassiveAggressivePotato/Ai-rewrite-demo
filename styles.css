@@ -415,7 +415,8 @@ body::before {
 .list-col { padding: 0; }
 .list-col h3 {
   font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--gold); margin-bottom: 9px; line-height: 1.2; text-align: center; cursor: pointer;
+  color: var(--gold); margin-bottom: 9px; line-height: 1.2; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
 }
 
 /* ---- Landing lists: vertical (text beside) ⇄ horizontal (scrolling rows) -- */
@@ -691,28 +692,32 @@ body::before {
 
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 12px 2px 7px; }
-.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 .sec-right { display: inline-flex; align-items: center; gap: 10px; flex: none; }
-/* Trailing chevron marking a title as a link to its own page. */
-.title-go { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--gold); opacity: .85; }
-.title-go svg { width: 1em; height: 1em; }
+/* Trailing chevron marking a title as a link to its own page — centred with the
+ * title text and a touch larger. */
+.title-go { display: inline-flex; align-items: center; margin-left: 5px; color: var(--gold); opacity: .85; }
+.title-go svg { width: 1.15em; height: 1.15em; }
 
-/* Collapsible detail sections (Where to Watch / Actors / More Like This). The
+/* Collapsible detail sections (Where to Watch / Actors / More Like This …). The
  * chevron toggles .dsec-body; the title links to its own page. */
 .sec-toggle {
-  flex: none; width: 30px; height: 30px; border-radius: 50%;
-  display: grid; place-items: center; color: var(--text-dim);
-  background: var(--surface); border: 1px solid var(--border);
-  transition: color .15s, background .15s, transform .25s var(--ease);
+  flex: none; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--text-faint);
+  background: transparent; border: none;
+  transition: color .15s, background .15s, transform .3s var(--ease);
 }
-.sec-toggle:hover { color: var(--text); background: var(--surface-2); }
-.sec-toggle svg { width: 17px; height: 17px; display: block; }
+.sec-toggle:hover { color: var(--text); background: var(--surface); }
+.sec-toggle svg { width: 15px; height: 15px; display: block; }
 .dsec.collapsed .sec-toggle { transform: rotate(-90deg); }
-.dsec-body { max-height: 1600px; opacity: 1; transition: max-height .35s var(--ease), opacity .25s; }
-.dsec.collapsed .dsec-body { max-height: 0; opacity: 0; overflow: hidden; pointer-events: none; }
+/* Smooth height animation via grid-template-rows (no magic max-height). */
+.dsec-body { display: grid; grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows .35s var(--ease), opacity .25s; }
+.dsec-body > * { min-height: 0; overflow: hidden; }
+.dsec.collapsed .dsec-body { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
 /* Reserve stable space so live changes (e.g. country switch) never resize the page. */
 #watch-region { min-height: 100px; }
+.dsec.collapsed #watch-region { min-height: 0; }   /* let the grid track collapse fully */
 
 /* Actors / cast — a horizontally-scrolling row of portrait cards. */
 .cast-sec { margin-top: 4px; }
@@ -818,6 +823,8 @@ body::before {
 .rise.d2 { animation-delay: .1s; }
 .rise.d3 { animation-delay: .15s; }
 .rise.d4 { animation-delay: .2s; }
+.rise.d5 { animation-delay: .25s; }
+.rise.d6 { animation-delay: .3s; }
 @media (prefers-reduced-motion: reduce) { .rise { animation: none; } .dial::before { transition: none; } }
 
 .hidden { display: none !important; }
