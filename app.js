@@ -1719,12 +1719,12 @@ function wireCycle(len, start, onIdx) {
 function homeGroups() {
   return [
     { name: "Background", items: [
-      { k: "--home-blur", label: "Backdrop blur", val: 24, step: 1, min: 0, max: 80 },
-      { k: "--home-fade-col", label: "Top fade colour", type: "color", val: "#171726" },
-      { k: "--home-fade-soft", label: "Fade edge softness", val: 45, step: 1, min: 0, max: 95, unit: "" },
+      { k: "--home-blur", label: "Backdrop blur", val: 5, step: 1, min: 0, max: 80 },
+      { k: "--home-fade-col", label: "Top fade colour", type: "color", val: "#0f0f1a" },
+      { k: "--home-fade-soft", label: "Fade edge softness", val: 35, step: 1, min: 0, max: 95, unit: "" },
     ] },
     { name: "Spacing", items: [
-      { k: "--home-head-gap", label: "Header spacing", val: 24, step: 1, min: 0 },
+      { k: "--home-head-gap", label: "Header spacing", val: 35, step: 1, min: 0 },
       { k: "--home-tabs-gap", label: "Tabs spacing", val: 8, step: 1, min: 0 },
       { k: "--home-search-gap", label: "Search spacing", val: 0, step: 1, min: 0 },
       { k: "--home-lists-gap", label: "Lists spacing", val: 16, step: 1, min: 0 },

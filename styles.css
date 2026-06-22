@@ -98,6 +98,22 @@ body::before {
   display: flex;
   flex-direction: column;
 }
+
+/* Portrait-only gate: cover the app when a phone is held in landscape (browser
+ * tabs can't lock orientation). Short viewport height => a phone, not a tablet. */
+.rotate-gate { display: none; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .rotate-gate {
+    display: grid; place-items: center; position: fixed; inset: 0; z-index: 9999;
+    background: var(--chrome, #171726); text-align: center; padding: 24px;
+  }
+  .rotate-gate-inner { display: grid; justify-items: center; gap: 14px; }
+  .rotate-gate svg { width: 54px; height: 54px; color: var(--text-dim); }
+  .rotate-gate p {
+    font-family: var(--font-display); font-weight: 800; font-size: 15px;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--gold); margin: 0;
+  }
+}
 @media (min-width: 540px) {
   #app {
     height: min(900px, 96dvh);
@@ -136,14 +152,18 @@ body::before {
  * ===================================================================== */
 .landing { padding: 14px var(--gut) 0; position: relative; }
 .landing > :not(.home-topfade) { position: relative; z-index: 1; }   /* content above the top wash */
-/* Fixed, heavily-blurred random backdrop behind the homepage; stays static while
- * .scroll rolls over it (it's transparent where the lists are). */
+/* Fixed, blurred random backdrop behind the homepage; stays static while
+ * .scroll rolls over it (it's transparent where the lists are). Its top edge is
+ * anchored just under the head's last solid pixels (tracks --home-fade-soft). */
 .home-bg {
-  position: absolute; inset: 0; z-index: 0;
-  background-size: cover !important; background-position: center !important;
-  filter: blur(var(--home-blur, 24px)) saturate(1.15) brightness(.66); transform: scale(1.2);
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 0;
+  top: calc(340px * (100 - var(--home-fade-soft, 35)) / 100 - 12px);
+  background-size: cover !important; background-position: center top !important;
+  filter: blur(var(--home-blur, 5px)) saturate(1.15) brightness(.66);
+  transform: scale(1.2); transform-origin: center top;
 }
 .home-bg::after { content: ""; position: absolute; inset: 0; background: rgba(10,12,16,.28); }
+.landing-screen { background: var(--home-fade-col, #0f0f1a); }
 .landing-screen .scroll { position: relative; z-index: 1; }
 /* Solid colour behind the wordmark→tabs, fading to transparent by the lists;
  * scrolls with the content. Negative insets span past the .landing gutter. */
@@ -151,8 +171,8 @@ body::before {
   position: absolute; top: 0; left: calc(-1 * var(--gut)); right: calc(-1 * var(--gut));
   height: 340px; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg,
-    var(--home-fade-col, #171726) 0%,
-    var(--home-fade-col, #171726) calc(100% - var(--home-fade-soft, 45) * 1%),
+    var(--home-fade-col, #0f0f1a) 0%,
+    var(--home-fade-col, #0f0f1a) calc(100% - var(--home-fade-soft, 35) * 1%),
     transparent 100%);
 }
 /* Compact header that slides down once you scroll past the hero (same bar as the
@@ -288,7 +308,7 @@ body::before {
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
-.prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: var(--home-head-gap, 24px) 0 12px; letter-spacing: .02em; }
+.prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: var(--home-head-gap, 35px) 0 12px; letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--home-tabs-gap, 8px); align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
@@ -979,7 +999,7 @@ body::before {
 .st-compare.st-home { gap: 16px; }
 .home-frame { width: 156px; height: 300px; overflow: hidden; border-radius: 14px; border: 1px solid var(--border); flex: none; box-shadow: var(--shadow-dir-sm); }
 .home-frame > .home-mini { transform: scale(0.3628); transform-origin: top left; }
-.home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--chrome); }
+.home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--home-fade-col, #0f0f1a); }
 .home-mini .landing { min-height: 100%; }
 /* Active-tab preview: a single tab at a realistic width. */
 .tabwrap { width: 96px; }
