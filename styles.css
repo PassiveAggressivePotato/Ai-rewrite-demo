@@ -148,35 +148,36 @@ body::before {
  * the fill is any colour/gradient, and outline/shadow ride the filter chain. All
  * styling tokens are scoped per instance (front-page vs header) further down. */
 .wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; }
+/* Outline + shadow live on the WORDMARK (parent), not the masked .logo. Applying
+ * filters to the mask element itself is unreliable in Safari; on the parent they
+ * filter the child's rendered (masked) shape, so they work everywhere. Outline =
+ * a ring of offset drop-shadows; shadow = one drop-shadow (both set per-instance). */
 .wordmark .logo {
   height: .82em; aspect-ratio: 1333 / 396; display: block;
   background: var(--logo-fill, var(--logo-gold));
   -webkit-mask: var(--logo-src) no-repeat center / contain;
   mask: var(--logo-src) no-repeat center / contain;
   opacity: var(--logo-op, 1);
-  filter: var(--logo-ol-filter, ) var(--logo-shadow-filter, drop-shadow(3px 4px 2px rgba(0,0,0,.65)));
   transform: rotate(var(--logo-rot, 0deg));
   transition: transform .2s var(--ease);
 }
+.wordmark { filter: var(--logo-outline-filter, ) var(--logo-shadow-filter, drop-shadow(3px 4px 2px rgba(0,0,0,.65))); }
 .wordmark:hover .logo { transform: rotate(var(--logo-rot, 0deg)) scale(1.03); }
-/* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview).
- * `color` drives the outline flood (feFlood flood-color="currentColor"). */
+/* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview). */
 .landing-head .wordmark, .logo-scope-fp .wordmark {
   font-size: var(--logo-fp-size, 54px);
-  color: var(--logo-fp-ol-col, transparent);
   --logo-fill: var(--logo-fp-fill, var(--logo-gold));
   --logo-op: var(--logo-fp-op, 1);
   --logo-rot: var(--logo-fp-rot, 0deg);
-  --logo-ol-filter: var(--logo-fp-ol, );
+  --logo-outline-filter: var(--logo-fp-outline, );
   --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 3px 4px 2px rgba(0,0,0,.65)));
 }
 .landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
   font-size: var(--logo-hd-size, 30px);
-  color: var(--logo-hd-ol-col, transparent);
   --logo-fill: var(--logo-hd-fill, var(--logo-gold));
   --logo-op: var(--logo-hd-op, 1);
   --logo-rot: var(--logo-hd-rot, 0deg);
-  --logo-ol-filter: var(--logo-hd-ol, );
+  --logo-outline-filter: var(--logo-hd-outline, );
   --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 3px 4px 2px rgba(0,0,0,.65)));
 }
 
@@ -791,15 +792,15 @@ body::before {
 
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 12px 2px 7px; }
-.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; display: flex; align-items: center; }
+.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 .sec-right { display: inline-flex; align-items: center; gap: 10px; flex: none; }
 .rel-creator { color: var(--gold); }   /* creator name (2nd line) on "From the Same Mind:" */
 .rel-cat { color: var(--gold); }       /* category word in "Watch Next Movies" etc. */
-/* Trailing chevron marking a title as a link to its own page — vertically
- * centred against the (possibly multi-line) title, 5% larger than it. */
-.title-go { display: inline-flex; align-items: center; margin-left: 5px; color: var(--gold); opacity: .85; flex: none; }
-.title-go svg { width: 1.05em; height: 1.05em; }
+/* Trailing chevron marking a title as a link — nested in the text so it sits on
+ * the last line, optically centred on the caps and a hair taller than them. */
+.title-go { display: inline-block; margin-left: .3em; color: var(--gold); opacity: .9; vertical-align: -0.085em; }
+.title-go svg { display: inline-block; height: .92em; width: auto; }
 /* Related-content lists sit closer together (≈half the default gap). */
 .rel-sec .sec-head { margin-top: 6px; margin-bottom: 4px; }
 .rel-sec .lists { padding-bottom: 7px; }

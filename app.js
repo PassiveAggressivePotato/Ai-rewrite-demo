@@ -46,6 +46,9 @@ const ICON = {
   chev: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
   reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v5h5"/><path d="M3.5 10a8 8 0 1 1-1 5"/></svg>`,
   next: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
+  /* Title link chevron — tight viewBox so the glyph fills the box (sizes/aligns
+   * cleanly next to a heading); slightly larger than the caps it sits beside. */
+  go: `<svg viewBox="7.5 4.5 9 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
   scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`,
 };
 
@@ -563,7 +566,9 @@ function listColumn(title, rows, featured = false) {
   return `<div class="list-col">${title ? `<h3>${titleLink(title)}</h3>` : ""}<div class="col-items">${items}${seeAll}</div></div>`;
 }
 /* A title that links to its own page gets a trailing chevron as the affordance. */
-const titleLink = (text) => `<span class="title-text">${text}</span><span class="title-go" aria-hidden="true">${ICON.next}</span>`;
+/* Chevron nested INSIDE the title text so it flows after the last word — on the
+ * 2nd line for multi-line titles (e.g. the creator name) — and aligns to it. */
+const titleLink = (text) => `<span class="title-text">${text}<span class="title-go" aria-hidden="true">${ICON.go}</span></span>`;
 
 const listsClass = () => "lists cards layout-horizontal";
 
@@ -1216,10 +1221,11 @@ function controlRow(it) {
   const startOff = !!it.off;
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val, it.layer);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
+  else if (it.type === "outline") ctrl = `<button class="outline-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "text") ctrl = `<input class="st-text" type="text" data-var="${it.k}" value="${escapeAttr(String(it.val))}">`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit, it.fine, it.noauto);
-  const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
+  const def = (it.type === "shadow" || it.type === "outline") ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
   const tog = toggleable ? `<input type="checkbox" class="ctl-tog"${startOff ? "" : " checked"} aria-label="Enable ${it.label}">` : "";
   return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
@@ -1228,7 +1234,7 @@ function controlRow(it) {
 function studioInitStyle(groups) {
   const out = [];
   groups.forEach((g) => g.items.forEach((it) => {
-    if (it.type === "lock" || it.type === "text" || it.type === "shadow") return;
+    if (it.type === "lock" || it.type === "text" || it.type === "shadow" || it.type === "outline") return;
     if (it.type === "color" || it.type === "select") out.push(`${it.k}:${it.val}`);
     else if (it.type === "radius") out.push(`${it.k}:${it.val}px`);
     else out.push(`${it.k}:${it.val}${it.unit == null ? "px" : it.unit}`);
@@ -1313,6 +1319,7 @@ function wireGroupControls(root, applyVar, onText) {
       btn.addEventListener("click", () => { quadSteps[i].querySelector(".step-val").value = def; apply(); }));
   });
   root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
+  root.querySelectorAll(".outline-btn").forEach((btn) => btn.addEventListener("click", () => openOutlineEditor(btn.dataset.var, applyVar)));
   // Enable/disable toggles (colours & shadows). Off = transparent / no shadow.
   root.querySelectorAll(".ctl-tog").forEach((cb) => {
     const ctl = cb.closest(".ctl");
@@ -1327,12 +1334,14 @@ function wireGroupControls(root, applyVar, onText) {
       const sw = ctl.querySelector(":scope > .swatch");
       const sel = ctl.querySelector(":scope > .st-select");
       const sh = ctl.querySelector(":scope > .shadow-btn");
+      const ol = ctl.querySelector(":scope > .outline-btn");
       const txt = ctl.querySelector(":scope > .st-text");
       if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + (step.dataset.unit ?? "px")); }
       else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, sw.dataset.layer ? asImage(def) : def); }
       else if (sel) { sel.value = def; applyVar(sel.dataset.var, def); }
       else if (txt) { txt.value = def; onText?.(txt.dataset.var, def); }
       else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
+      else if (ol) { const v = ol.dataset.var; OUTLINES[v] = { ...OUTLINE_DEFAULT }; applyVar(v, ""); }
     });
   });
 }
@@ -1349,6 +1358,7 @@ function readGroupValues(groups, changedOnly = true) {
     else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
     else if (it.type === "text") { cur = app.querySelector(`.st-text[data-var="${it.k}"]`).value; def = it.val; }
     else if (it.type === "shadow") { off = isOff(`.shadow-btn[data-var="${it.k}"]`); def = it.def || "none"; cur = off ? "none" : (SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def); }
+    else if (it.type === "outline") { def = ""; cur = OUTLINES[it.k] ? outlineCss(OUTLINES[it.k]) : ""; }
     else if (it.type === "radius") {
       const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
       cur = rc.classList.contains("expanded")
@@ -1425,6 +1435,45 @@ function openShadowEditor(v, applyVar) {
   }));
   wrap.querySelector(".cp-scrim").addEventListener("click", closeShadowEditor);
   wrap.querySelector(".cp-done").addEventListener("click", closeShadowEditor);
+  upd();
+}
+
+/* Outline = a ring of offset drop-shadows (width + colour) applied on the parent
+ * wordmark. Robust everywhere (no SVG filter / mask-on-element quirks). */
+const OUTLINES = {};
+const OUTLINE_DEFAULT = { width: 0, color: "#ffffff" };
+function outlineCss(o) {
+  const w = +o.width || 0;
+  if (w <= 0) return "";
+  const c = o.color || "#ffffff";
+  const n = w <= 1.5 ? 8 : 12;   // denser ring for thicker outlines
+  const pts = [];
+  for (let i = 0; i < n; i++) { const a = (i / n) * 2 * Math.PI; pts.push(`drop-shadow(${(Math.cos(a) * w).toFixed(2)}px ${(Math.sin(a) * w).toFixed(2)}px 0 ${c})`); }
+  return pts.join(" ");
+}
+function closeOutlineEditor() { app.querySelector(".oled")?.remove(); }
+function openOutlineEditor(v, applyVar) {
+  closeOutlineEditor();
+  const o = OUTLINES[v] || (OUTLINES[v] = { ...OUTLINE_DEFAULT });
+  const wrap = document.createElement("div");
+  wrap.className = "shed oled";
+  wrap.innerHTML = `
+    <div class="cp-scrim"></div>
+    <div class="cp-sheet">
+      <div class="cp-head"><span>Outline</span><button class="cp-done">Done</button></div>
+      <div class="ctl"><span class="ctl-l">Width</span><div class="step" data-field="width" data-min="0" data-max="10" data-unit=""><button class="step-btn big" data-d="-1">«</button><button class="step-btn" data-d="-0.5">‹</button><input class="step-val" type="text" inputmode="decimal" value="${o.width}"><button class="step-btn" data-d="0.5">›</button><button class="step-btn big" data-d="1">»</button></div></div>
+      <div class="ctl"><span class="ctl-l">Colour</span>${swatchHTML("__olcol", o.color)}</div>
+    </div>`;
+  app.appendChild(wrap);
+  placeSheet(wrap);
+  const upd = () => applyVar(v, outlineCss(o));
+  wrap.querySelectorAll(".step[data-field]").forEach((step) => attachStepper(step, (n) => { o[step.dataset.field] = n; upd(); }));
+  const sw = wrap.querySelector(".swatch");
+  sw.addEventListener("click", () => openColorPicker(o.color, (val) => {
+    o.color = val; sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val; sw.querySelector(".swatch-val").textContent = val; upd();
+  }));
+  wrap.querySelector(".cp-scrim").addEventListener("click", closeOutlineEditor);
+  wrap.querySelector(".cp-done").addEventListener("click", closeOutlineEditor);
   upd();
 }
 
@@ -1908,11 +1957,6 @@ function renderStudioHomepage() {
 
 /* ---- Studio: Logo (wordmark — fully customisable, header + front-page) ---- */
 const LOGO_GOLD = "linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%, #b9791f 100%)";
-const OUTLINE_OPTS = [
-  { v: "", l: "Off" }, { v: "url(#io-05)", l: "Hairline" }, { v: "url(#io-1)", l: "Thin" },
-  { v: "url(#io-15)", l: "Medium" }, { v: "url(#io-2)", l: "Bold" },
-  { v: "url(#io-3)", l: "Heavy" }, { v: "url(#io-4)", l: "Max" },
-];
 const LOGO_TARGETS = { fp: { name: "Front page", size: 54 }, hd: { name: "Header", size: 30 } };
 function logoGroups(t) {
   const size = LOGO_TARGETS[t].size;
@@ -1925,8 +1969,7 @@ function logoGroups(t) {
       { k: `--logo-${t}-shadow`, label: "Drop shadow", type: "shadow", def: "3px 4px 2px rgba(0,0,0,0.65)" },
     ] },
     { name: "Outline", items: [
-      { k: `--logo-${t}-ol`, label: "Thickness", type: "select", val: "", opts: OUTLINE_OPTS },
-      { k: `--logo-${t}-ol-col`, label: "Colour", type: "color", val: "#ffffff" },
+      { k: `--logo-${t}-outline`, label: "Outline (width + colour)", type: "outline" },
     ] },
   ];
 }
