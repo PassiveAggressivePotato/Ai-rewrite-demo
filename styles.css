@@ -827,8 +827,10 @@ body::before {
 /* Actors / cast — a horizontally-scrolling row of portrait cards. */
 .cast-sec { margin-top: 4px; }
 .cast-row {
-  display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none;
+  display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden;
   margin: 0 calc(-1 * var(--gut)); padding: 4px var(--gut) 6px;
+  scroll-padding-left: var(--gut);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
 }
 .cast-row::-webkit-scrollbar { display: none; }
 .cast-row .see-all { align-self: flex-start; height: 144px; }   /* match person-photo (108 × 4/3) */
