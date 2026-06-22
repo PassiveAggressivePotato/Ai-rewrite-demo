@@ -829,11 +829,10 @@ body::before {
 .cast-row {
   display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none;
   margin: 0 calc(-1 * var(--gut)); padding: 4px var(--gut) 6px;
-  scroll-snap-type: x proximity;
 }
 .cast-row::-webkit-scrollbar { display: none; }
 .cast-row .see-all { align-self: flex-start; height: 144px; }   /* match person-photo (108 × 4/3) */
-.person-card { flex: none; width: 108px; scroll-snap-align: start; }
+.person-card { flex: none; width: 108px; }
 .person-photo {
   position: relative; width: 108px; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden;
   background-size: cover; background-position: center top;
