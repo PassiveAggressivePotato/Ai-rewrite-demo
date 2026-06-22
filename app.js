@@ -51,11 +51,15 @@ const ICON = {
 
 /* CRITIKL wordmark, drawn from the supplied logo path (recoloured to gold). */
 const LOGO_PATH = "M55 0 H164 L215 57 V142 H135 V83 H83 V313 H135 V254 H215 V339 L161 396 H55 L0 339 V57 Z M244 0 H401 L458 58 V157 L424 196 L458 238 V396 H378 V240 H324 V396 H244 Z M324 83 H379 V157 H324 Z M486 0 H568 V396 H486 Z M587 0 H806 V82 H735 V396 H657 V82 H587 Z M827 0 H907 V396 H827 Z M930 0 H1010 V158 L1069 0 H1144 L1075 190 L1144 396 H1072 L1010 237 V396 H930 Z M1168 0 H1248 V313 H1333 V396 H1168 Z";
+/* The wordmark is rendered as a CSS-masked box (not an inline <svg fill>), so its
+ * fill accepts ANY colour or gradient from the colour picker. The shape is the
+ * LOGO_PATH supplied as a mask image (registered once on :root as --logo-src). */
+const LOGO_SVG = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1333 396"><path fill-rule="evenodd" d="${LOGO_PATH}"/></svg>`)}`;
+document.documentElement.style.setProperty("--logo-src", `url("${LOGO_SVG}")`);
 function logo(cls = "") {
   return `<span class="wordmark home-link ${cls}" data-home role="button" aria-label="${BRAND.name} — home">
-    <svg class="logo" viewBox="0 0 1333 396" role="img" aria-label="${BRAND.name}">
-      <path fill="url(#logo-gold)" fill-rule="evenodd" d="${LOGO_PATH}"/>
-    </svg></span>`;
+    <span class="logo" role="img" aria-label="${BRAND.name}"></span></span>`;
 }
 
 /* Polished category icons — rendered as CSS masks so their colour/gradient is
@@ -100,6 +104,46 @@ function averageColor(src) {
     img.src = src;
   });
 }
+/* Average colour of just the TOP strip of an image — used to extend the homepage
+ * backdrop upward in "colour fill" mode so its top edge melts into the head. */
+const _topColorCache = new Map();
+function topStripColor(src) {
+  if (!src) return Promise.resolve(null);
+  if (_topColorCache.has(src)) return Promise.resolve(_topColorCache.get(src));
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const w = 24, h = 24, rows = 4;
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const cx = cv.getContext("2d", { willReadFrequently: true });
+        cx.drawImage(img, 0, 0, w, h);
+        const d = cx.getImageData(0, 0, w, rows).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+        const hex = n ? "#" + [r, g, b].map((v) => Math.round(v / n).toString(16).padStart(2, "0")).join("") : null;
+        if (hex) _topColorCache.set(src, hex);
+        resolve(hex);
+      } catch (_) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+/* The backdrop is shown dimmed (brightness .66 + a dark overlay). Darken a raw
+ * sampled colour the same way so the flat fill matches the displayed image top. */
+function adjustForBackdrop(hex) {
+  const c = parseColor(hex), k = 0.66, ov = 0.28;
+  const mix = (x, o) => Math.round(x * k * (1 - ov) + o * ov);
+  return "#" + [mix(c.r, 10), mix(c.g, 12), mix(c.b, 16)].map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("");
+}
+/* Resolve the homepage backdrop's top-strip fill colour onto a scope element. */
+function paintTopFill(scopeEl, art) {
+  if (!scopeEl || !art) return;
+  topStripColor(art).then((hex) => { if (hex) scopeEl.style.setProperty("--home-fill-col", adjustForBackdrop(hex)); });
+}
+
 /* After a render, fill each book's detail-page background with the cover's true
  * average colour. Once computed it's cached on the item, so later renders are
  * exact and this becomes a no-op. */
@@ -627,16 +671,19 @@ function renderLanding() {
   // A random movie/TV/game backdrop sits (blurred, static) behind the homepage.
   const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
   const randArt = arts[Math.floor(Math.random() * arts.length)];
+  const randSrc = randArt ? backdropArt(randArt) : "";
   app.innerHTML = `
     <div class="screen landing-screen">
-      ${randArt ? `<div class="home-bg" style="background:${backdropBg(randArt)}"></div>` : ""}
+      ${randArt ? `<div class="home-bg" style="background:${backdropBg(randArt)}"></div>
+      <div class="home-fill"></div>
+      <div class="home-mirror" style="background-image:url('${randSrc}')"></div>
+      <div class="home-scrim"></div>` : ""}
       <div class="landing-sticky">
         <div class="head-left">${logo()}</div>
         <div class="head-actions">${headSearch()}</div>
       </div>
       <div class="scroll">
         <div class="landing ${state.searchOpen ? "searching" : ""}">
-          <div class="home-topfade"></div>
           <div class="landing-head rise">
             ${logo()}
             <div class="tagline">${BRAND.tagline}</div>
@@ -662,6 +709,9 @@ function renderLanding() {
       </div>
       ${toolbox()}
     </div>`;
+
+  // Extend the backdrop upward in "colour fill" mode: sample its top strip.
+  paintTopFill(app.querySelector(".landing-screen"), randSrc);
 
   renderResultsArea();
 
@@ -808,10 +858,13 @@ const watchSub = (item) => (item.category === "movie" || item.category === "tv")
 
 /* ---- Related-content lists on the item page (all copy lives in REL) ---- */
 const CREATOR_KEY = { movie: "Director", tv: "Creator", game: "Developer", book: "Author" };
+const NEXT_VERB = { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" };
+const NEXT_CAT = { movie: "Movies", tv: "Shows", game: "Games", book: "Books" };
+/* "Watch Next Movies" etc. — the category word is gold (uppercased via CSS). */
+const nextTitle = (cat) => `${NEXT_VERB[cat]} <span class="rel-cat">${NEXT_CAT[cat]}</span>`;
 const REL = {
   universe: "The Same Universe",
   mind: (name) => `From the Same Mind:<br><span class="rel-creator">${name}</span>`,
-  next: { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" },
 };
 /* Other items in a category, ranked by shared-genre relevance to `item`
  * (tie-broken by score; falls back to top score when nothing overlaps). */
@@ -858,16 +911,18 @@ function renderDetail(item) {
     .map((x) => ({ it: x, s: scoreItem(x) }))
     .sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0)).slice(0, 10);
 
-  // Related-content sections appended after "More Like This" (specificity-first:
-  // exact franchise → same creator → cross-medium discovery). Empties drop out.
+  // Related-content lists (specificity-first). The top list is the page's own
+  // category ("Watch Next Movies" on a movie, etc. — replaces "More Like This"),
+  // then exact franchise → same creator → cross-medium discovery. Empties drop.
   const cr = sameCreator(item);
   const OTHER = ["movie", "tv", "game", "book"].filter((c) => c !== item.category);
   const relatedSecs = [
+    { title: nextTitle(item.category), sub: "", rows: similar },
     { title: REL.universe, sub: "", rows: franchiseItems(item) },
     { title: REL.mind(cr.creator), sub: "", rows: cr.rows },
-    ...OTHER.map((c) => ({ title: REL.next[c], sub: "", rows: relatedInCategory(item, c) })),
+    ...OTHER.map((c) => ({ title: nextTitle(c), sub: "", rows: relatedInCategory(item, c) })),
   ].filter((d) => d.rows.length);
-  const renderRelatedSec = (d, i) => `<section class="dsec rise d${Math.min(5 + i, 6)}">
+  const renderRelatedSec = (d, i) => `<section class="dsec rel-sec rise d${Math.min(4 + i, 6)}">
           ${secHead(d.title, d.sub)}
           <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", d.rows)}</div></div>
         </section>`;
@@ -941,11 +996,6 @@ function renderDetail(item) {
         </section>
 
         ${castSection(item)}
-
-        ${similar.length ? `<section class="dsec rise d4">
-          ${secHead("More Like This")}
-          <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", similar)}</div></div>
-        </section>` : ""}
 
         ${relatedSecs.map(renderRelatedSec).join("")}
       </div>
@@ -1166,11 +1216,24 @@ function controlRow(it) {
   const startOff = !!it.off;
   if (it.type === "color") ctrl = swatchHTML(it.k, it.val, it.layer);
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
+  else if (it.type === "text") ctrl = `<input class="st-text" type="text" data-var="${it.k}" value="${escapeAttr(String(it.val))}">`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit, it.fine, it.noauto);
   const def = it.type === "shadow" ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
   const tog = toggleable ? `<input type="checkbox" class="ctl-tog"${startOff ? "" : " checked"} aria-label="Enable ${it.label}">` : "";
   return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
+}
+/* Inline starting style for an "After" candidate: colours/selects raw, numeric
+ * tokens with their unit; text + shadow are skipped (applied separately). */
+function studioInitStyle(groups) {
+  const out = [];
+  groups.forEach((g) => g.items.forEach((it) => {
+    if (it.type === "lock" || it.type === "text" || it.type === "shadow") return;
+    if (it.type === "color" || it.type === "select") out.push(`${it.k}:${it.val}`);
+    else if (it.type === "radius") out.push(`${it.k}:${it.val}px`);
+    else out.push(`${it.k}:${it.val}${it.unit == null ? "px" : it.unit}`);
+  }));
+  return out.join(";");
 }
 function groupHTML(g, open) {
   const scaleBtn = g.scale ? `<button class="grp-scale" data-grp-scale="${g.scale}" aria-label="Scale ${g.name}">${ICON.scale}</button>` : "";
@@ -1209,9 +1272,11 @@ function shadowCss(s) {
   const c = parseColor(s.color), a = c.a == null ? 1 : c.a;
   return `${ox}px ${oy}px ${Math.max(0, s.blur * sc).toFixed(1)}px rgba(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)}, ${a.toFixed(2)})`;
 }
-function wireGroupControls(root, applyVar) {
+function wireGroupControls(root, applyVar, onText) {
   root.querySelectorAll(".st-h[data-acc]").forEach((h) =>
     h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
+  root.querySelectorAll(".st-text").forEach((inp) =>
+    inp.addEventListener("input", () => onText?.(inp.dataset.var, inp.value)));
   root.querySelectorAll("[data-grp-scale]").forEach((btn) =>
     btn.addEventListener("click", (e) => { e.stopPropagation(); openScaleEditor(btn.dataset.grpScale, applyVar); }));
   root.querySelectorAll(".st-controls .step[data-var]:not([data-noauto])").forEach((step) =>
@@ -1262,9 +1327,11 @@ function wireGroupControls(root, applyVar) {
       const sw = ctl.querySelector(":scope > .swatch");
       const sel = ctl.querySelector(":scope > .st-select");
       const sh = ctl.querySelector(":scope > .shadow-btn");
+      const txt = ctl.querySelector(":scope > .st-text");
       if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + (step.dataset.unit ?? "px")); }
       else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, sw.dataset.layer ? asImage(def) : def); }
       else if (sel) { sel.value = def; applyVar(sel.dataset.var, def); }
+      else if (txt) { txt.value = def; onText?.(txt.dataset.var, def); }
       else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
     });
   });
@@ -1280,6 +1347,7 @@ function readGroupValues(groups, changedOnly = true) {
     let cur, def, off = false;
     if (it.type === "color") { off = isOff(`.swatch[data-var="${it.k}"]`); cur = off ? "transparent" : app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
     else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
+    else if (it.type === "text") { cur = app.querySelector(`.st-text[data-var="${it.k}"]`).value; def = it.val; }
     else if (it.type === "shadow") { off = isOff(`.shadow-btn[data-var="${it.k}"]`); def = it.def || "none"; cur = off ? "none" : (SHADOWS[it.k] ? shadowCss(SHADOWS[it.k]) : def); }
     else if (it.type === "radius") {
       const rc = app.querySelector(`.ctl-radius[data-var="${it.k}"]`);
@@ -1571,8 +1639,10 @@ function openColorPicker(initial, onChange) {
 
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
-  { id: "home", name: "Homepage", desc: "Landing backdrop, top fade + spacing",
+  { id: "home", name: "Homepage", desc: "Backdrop, top blend, type + spacing",
     thumb: `<span class="sc-thumb" style="background:linear-gradient(180deg,#171726,#0c0d14)"></span>` },
+  { id: "logo", name: "Logo", desc: "Wordmark — fill, size, outline, shadow",
+    thumb: `<span class="sc-thumb sc-thumb-logo"></span>` },
   { id: "poster", name: "Poster Card", desc: "List poster + score badge",
     thumb: `<span class="sc-thumb" style="background:url('assets/poor-things-poster.webp') center/cover"></span>` },
   { id: "tab", name: "Active Tab", desc: "Selected category tab",
@@ -1715,16 +1785,41 @@ function wireCycle(len, start, onIdx) {
   app.querySelector("[data-next]").addEventListener("click", () => go(1));
 }
 
-/* ---- Studio: Homepage (landing backdrop, top fade + spacing) ---- */
+/* ---- Studio: Homepage (landing backdrop, top blend + type & spacing) ---- */
+const TOP_MODE_OPTS = [{ v: "0", l: "Colour fill" }, { v: "1", l: "Mirror" }];
 function homeGroups() {
   return [
     { name: "Background", items: [
       { k: "--home-blur", label: "Backdrop blur", val: 5, step: 1, min: 0, max: 80 },
-      { k: "--home-fade-col", label: "Top fade colour", type: "color", val: "#0f0f1a" },
-      { k: "--home-fade-soft", label: "Fade edge softness", val: 35, step: 1, min: 0, max: 95, unit: "" },
+      { k: "--home-fade-col", label: "Base colour", type: "color", val: "#0f0f1a" },
+      { k: "--home-fade-soft", label: "Image top offset", val: 35, step: 1, min: 0, max: 95, unit: "" },
+    ] },
+    { name: "Top blend", items: [
+      { k: "--home-top-mode", label: "Top extension", type: "select", val: "0", opts: TOP_MODE_OPTS },
+      { k: "--home-fill-col", label: "Fill colour", type: "color", val: "#0f0f1a" },
+      { k: "--home-seam", label: "Seam feather", val: 48, step: 1, min: 0, max: 400 },
+      { k: "--home-mirror-h", label: "Mirror height", val: 220, step: 2, min: 0, max: 600 },
+      { k: "--home-mirror-blur", label: "Mirror blur", val: 18, step: 1, min: 0, max: 80 },
+      { k: "--home-mirror-op", label: "Mirror strength", val: 85, step: 1, min: 0, max: 100, unit: "" },
+    ] },
+    { name: "Logo", items: [
+      { k: "--home-logo-gap-top", label: "Space above logo", val: 16, step: 1, min: 0 },
+      { k: "--home-logo-gap-bot", label: "Space below logo", val: 0, step: 1, min: 0 },
+    ] },
+    { name: "Tagline", items: [
+      { k: "--home-tag-size", label: "Tagline size", val: 13, step: 0.5, min: 6 },
+      { k: "--home-tag-col", label: "Tagline colour", type: "color", val: "#9aa1b0" },
+      { k: "--home-tag-gap", label: "Tagline spacing", val: 10, step: 1, min: 0 },
+      { k: "--home-tag-text", label: "Tagline wording", type: "text", val: BRAND.tagline },
+    ] },
+    { name: "Prompt", items: [
+      { k: "--home-prompt-size", label: "Prompt size", val: 13, step: 0.5, min: 6 },
+      { k: "--home-prompt-col", label: "Prompt colour", type: "color", val: "#9aa1b0" },
+      { k: "--home-prompt-gap-top", label: "Space above prompt", val: 35, step: 1, min: 0 },
+      { k: "--home-prompt-gap-bot", label: "Space below prompt", val: 12, step: 1, min: 0 },
+      { k: "--home-prompt-text", label: "Prompt wording", type: "text", val: "What are you looking for?" },
     ] },
     { name: "Spacing", items: [
-      { k: "--home-head-gap", label: "Header spacing", val: 35, step: 1, min: 0 },
       { k: "--home-tabs-gap", label: "Tabs spacing", val: 8, step: 1, min: 0 },
       { k: "--home-search-gap", label: "Search spacing", val: 0, step: 1, min: 0 },
       { k: "--home-lists-gap", label: "Lists spacing", val: 16, step: 1, min: 0 },
@@ -1734,7 +1829,7 @@ function homeGroups() {
 /* A fully-populated, static snapshot of the landing page for the preview frame.
  * Mirrors renderLanding's structure/classes so the live CSS (and the editable
  * tokens) apply 1:1. */
-function homePreviewHTML(bg) {
+function homePreviewHTML(bg, art) {
   const tabs = CATEGORIES.map((c) => `<button class="tab" tabindex="-1"><span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`).join("");
   const lists = `<div class="section-title">Popular Right Now</div>
     <div class="lists cards layout-horizontal">
@@ -1745,8 +1840,10 @@ function homePreviewHTML(bg) {
     </div>`;
   return `
     <div class="home-bg" style="background:${bg}"></div>
+    <div class="home-fill"></div>
+    <div class="home-mirror"${art ? ` style="background-image:url('${art}')"` : ""}></div>
+    <div class="home-scrim"></div>
     <div class="landing">
-      <div class="home-topfade"></div>
       <div class="landing-head">${logo()}<div class="tagline">${BRAND.tagline}</div></div>
       <div class="prompt">What are you looking for?</div>
       <div class="tabs">${tabs}</div>
@@ -1762,10 +1859,10 @@ function homePreviewHTML(bg) {
 function renderStudioHomepage() {
   const groups = homeGroups();
   const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
-  const bg = backdropBg(arts[Math.floor(Math.random() * arts.length)] || CATALOG[0]);
-  const initStyle = groups.flatMap((g) => g.items.map((it) =>
-    `${it.k}:${it.val}${it.type === "color" ? "" : (it.unit == null ? "px" : it.unit)}`)).join(";");
-  const mini = (id, style) => `<div class="home-frame"><div class="home-mini" id="${id}"${style ? ` style="${style}"` : ""}>${homePreviewHTML(bg)}</div></div>`;
+  const item = arts[Math.floor(Math.random() * arts.length)] || CATALOG[0];
+  const bg = backdropBg(item), art = backdropArt(item);
+  const initStyle = studioInitStyle(groups);
+  const mini = (id, style) => `<div class="home-frame"><div class="home-mini" id="${id}"${style ? ` style="${style}"` : ""}>${homePreviewHTML(bg, art)}</div></div>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
@@ -1788,10 +1885,84 @@ function renderStudioHomepage() {
     </div>`;
   const cand = app.querySelector("#cand");
   const applyVar = (v, val) => cand.style.setProperty(v, val);
-  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  // Live-edit the tagline / prompt wording in the After mini.
+  const onText = (key, val) => {
+    const sel = key === "--home-tag-text" ? ".tagline" : key === "--home-prompt-text" ? ".prompt" : null;
+    const node = sel && cand.querySelector(sel); if (node) node.textContent = val;
+  };
+  // Both minis show the sampled top-strip fill (so Before/After match the live look).
+  paintTopFill(app.querySelector("#cur"), art);
+  paintTopFill(cand, art);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar, onText);
   app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
   app.querySelector("#st-export").addEventListener("click", () => {
     const text = JSON.stringify({ Homepage: readGroupValues(groups) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+  wireHeader(app);
+}
+
+/* ---- Studio: Logo (wordmark — fully customisable, header + front-page) ---- */
+const LOGO_GOLD = "linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%, #b9791f 100%)";
+const OUTLINE_OPTS = [
+  { v: "", l: "Off" }, { v: "url(#io-05)", l: "Hairline" }, { v: "url(#io-1)", l: "Thin" },
+  { v: "url(#io-15)", l: "Medium" }, { v: "url(#io-2)", l: "Bold" },
+  { v: "url(#io-3)", l: "Heavy" }, { v: "url(#io-4)", l: "Max" },
+];
+const LOGO_TARGETS = { fp: { name: "Front page", size: 54 }, hd: { name: "Header", size: 30 } };
+function logoGroups(t) {
+  const size = LOGO_TARGETS[t].size;
+  return [
+    { name: "Logo", items: [
+      { k: `--logo-${t}-size`, label: "Size", val: size, step: 1, min: 8, max: 200 },
+      { k: `--logo-${t}-fill`, label: "Fill", type: "color", val: LOGO_GOLD },
+      { k: `--logo-${t}-op`, label: "Opacity", val: 1, step: 0.05, min: 0, max: 1, unit: "" },
+      { k: `--logo-${t}-rot`, label: "Rotation", val: 0, step: 1, min: -180, max: 180, unit: "deg" },
+      { k: `--logo-${t}-shadow`, label: "Drop shadow", type: "shadow", def: "3px 4px 2px rgba(0,0,0,0.65)" },
+    ] },
+    { name: "Outline", items: [
+      { k: `--logo-${t}-ol`, label: "Thickness", type: "select", val: "", opts: OUTLINE_OPTS },
+      { k: `--logo-${t}-ol-col`, label: "Colour", type: "color", val: "#000000" },
+    ] },
+  ];
+}
+function renderStudioLogo(target) {
+  const t = LOGO_TARGETS[target] ? target : "fp";
+  const groups = logoGroups(t);
+  const initStyle = studioInitStyle(groups);
+  const seg = (id, label) => `<a class="st-seg ${id === t ? "on" : ""}" href="#/studio/logo${id === "hd" ? "-header" : ""}">${label}</a>`;
+  const prev = (id, style) => `<div class="logo-prev"><div class="logo-scope-${t}" id="${id}"${style ? ` style="${style}"` : ""}><span class="wordmark"><span class="logo" role="img" aria-label="${BRAND.name}"></span></span></div></div>`;
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>Logo</h1>
+        </div>
+        <div class="st-segs">${seg("fp", "Front page")}${seg("hd", "Header")}</div>
+        <div class="st-stage st-compare">
+          <figure class="st-cmp">${prev("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${prev("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+        </div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
+        <section class="st-sec">
+          <h2>Export</h2>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="8" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+  const cand = app.querySelector("#cand");
+  const applyVar = (v, val) => cand.style.setProperty(v, val);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ [`Logo (${LOGO_TARGETS[t].name})`]: readGroupValues(groups) }, null, 2);
     app.querySelector("#st-out").value = text;
     navigator.clipboard?.writeText(text).catch(() => {});
     const btn = app.querySelector("#st-export");
@@ -2012,6 +2183,8 @@ function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
   if (hash === "#/studio/home") { renderStudioHomepage(); return; }
+  if (hash === "#/studio/logo") { renderStudioLogo("fp"); return; }
+  if (hash === "#/studio/logo-header") { renderStudioLogo("hd"); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
   if (hash === "#/studio/tab") { renderStudioTab("active"); return; }
   if (hash === "#/studio/tab-idle") { renderStudioTab("idle"); return; }

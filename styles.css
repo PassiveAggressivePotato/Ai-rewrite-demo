@@ -17,6 +17,7 @@
   --teal-1: #4fd0c8;
   --teal-2: #2c97a8;
   --icon-default: radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f);
+  --logo-gold: linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%, #b9791f 100%);
   --radius: 18px;
   --radius-sm: 12px;
   --gut: 10px;            /* page side margin / list gutter (Home + Title pages) */
@@ -143,21 +144,57 @@ body::before {
 .scroll::-webkit-scrollbar { display: none; }
 
 /* ---- Brand / wordmark (CRITIKL logo) -------------------------------------- */
+/* The wordmark is a CSS-masked box: the shape is --logo-src (registered in JS),
+ * the fill is any colour/gradient, and outline/shadow ride the filter chain. All
+ * styling tokens are scoped per instance (front-page vs header) further down. */
 .wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; }
-.wordmark .logo { height: .82em; width: auto; display: block; filter: drop-shadow(3px 4px 2px rgba(0,0,0,.65)); transition: transform .2s var(--ease); }
-.wordmark:hover .logo { transform: scale(1.03); }
+.wordmark .logo {
+  height: .82em; aspect-ratio: 1333 / 396; display: block;
+  background: var(--logo-fill, var(--logo-gold));
+  -webkit-mask: var(--logo-src) no-repeat center / contain;
+  mask: var(--logo-src) no-repeat center / contain;
+  opacity: var(--logo-op, 1);
+  filter: var(--logo-ol-filter, ) var(--logo-shadow-filter, drop-shadow(3px 4px 2px rgba(0,0,0,.65)));
+  transform: rotate(var(--logo-rot, 0deg));
+  transition: transform .2s var(--ease);
+}
+.wordmark:hover .logo { transform: rotate(var(--logo-rot, 0deg)) scale(1.03); }
+/* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview).
+ * `color` drives the outline flood (feFlood flood-color="currentColor"). */
+.landing-head .wordmark, .logo-scope-fp .wordmark {
+  font-size: var(--logo-fp-size, 54px);
+  color: var(--logo-fp-ol-col, transparent);
+  --logo-fill: var(--logo-fp-fill, var(--logo-gold));
+  --logo-op: var(--logo-fp-op, 1);
+  --logo-rot: var(--logo-fp-rot, 0deg);
+  --logo-ol-filter: var(--logo-fp-ol, );
+  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 3px 4px 2px rgba(0,0,0,.65)));
+}
+.landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
+  font-size: var(--logo-hd-size, 30px);
+  color: var(--logo-hd-ol-col, transparent);
+  --logo-fill: var(--logo-hd-fill, var(--logo-gold));
+  --logo-op: var(--logo-hd-op, 1);
+  --logo-rot: var(--logo-hd-rot, 0deg);
+  --logo-ol-filter: var(--logo-hd-ol, );
+  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 3px 4px 2px rgba(0,0,0,.65)));
+}
 
 /* =====================================================================
  * LANDING PAGE
  * ===================================================================== */
 .landing { padding: 14px var(--gut) 0; position: relative; }
-.landing > :not(.home-topfade) { position: relative; z-index: 1; }   /* content above the top wash */
+.landing > * { position: relative; z-index: 1; }   /* content above the static backdrop */
 /* Fixed, blurred random backdrop behind the homepage; stays static while
  * .scroll rolls over it (it's transparent where the lists are). Its top edge is
- * anchored just under the head's last solid pixels (tracks --home-fade-soft). */
+ * anchored part-way down (tracks --home-img-top); the region above is extended
+ * upward by the "top blend" layers below so there's no flat seam. */
+.landing-screen, .home-mini {
+  --home-img-top: calc(340px * (100 - var(--home-fade-soft, 35)) / 100 - 12px);
+}
 .home-bg {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 0;
-  top: calc(340px * (100 - var(--home-fade-soft, 35)) / 100 - 12px);
+  top: var(--home-img-top);
   background-size: cover !important; background-position: center top !important;
   filter: blur(var(--home-blur, 5px)) saturate(1.15) brightness(.66);
   transform: scale(1.2); transform-origin: center top;
@@ -165,15 +202,36 @@ body::before {
 .home-bg::after { content: ""; position: absolute; inset: 0; background: rgba(10,12,16,.28); }
 .landing-screen { background: var(--home-fade-col, #0f0f1a); }
 .landing-screen .scroll { position: relative; z-index: 1; }
-/* Solid colour behind the wordmark→tabs, fading to transparent by the lists;
- * scrolls with the content. Negative insets span past the .landing gutter. */
-.home-topfade {
-  position: absolute; top: 0; left: calc(-1 * var(--gut)); right: calc(-1 * var(--gut));
-  height: 340px; z-index: 0; pointer-events: none;
-  background: linear-gradient(180deg,
-    var(--home-fade-col, #0f0f1a) 0%,
-    var(--home-fade-col, #0f0f1a) calc(100% - var(--home-fade-soft, 35) * 1%),
-    transparent 100%);
+
+/* ---- Top blend: extend the backdrop above its framed top (two modes) ------- */
+/* Colour-fill mode (default): a flat band in the sampled top-strip colour
+ * (--home-fill-col, set in JS), feathered into the image over --home-seam. */
+.home-fill {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 0;
+  height: calc(var(--home-img-top) + var(--home-seam, 48px));
+  background: var(--home-fill-col, var(--home-fade-col, #0f0f1a));
+  opacity: calc(1 - var(--home-top-mode, 0));
+  -webkit-mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 48px)), transparent 100%);
+  mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 48px)), transparent 100%);
+}
+/* Mirror mode: a vertically-flipped, blurred copy of the backdrop sitting above
+ * the seam as a soft reflection; fades out towards the top. */
+.home-mirror {
+  position: absolute; left: 0; right: 0; z-index: 0;
+  top: calc(var(--home-img-top) - var(--home-mirror-h, 220px));
+  height: var(--home-mirror-h, 220px);
+  background-size: cover; background-position: center top;
+  transform: scaleY(-1); transform-origin: bottom;
+  filter: blur(var(--home-mirror-blur, 18px)) saturate(1.15) brightness(.6);
+  opacity: calc(var(--home-top-mode, 0) * var(--home-mirror-op, 85) / 100);
+  -webkit-mask: linear-gradient(180deg, transparent 0, #000 100%);
+  mask: linear-gradient(180deg, transparent 0, #000 100%);
+}
+/* Static legibility scrim over the head area (keeps text readable on any image). */
+.home-scrim {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 0; pointer-events: none;
+  height: calc(var(--home-img-top) + 90px);
+  background: linear-gradient(180deg, rgba(8,10,14,.6) 0%, rgba(8,10,14,.28) 45%, transparent 100%);
 }
 /* Compact header that slides down once you scroll past the hero (same bar as the
  * detail pages, minus the back button — you're already home). */
@@ -189,10 +247,8 @@ body::before {
   transition: transform .3s var(--ease), opacity .25s var(--ease);
 }
 .landing-screen.show-sticky .landing-sticky { transform: translateY(0); opacity: 1; pointer-events: auto; }
-.landing-sticky .wordmark { font-size: 30px; }
-.landing-head { text-align: center; padding-top: 16px; position: relative; }
-.landing-head .wordmark { font-size: 54px; }
-.landing-head .tagline { color: var(--text-dim); font-size: 13px; margin-top: 10px; letter-spacing: .04em; }
+.landing-head { text-align: center; position: relative; padding-top: var(--home-logo-gap-top, 16px); margin-bottom: var(--home-logo-gap-bot, 0px); }
+.landing-head .tagline { color: var(--home-tag-col, var(--text-dim)); font-size: var(--home-tag-size, 13px); margin-top: var(--home-tag-gap, 10px); letter-spacing: .04em; }
 
 .home-link { cursor: pointer; }
 
@@ -308,7 +364,7 @@ body::before {
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
-.prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: var(--home-head-gap, 35px) 0 12px; letter-spacing: .02em; }
+.prompt { text-align: center; color: var(--home-prompt-col, var(--text-dim)); font-size: var(--home-prompt-size, 13px); font-weight: 600; margin: var(--home-prompt-gap-top, 35px) 0 var(--home-prompt-gap-bot, 12px); letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--home-tabs-gap, 8px); align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
@@ -525,11 +581,12 @@ body::before {
 .lists.layout-horizontal .li-year { font-size: 9px; }
 /* End-of-row "See all" tile → (future) full listing page */
 .see-all {
-  flex: 0 0 auto; width: 60px; align-self: stretch;
+  flex: 0 0 auto; width: 60px; align-self: flex-start;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   color: var(--gold); border: 1px dashed rgba(240,196,105,.5); border-radius: 10px;
-  margin-bottom: 22px;
 }
+/* Match the poster image height and top-align with the row (not the text below). */
+.lists.layout-horizontal .see-all { height: 132px; }
 .see-all .sa-ic { transform: rotate(180deg); display: grid; place-items: center; }
 .see-all .sa-ic svg { width: 22px; height: 22px; }
 .see-all .sa-t { font-size: 10px; font-weight: 800; text-transform: uppercase; line-height: 1.12; text-align: center; }
@@ -609,7 +666,6 @@ body::before {
   border-bottom: 1px solid rgba(255,255,255,.09);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.16), var(--shadow-dir);
 }
-.detail-head .wordmark { font-size: 30px; }
 /* Back button only as tall as the logo (keeps the header compact). */
 .detail-head .icon-btn { width: 28px; height: 26px; border-radius: 8px; }
 .detail-head .icon-btn svg { width: 18px; height: 18px; }
@@ -735,14 +791,19 @@ body::before {
 
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 12px 2px 7px; }
-.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; }
+.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; display: flex; align-items: center; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 .sec-right { display: inline-flex; align-items: center; gap: 10px; flex: none; }
 .rel-creator { color: var(--gold); }   /* creator name (2nd line) on "From the Same Mind:" */
-/* Trailing chevron marking a title as a link to its own page — flows inline
- * right after the last word of the (possibly multi-line) title, a touch larger. */
-.title-go { display: inline-flex; vertical-align: middle; margin-left: 5px; color: var(--gold); opacity: .85; }
-.title-go svg { width: 1.15em; height: 1.15em; }
+.rel-cat { color: var(--gold); }       /* category word in "Watch Next Movies" etc. */
+/* Trailing chevron marking a title as a link to its own page — vertically
+ * centred against the (possibly multi-line) title, 5% larger than it. */
+.title-go { display: inline-flex; align-items: center; margin-left: 5px; color: var(--gold); opacity: .85; flex: none; }
+.title-go svg { width: 1.05em; height: 1.05em; }
+/* Related-content lists sit closer together (≈half the default gap). */
+.rel-sec .sec-head { margin-top: 6px; margin-bottom: 4px; }
+.rel-sec .lists { padding-bottom: 7px; }
+.rel-sec .col-items { padding-bottom: 3px; }
 
 /* Collapsible detail sections (Where to Watch / Actors / More Like This …). The
  * chevron toggles .dsec-body; the title links to its own page. */
@@ -771,7 +832,7 @@ body::before {
   scroll-snap-type: x proximity;
 }
 .cast-row::-webkit-scrollbar { display: none; }
-.cast-row .see-all { margin-bottom: 0; align-self: center; height: 132px; }
+.cast-row .see-all { align-self: flex-start; height: 144px; }   /* match person-photo (108 × 4/3) */
 .person-card { flex: none; width: 108px; scroll-snap-align: start; }
 .person-photo {
   position: relative; width: 108px; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden;
@@ -1001,6 +1062,12 @@ body::before {
 .home-frame > .home-mini { transform: scale(0.3628); transform-origin: top left; }
 .home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--home-fade-col, #0f0f1a); }
 .home-mini .landing { min-height: 100%; }
+/* Logo editor: wordmark on a neutral chip, + segmented target switch + thumb. */
+.logo-prev { display: flex; align-items: center; justify-content: center; min-width: 150px; min-height: 120px; padding: 22px 18px; background: linear-gradient(180deg, #1a2230, #0c0f16); border-radius: 12px; }
+.st-segs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; }
+.st-seg { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-dim); text-decoration: none; }
+.st-seg.on { background: var(--gold); color: #1a1206; }
+.sc-thumb-logo { background: var(--logo-gold); -webkit-mask: var(--logo-src) no-repeat center / 70% auto; mask: var(--logo-src) no-repeat center / 70% auto; }
 /* Active-tab preview: a single tab at a realistic width. */
 .tabwrap { width: 96px; }
 .tabwrap .tab { width: 100%; }
@@ -1093,6 +1160,13 @@ body::before {
   border: 1px solid var(--border); border-radius: 9px; padding: 7px 10px; outline: none;
 }
 .st-select:focus { border-color: var(--gold); }
+
+/* Free-text control (wording) */
+.st-text {
+  flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 9px; padding: 7px 10px; outline: none;
+}
+.st-text:focus { border-color: var(--gold); }
 
 /* Per-corner radius control (single value, ⊞ expands to 4 corners) */
 .ctl-radius { display: block; }
