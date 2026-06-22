@@ -1571,6 +1571,8 @@ function openColorPicker(initial, onChange) {
 
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
+  { id: "home", name: "Homepage", desc: "Landing backdrop, top fade + spacing",
+    thumb: `<span class="sc-thumb" style="background:linear-gradient(180deg,#171726,#0c0d14)"></span>` },
   { id: "poster", name: "Poster Card", desc: "List poster + score badge",
     thumb: `<span class="sc-thumb" style="background:url('assets/poor-things-poster.webp') center/cover"></span>` },
   { id: "tab", name: "Active Tab", desc: "Selected category tab",
@@ -1711,6 +1713,92 @@ function wireCycle(len, start, onIdx) {
   const go = (d) => { i = (i + d + len) % len; onIdx(i); };
   app.querySelector("[data-prev]").addEventListener("click", () => go(-1));
   app.querySelector("[data-next]").addEventListener("click", () => go(1));
+}
+
+/* ---- Studio: Homepage (landing backdrop, top fade + spacing) ---- */
+function homeGroups() {
+  return [
+    { name: "Background", items: [
+      { k: "--home-blur", label: "Backdrop blur", val: 24, step: 1, min: 0, max: 80 },
+      { k: "--home-fade-col", label: "Top fade colour", type: "color", val: "#171726" },
+      { k: "--home-fade-soft", label: "Fade edge softness", val: 45, step: 1, min: 0, max: 95, unit: "" },
+    ] },
+    { name: "Spacing", items: [
+      { k: "--home-head-gap", label: "Header spacing", val: 24, step: 1, min: 0 },
+      { k: "--home-tabs-gap", label: "Tabs spacing", val: 8, step: 1, min: 0 },
+      { k: "--home-search-gap", label: "Search spacing", val: 0, step: 1, min: 0 },
+      { k: "--home-lists-gap", label: "Lists spacing", val: 16, step: 1, min: 0 },
+    ] },
+  ];
+}
+/* A fully-populated, static snapshot of the landing page for the preview frame.
+ * Mirrors renderLanding's structure/classes so the live CSS (and the editable
+ * tokens) apply 1:1. */
+function homePreviewHTML(bg) {
+  const tabs = CATEGORIES.map((c) => `<button class="tab" tabindex="-1"><span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`).join("");
+  const lists = `<div class="section-title">Popular Right Now</div>
+    <div class="lists cards layout-horizontal">
+      ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"), true)}
+      ${listColumn("Shows", rankBy(itemsByCategory("tv"), "synth"))}
+      ${listColumn("Games", rankBy(itemsByCategory("game"), "synth"))}
+      ${listColumn("Books", rankBy(itemsByCategory("book"), "synth"))}
+    </div>`;
+  return `
+    <div class="home-bg" style="background:${bg}"></div>
+    <div class="landing">
+      <div class="home-topfade"></div>
+      <div class="landing-head">${logo()}<div class="tagline">${BRAND.tagline}</div></div>
+      <div class="prompt">What are you looking for?</div>
+      <div class="tabs">${tabs}</div>
+      <div class="searchbar-wrap">
+        <div class="searchbar"><div class="search-field">
+          <span class="search-ic">${ICON.search}</span>
+          <input type="search" placeholder="Search ${BRAND.name.toLowerCase()}…" tabindex="-1" disabled />
+        </div></div>
+      </div>
+      ${lists}
+    </div>`;
+}
+function renderStudioHomepage() {
+  const groups = homeGroups();
+  const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
+  const bg = backdropBg(arts[Math.floor(Math.random() * arts.length)] || CATALOG[0]);
+  const initStyle = groups.flatMap((g) => g.items.map((it) =>
+    `${it.k}:${it.val}${it.type === "color" ? "" : (it.unit == null ? "px" : it.unit)}`)).join(";");
+  const mini = (id, style) => `<div class="home-frame"><div class="home-mini" id="${id}"${style ? ` style="${style}"` : ""}>${homePreviewHTML(bg)}</div></div>`;
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>Homepage</h1>
+        </div>
+        <div class="st-stage st-compare st-home">
+          <figure class="st-cmp">${mini("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${mini("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+        </div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
+        <section class="st-sec">
+          <h2>Export</h2>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="8" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+  const cand = app.querySelector("#cand");
+  const applyVar = (v, val) => cand.style.setProperty(v, val);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ Homepage: readGroupValues(groups) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+  wireHeader(app);
 }
 
 function renderStudioPoster() {
@@ -1923,6 +2011,7 @@ function renderStudioTab(state) {
 function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
+  if (hash === "#/studio/home") { renderStudioHomepage(); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
   if (hash === "#/studio/tab") { renderStudioTab("active"); return; }
   if (hash === "#/studio/tab-idle") { renderStudioTab("idle"); return; }

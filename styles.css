@@ -141,16 +141,19 @@ body::before {
 .home-bg {
   position: absolute; inset: 0; z-index: 0;
   background-size: cover !important; background-position: center !important;
-  filter: blur(24px) saturate(1.15) brightness(.66); transform: scale(1.2);
+  filter: blur(var(--home-blur, 24px)) saturate(1.15) brightness(.66); transform: scale(1.2);
 }
 .home-bg::after { content: ""; position: absolute; inset: 0; background: rgba(10,12,16,.28); }
 .landing-screen .scroll { position: relative; z-index: 1; }
-/* Solid #191f26 behind the wordmark→tabs, fading to transparent by the lists;
+/* Solid colour behind the wordmark→tabs, fading to transparent by the lists;
  * scrolls with the content. Negative insets span past the .landing gutter. */
 .home-topfade {
   position: absolute; top: 0; left: calc(-1 * var(--gut)); right: calc(-1 * var(--gut));
   height: 340px; z-index: 0; pointer-events: none;
-  background: linear-gradient(180deg, var(--chrome) 0%, var(--chrome) 55%, transparent 100%);
+  background: linear-gradient(180deg,
+    var(--home-fade-col, #171726) 0%,
+    var(--home-fade-col, #171726) calc(100% - var(--home-fade-soft, 45) * 1%),
+    transparent 100%);
 }
 /* Compact header that slides down once you scroll past the hero (same bar as the
  * detail pages, minus the back button — you're already home). */
@@ -285,8 +288,8 @@ body::before {
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
-.prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: 24px 0 12px; letter-spacing: .02em; }
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
+.prompt { text-align: center; color: var(--text-dim); font-size: 13px; font-weight: 600; margin: var(--home-head-gap, 24px) 0 12px; letter-spacing: .02em; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--home-tabs-gap, 8px); align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
   padding: var(--tab-pad, 14px) 5px;
@@ -370,7 +373,7 @@ body::before {
 
 /* Search bar — collapsed until a tab is first chosen; fuses to the active tab */
 .searchbar-wrap {
-  overflow: hidden; max-height: 80px; opacity: 1; margin-top: 0;
+  overflow: hidden; max-height: 80px; opacity: 1; margin-top: var(--home-search-gap, 0px);
   position: relative; z-index: 1;
   transition: max-height .3s var(--ease), opacity .25s var(--ease);
 }
@@ -479,6 +482,7 @@ body::before {
  * .col-items becomes a real horizontal scroll container. */
 .lists.layout-horizontal { display: block; }
 .lists.layout-horizontal .list-col { margin-bottom: var(--row-gap); min-width: 0; }
+.landing .lists.layout-horizontal .list-col { margin-bottom: var(--home-lists-gap, var(--row-gap)); }
 .lists.layout-horizontal .list-col:last-child { margin-bottom: 0; }
 .lists.layout-horizontal .list-col h3 { font-size: 12.5px; justify-content: flex-start; margin: 0 0 8px; }
 /* Rows bleed to the screen edges: first item sits at the gutter, the row runs
@@ -970,6 +974,14 @@ body::before {
   box-shadow: 0 8px 18px rgba(0,0,0,.45);
 }
 .st-compare { display: flex; justify-content: center; align-items: flex-start; gap: 30px; }
+/* Homepage preview: a real, fully-populated landing rendered at device width
+ * (430px) inside a cropped frame, scaled down. Inspect clones the unscaled mini
+ * (the transform lives on .home-frame > .home-mini, not on .home-mini itself). */
+.st-compare.st-home { gap: 16px; }
+.home-frame { width: 156px; height: 300px; overflow: hidden; border-radius: 14px; border: 1px solid var(--border); flex: none; box-shadow: var(--shadow-dir-sm); }
+.home-frame > .home-mini { transform: scale(0.3628); transform-origin: top left; }
+.home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--chrome); }
+.home-mini .landing { min-height: 100%; }
 /* Active-tab preview: a single tab at a realistic width. */
 .tabwrap { width: 96px; }
 .tabwrap .tab { width: 100%; }
