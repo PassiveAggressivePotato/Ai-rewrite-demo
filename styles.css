@@ -715,14 +715,13 @@ body::before {
 
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 12px 2px 7px; }
-.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; }
+.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 .sec-right { display: inline-flex; align-items: center; gap: 10px; flex: none; }
-.title-text { min-width: 0; }
 .rel-creator { color: var(--gold); }   /* creator name (2nd line) on "From the Same Mind:" */
-/* Trailing chevron marking a title as a link to its own page — centred with the
- * (possibly multi-line) title text and a touch larger. */
-.title-go { display: inline-flex; align-items: center; margin-left: 5px; color: var(--gold); opacity: .85; flex: none; }
+/* Trailing chevron marking a title as a link to its own page — flows inline
+ * right after the last word of the (possibly multi-line) title, a touch larger. */
+.title-go { display: inline-flex; vertical-align: middle; margin-left: 5px; color: var(--gold); opacity: .85; }
 .title-go svg { width: 1.15em; height: 1.15em; }
 
 /* Collapsible detail sections (Where to Watch / Actors / More Like This …). The
