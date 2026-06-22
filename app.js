@@ -66,16 +66,14 @@ function catIconSvg(id) {
 
 /* ---- Small helpers -------------------------------------------------------- */
 const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.colors[1]})`;
-/* Books: cover aspect ratios vary, so we letterbox the whole cover (`contain`)
- * over the cover's own average colour (computed lazily, see paintBookColors).
- * Everything else fills the 2:3 card (`cover`) over a palette gradient. */
-const posterBg = (item) => {
-  if (!item.poster) return gradient(item);
-  if (item.category === "book") return `url('${item.poster}') center/contain no-repeat, ${item.avg || item.colors[0]}`;
-  return `url('${item.poster}') center/cover, ${gradient(item)}`;
-};
+const posterBg = (item) => item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
 const backdropArt = (item) => item.backdrop || item.poster || "";
-const backdropBg = (item) => { const a = backdropArt(item); return a ? `url('${a}') center/cover` : gradient(item); };
+/* Books have no wide backdrop art, so the detail page background is a flat wash
+ * of the cover's own average colour (computed lazily, see paintBookColors). */
+const backdropBg = (item) => {
+  if (item.category === "book") return item.avg || item.colors[0];
+  const a = backdropArt(item); return a ? `url('${a}') center/cover` : gradient(item);
+};
 
 /* Average colour of an image, sampled from a tiny canvas. Cached by URL. */
 const _avgColorCache = new Map();
@@ -102,9 +100,9 @@ function averageColor(src) {
     img.src = src;
   });
 }
-/* After a render, replace each book card's stand-in colour with the cover's true
- * average. Once computed it's cached on the item, so later renders are exact and
- * this becomes a no-op. */
+/* After a render, fill each book's detail-page background with the cover's true
+ * average colour. Once computed it's cached on the item, so later renders are
+ * exact and this becomes a no-op. */
 function paintBookColors(root) {
   const scope = root || document;
   CATALOG.forEach((it) => {
@@ -112,10 +110,7 @@ function paintBookColors(root) {
     averageColor(it.poster).then((hex) => {
       if (!hex) return;
       it.avg = hex;
-      const bg = posterBg(it);
-      scope.querySelectorAll(".poster-card, .pc2, .hero-poster, .thumb").forEach((el) => {
-        if ((el.getAttribute("style") || "").includes(it.poster)) el.style.background = bg;
-      });
+      scope.querySelectorAll(`.backdrop[data-slug="${it.slug}"] .art`).forEach((el) => { el.style.background = hex; });
     });
   });
 }
@@ -807,7 +802,7 @@ function renderDetail(item) {
   const hasArt = !!item.poster;
   app.innerHTML = `
     <div class="screen detail">
-      <div class="backdrop">
+      <div class="backdrop" data-slug="${item.slug}">
         <div class="art" style="background:${backdropBg(item)}"></div>
         <div class="art blur" style="background:${backdropBg(item)}"></div>
         <div class="scrim"></div>
