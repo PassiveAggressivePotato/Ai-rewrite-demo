@@ -66,16 +66,65 @@ function catIconSvg(id) {
 
 /* ---- Small helpers -------------------------------------------------------- */
 const gradient = (item) => `linear-gradient(160deg, ${item.colors[0]}, ${item.colors[1]})`;
-const posterBg = (item) => item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
+/* Books: cover aspect ratios vary, so we letterbox the whole cover (`contain`)
+ * over the cover's own average colour (computed lazily, see paintBookColors).
+ * Everything else fills the 2:3 card (`cover`) over a palette gradient. */
+const posterBg = (item) => {
+  if (!item.poster) return gradient(item);
+  if (item.category === "book") return `url('${item.poster}') center/contain no-repeat, ${item.avg || item.colors[0]}`;
+  return `url('${item.poster}') center/cover, ${gradient(item)}`;
+};
 const backdropArt = (item) => item.backdrop || item.poster || "";
 const backdropBg = (item) => { const a = backdropArt(item); return a ? `url('${a}') center/cover` : gradient(item); };
+
+/* Average colour of an image, sampled from a tiny canvas. Cached by URL. */
+const _avgColorCache = new Map();
+function averageColor(src) {
+  if (_avgColorCache.has(src)) return Promise.resolve(_avgColorCache.get(src));
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const w = 20, h = 30;
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const cx = cv.getContext("2d", { willReadFrequently: true });
+        cx.drawImage(img, 0, 0, w, h);
+        const d = cx.getImageData(0, 0, w, h).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+        const hex = n ? "#" + [r, g, b].map((v) => Math.round(v / n).toString(16).padStart(2, "0")).join("") : null;
+        if (hex) _avgColorCache.set(src, hex);
+        resolve(hex);
+      } catch (_) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+/* After a render, replace each book card's stand-in colour with the cover's true
+ * average. Once computed it's cached on the item, so later renders are exact and
+ * this becomes a no-op. */
+function paintBookColors(root) {
+  const scope = root || document;
+  CATALOG.forEach((it) => {
+    if (it.category !== "book" || !it.poster || it.avg) return;
+    averageColor(it.poster).then((hex) => {
+      if (!hex) return;
+      it.avg = hex;
+      const bg = posterBg(it);
+      scope.querySelectorAll(".poster-card, .pc2, .hero-poster, .thumb").forEach((el) => {
+        if ((el.getAttribute("style") || "").includes(it.poster)) el.style.background = bg;
+      });
+    });
+  });
+}
 const catIcon = (item) => catIconSvg(item.category);
 const escapeAttr = (s) => String(s).replace(/"/g, "&quot;");
 const cat = () => CATEGORIES.find((c) => c.id === state.category) || {};
 
 function posterBox(item, cls = "thumb") {
-  const bg = item.poster ? `url('${item.poster}') center/cover, ${gradient(item)}` : gradient(item);
-  return `<div class="${cls}" style="background:${bg}">${item.poster ? "" : catIconSvg(item.category)}</div>`;
+  return `<div class="${cls}" style="background:${posterBg(item)}">${item.poster ? "" : catIconSvg(item.category)}</div>`;
 }
 
 function nativeText(row) {
@@ -1815,7 +1864,7 @@ function route() {
 }
 // The zoom loupe lives in a persistent layer; after each navigation rebuild its
 // mirror so it shows the new page while keeping its position/zoom.
-function router() { route(); requestAnimationFrame(() => currentLoupe?.rebuild?.()); }
+function router() { route(); paintBookColors(); requestAnimationFrame(() => currentLoupe?.rebuild?.()); }
 
 window.addEventListener("hashchange", router);
 applyDebug();

@@ -124,7 +124,7 @@ export const CATALOG = [
     id: "tv-shogun", slug: "shogun", category: "tv",
     title: "Shōgun", year: 2024, certification: "TV-MA",
     genres: ["Drama", "History"], runtime: "10 episodes",
-    colors: ["#9c2a2a", "#0c0a08"], poster: "", trending: true,
+    colors: ["#9c2a2a", "#0c0a08"], poster: "assets/shogun-poster.webp", backdrop: "assets/shogun-backdrop.webp", trending: true,
     synopsis: "In Japan in the year 1600, at the dawn of a century-defining civil war, Lord Toranaga fights for his life as his enemies on the Council of Regents unite against him, while a mysterious English ship is found marooned in a nearby fishing village.",
     credits: { Creator: "Justin Marks, Rachel Kondo", Cast: "Hiroyuki Sanada, Cosmo Jarvis, Anna Sawai" },
     ratings: [
@@ -143,7 +143,7 @@ export const CATALOG = [
     id: "tv-the-bear", slug: "the-bear", category: "tv",
     title: "The Bear", year: 2022, certification: "TV-MA",
     genres: ["Drama", "Comedy"], runtime: "3 seasons",
-    colors: ["#2f6f4f", "#0a0d0b"], poster: "",
+    colors: ["#2f6f4f", "#0a0d0b"], poster: "assets/the-bear-poster.webp", backdrop: "assets/the-bear-backdrop.webp",
     synopsis: "A young, award-winning chef from the fine-dining world returns to Chicago to run his late brother's chaotic Italian beef sandwich shop, clashing with the unruly kitchen crew as he fights to transform both the restaurant and himself.",
     credits: { Creator: "Christopher Storer", Cast: "Jeremy Allen White, Ayo Edebiri, Ebon Moss-Bachrach" },
     ratings: [
@@ -162,7 +162,7 @@ export const CATALOG = [
     id: "tv-fallout", slug: "fallout", category: "tv",
     title: "Fallout", year: 2024, certification: "TV-MA",
     genres: ["Sci-Fi", "Adventure"], runtime: "8 episodes",
-    colors: ["#3a8f3a", "#0d0f08"], poster: "", trending: true,
+    colors: ["#3a8f3a", "#0d0f08"], poster: "assets/fallout-poster.webp", backdrop: "assets/fallout-backdrop.webp", trending: true,
     synopsis: "200 years after the apocalypse, the gentle denizens of luxury fallout shelters are forced to return to the irradiated hellscape their ancestors left behind — and are shocked to discover an incredibly complex, gleefully weird, and highly violent universe waiting for them.",
     credits: { Creator: "Geneva Robertson-Dworet, Graham Wagner", Cast: "Ella Purnell, Aaron Moten, Walton Goggins" },
     ratings: [
@@ -181,7 +181,7 @@ export const CATALOG = [
     id: "tv-succession", slug: "succession", category: "tv",
     title: "Succession", year: 2018, certification: "TV-MA",
     genres: ["Drama"], runtime: "4 seasons",
-    colors: ["#6b5b3a", "#0c0b08"], poster: "",
+    colors: ["#6b5b3a", "#0c0b08"], poster: "assets/succession-poster.webp", backdrop: "assets/succession-backdrop.webp",
     synopsis: "The Roy family controls one of the biggest media and entertainment conglomerates in the world. As their ageing patriarch's health declines, each of his children jockeys for control of the empire.",
     credits: { Creator: "Jesse Armstrong", Cast: "Brian Cox, Jeremy Strong, Sarah Snook" },
     ratings: [
@@ -200,7 +200,7 @@ export const CATALOG = [
     id: "tv-severance", slug: "severance", category: "tv",
     title: "Severance", year: 2022, certification: "TV-MA",
     genres: ["Sci-Fi", "Thriller"], runtime: "2 seasons",
-    colors: ["#2a4a6f", "#080b12"], poster: "", trending: true,
+    colors: ["#2a4a6f", "#080b12"], poster: "assets/severance-poster.webp", backdrop: "assets/severance-backdrop.webp", trending: true,
     synopsis: "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
     credits: { Creator: "Dan Erickson", Cast: "Adam Scott, Britt Lower, Patricia Arquette" },
     ratings: [
@@ -221,7 +221,7 @@ export const CATALOG = [
     id: "game-bg3", slug: "baldurs-gate-3", category: "game",
     title: "Baldur's Gate 3", year: 2023, certification: "M",
     genres: ["RPG", "Strategy"], runtime: "PC, PS5, Xbox",
-    colors: ["#b03a2e", "#0d0a14"], poster: "", trending: true,
+    colors: ["#b03a2e", "#0d0a14"], poster: "assets/baldurs-gate-3-poster.jpg", backdrop: "assets/baldurs-gate-3-backdrop.jpg", trending: true,
     synopsis: "Gather your party and return to the Forgotten Realms in a tale of fellowship and betrayal, sacrifice and survival, and the lure of absolute power. Mysterious abilities are awakening inside you as you fight to resist a corruption that threatens to remake you.",
     credits: { Developer: "Larian Studios", Platforms: "PC, PlayStation 5, Xbox Series X/S" },
     ratings: [
@@ -239,7 +239,7 @@ export const CATALOG = [
     id: "game-elden-ring", slug: "elden-ring", category: "game",
     title: "Elden Ring", year: 2022, certification: "M",
     genres: ["Action RPG"], runtime: "PC, PS5, Xbox",
-    colors: ["#c79a3a", "#0c0a08"], poster: "", trending: true,
+    colors: ["#c79a3a", "#0c0a08"], poster: "assets/elden-ring-poster.jpg", backdrop: "assets/elden-ring-backdrop.jpg", trending: true,
     synopsis: "Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between — a vast world where open fields and huge dungeons are seamlessly connected.",
     credits: { Developer: "FromSoftware", Platforms: "PC, PlayStation 5, Xbox Series X/S" },
     ratings: [
@@ -256,7 +256,7 @@ export const CATALOG = [
     id: "game-zelda-totk", slug: "tears-of-the-kingdom", category: "game",
     title: "The Legend of Zelda: Tears of the Kingdom", year: 2023, certification: "E10+",
     genres: ["Adventure"], runtime: "Nintendo Switch",
-    colors: ["#3a8fa0", "#0a1014"], poster: "",
+    colors: ["#3a8fa0", "#0a1014"], poster: "assets/tears-of-the-kingdom-poster.jpg", backdrop: "assets/tears-of-the-kingdom-backdrop.jpg",
     synopsis: "An epic adventure across the land and skies of Hyrule awaits. Explore floating islands and battle threatening foes with powerful new abilities to craft, build, and fuse your way through the kingdom.",
     credits: { Developer: "Nintendo EPD", Platforms: "Nintendo Switch" },
     ratings: [
@@ -272,7 +272,7 @@ export const CATALOG = [
     id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game",
     title: "Marvel's Spider-Man 2", year: 2023, certification: "T",
     genres: ["Action Adventure"], runtime: "PlayStation 5",
-    colors: ["#c0392b", "#0b0d1a"], poster: "",
+    colors: ["#c0392b", "#0b0d1a"], poster: "assets/marvels-spider-man-2-poster.jpg", backdrop: "assets/marvels-spider-man-2-backdrop.jpg",
     synopsis: "Spider-Men Peter Parker and Miles Morales return for an exhilarating new adventure, swinging across Marvel's New York while facing the ultimate test of strength against the symbiote and the menace of Venom.",
     credits: { Developer: "Insomniac Games", Platforms: "PlayStation 5" },
     ratings: [
@@ -288,7 +288,7 @@ export const CATALOG = [
     id: "game-gow-ragnarok", slug: "god-of-war-ragnarok", category: "game",
     title: "God of War Ragnarök", year: 2022, certification: "M",
     genres: ["Action Adventure"], runtime: "PC, PS5, PS4",
-    colors: ["#3a5a7a", "#0a0c12"], poster: "", trending: true,
+    colors: ["#3a5a7a", "#0a0c12"], poster: "assets/god-of-war-ragnarok-poster.jpg", backdrop: "assets/god-of-war-ragnarok-backdrop.jpg", trending: true,
     synopsis: "Kratos and Atreus journey through the Nine Realms in search of answers as Asgardian forces prepare for a prophesied battle that will end the world. Together they face the wrath of the gods on the road to Ragnarök.",
     credits: { Developer: "Santa Monica Studio", Platforms: "PC, PlayStation 5, PlayStation 4" },
     ratings: [
@@ -307,7 +307,7 @@ export const CATALOG = [
     id: "book-project-hail-mary", slug: "project-hail-mary", category: "book",
     title: "Project Hail Mary", year: 2021, certification: "",
     genres: ["Sci-Fi"], runtime: "496 pages",
-    colors: ["#2a6f9c", "#08101a"], poster: "", trending: true,
+    colors: ["#2a6f9c", "#08101a"], poster: "assets/project-hail-mary-poster.jpg", trending: true,
     synopsis: "Ryland Grace is the sole survivor on a desperate, last-chance mission — and if he fails, humanity and the Earth itself will perish. Except he can't remember that, or even his own name. Slowly, he pieces together the truth: he's been asleep for a very, very long time.",
     credits: { Author: "Andy Weir", Publisher: "Ballantine Books" },
     ratings: [
@@ -322,7 +322,7 @@ export const CATALOG = [
     id: "book-the-midnight-library", slug: "the-midnight-library", category: "book",
     title: "The Midnight Library", year: 2020, certification: "",
     genres: ["Fiction", "Fantasy"], runtime: "304 pages",
-    colors: ["#2a6f5f", "#0a1311"], poster: "",
+    colors: ["#2a6f5f", "#0a1311"], poster: "assets/the-midnight-library-poster.jpg",
     synopsis: "Between life and death there is a library, and within it the shelves go on forever. Every book provides a chance to try another life you could have lived — to see how things would be if you had made other choices.",
     credits: { Author: "Matt Haig", Publisher: "Canongate Books" },
     ratings: [
@@ -337,7 +337,7 @@ export const CATALOG = [
     id: "book-fourth-wing", slug: "fourth-wing", category: "book",
     title: "Fourth Wing", year: 2023, certification: "",
     genres: ["Fantasy", "Romance"], runtime: "528 pages",
-    colors: ["#8a2e4a", "#0e0a0c"], poster: "", trending: true,
+    colors: ["#8a2e4a", "#0e0a0c"], poster: "assets/fourth-wing-poster.jpg", trending: true,
     synopsis: "Twenty-year-old Violet Sorrengail is forced to join the deadly riders quadrant of an elite war college for dragon riders, where the friends she makes are few and the death toll is high. With fewer dragons than candidates, most cadets won't survive.",
     credits: { Author: "Rebecca Yarros", Publisher: "Entangled: Red Tower" },
     ratings: [
@@ -352,7 +352,7 @@ export const CATALOG = [
     id: "book-tomorrow", slug: "tomorrow-and-tomorrow", category: "book",
     title: "Tomorrow, and Tomorrow, and Tomorrow", year: 2022, certification: "",
     genres: ["Fiction"], runtime: "416 pages",
-    colors: ["#3a5a9c", "#080c16"], poster: "",
+    colors: ["#3a5a9c", "#080c16"], poster: "assets/tomorrow-poster.jpg",
     synopsis: "Two friends — often in love, but never lovers — come together as creative partners in the world of video game design, where success brings them fame, joy, tragedy, duplicity, and, ultimately, a kind of immortality.",
     credits: { Author: "Gabrielle Zevin", Publisher: "Knopf" },
     ratings: [
@@ -367,7 +367,7 @@ export const CATALOG = [
     id: "book-iron-flame", slug: "iron-flame", category: "book",
     title: "Iron Flame", year: 2023, certification: "",
     genres: ["Fantasy", "Romance"], runtime: "640 pages",
-    colors: ["#6f2a3a", "#0e0a0c"], poster: "", trending: true,
+    colors: ["#6f2a3a", "#0e0a0c"], poster: "assets/iron-flame-poster.jpg", trending: true,
     synopsis: "Everyone expected Violet Sorrengail to die during her first year at Basgiath War College — but now the real test begins under a brutal new leadership intent on breaking her. With the world on the brink of war, she must keep the dragons' secrets and her own.",
     credits: { Author: "Rebecca Yarros", Publisher: "Entangled: Red Tower" },
     ratings: [
