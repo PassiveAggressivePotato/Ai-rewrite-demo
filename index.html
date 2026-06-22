@@ -24,6 +24,16 @@
   <!-- The entire app is rendered into here by app.js -->
   <div id="app"></div>
 
+  <!-- Portrait-only gate. Installed PWA locks via the manifest; in a browser tab
+       (where the orientation API can't lock) this overlay covers the app when a
+       phone is held in landscape. CSS-only; hidden on tablets/desktop. -->
+  <div class="rotate-gate" aria-hidden="true">
+    <div class="rotate-gate-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 19h4"/><path d="M2.5 9a5 5 0 0 1 5-5"/><path d="M2.5 9 1 7.5M2.5 9 4 7.5"/></svg>
+      <p>Rotate to portrait</p>
+    </div>
+  </div>
+
   <!-- Shared SVG gradient defs for the flat category icons + metallic logo. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
