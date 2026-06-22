@@ -44,7 +44,7 @@
   --bg: #06070c;
   --bg-grad-1: #12131d;
   --bg-grad-2: #06070c;
-  --chrome: #191f26;   /* shared "chrome" wash: homepage top + item-page deep fade */
+  --chrome: #171726;   /* shared "chrome" wash: homepage top + item-page deep fade */
   --surface: rgba(255,255,255,.055);
   --surface-2: rgba(255,255,255,.085);
   --surface-strong: rgba(20,22,32,.72);
@@ -141,7 +141,7 @@ body::before {
 .home-bg {
   position: absolute; inset: 0; z-index: 0;
   background-size: cover !important; background-position: center !important;
-  filter: blur(46px) saturate(1.15) brightness(.66); transform: scale(1.2);
+  filter: blur(24px) saturate(1.15) brightness(.66); transform: scale(1.2);
 }
 .home-bg::after { content: ""; position: absolute; inset: 0; background: rgba(10,12,16,.28); }
 .landing-screen .scroll { position: relative; z-index: 1; }
@@ -571,7 +571,7 @@ body::before {
 }
 .backdrop .scrim {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(25,31,38,0) 0%, rgba(25,31,38,.22) 44%, var(--chrome) 82%);
+  background: linear-gradient(180deg, rgba(23,23,38,0) 0%, rgba(23,23,38,.22) 44%, var(--chrome) 82%);
 }
 .detail .scroll { position: relative; z-index: 1; padding: 0 var(--gut) 16px; }
 
