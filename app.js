@@ -519,7 +519,7 @@ function listColumn(title, rows, featured = false) {
   return `<div class="list-col">${title ? `<h3>${titleLink(title)}</h3>` : ""}<div class="col-items">${items}${seeAll}</div></div>`;
 }
 /* A title that links to its own page gets a trailing chevron as the affordance. */
-const titleLink = (text) => `${text}<span class="title-go" aria-hidden="true">${ICON.next}</span>`;
+const titleLink = (text) => `<span class="title-text">${text}</span><span class="title-go" aria-hidden="true">${ICON.next}</span>`;
 
 const listsClass = () => "lists cards layout-horizontal";
 
@@ -624,14 +624,19 @@ function renderLanding() {
     </button>`).join("");
 
   const hasText = !!state.query.trim();
+  // A random movie/TV/game backdrop sits (blurred, static) behind the homepage.
+  const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
+  const randArt = arts[Math.floor(Math.random() * arts.length)];
   app.innerHTML = `
     <div class="screen landing-screen">
+      ${randArt ? `<div class="home-bg" style="background:${backdropBg(randArt)}"></div>` : ""}
       <div class="landing-sticky">
         <div class="head-left">${logo()}</div>
         <div class="head-actions">${headSearch()}</div>
       </div>
       <div class="scroll">
         <div class="landing ${state.searchOpen ? "searching" : ""}">
+          <div class="home-topfade"></div>
           <div class="landing-head rise">
             ${logo()}
             <div class="tagline">${BRAND.tagline}</div>
@@ -805,7 +810,7 @@ const watchSub = (item) => (item.category === "movie" || item.category === "tv")
 const CREATOR_KEY = { movie: "Director", tv: "Creator", game: "Developer", book: "Author" };
 const REL = {
   universe: "The Same Universe",
-  mind: (name) => `From the Same Mind: ${name}`,
+  mind: (name) => `From the Same Mind:<br><span class="rel-creator">${name}</span>`,
   next: { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" },
 };
 /* Other items in a category, ranked by shared-genre relevance to `item`
