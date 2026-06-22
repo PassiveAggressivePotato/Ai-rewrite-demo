@@ -801,6 +801,47 @@ const WATCH_TITLE = { movie: "Where to Watch", tv: "Where to Watch", game: "Wher
 const watchTitle = (item) => WATCH_TITLE[item.category] || "Where to Watch";
 const watchSub = (item) => (item.category === "movie" || item.category === "tv") ? "Powered by JustWatch" : "";
 
+/* ---- Related-content lists on the item page (all copy lives in REL) ---- */
+const CREATOR_KEY = { movie: "Director", tv: "Creator", game: "Developer", book: "Author" };
+const REL = {
+  universe: "The Same Universe",
+  mind: (name) => `From the Same Mind: ${name}`,
+  next: { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" },
+};
+/* Other items in a category, ranked by shared-genre relevance to `item`
+ * (tie-broken by score; falls back to top score when nothing overlaps). */
+function relatedInCategory(item, cat) {
+  const mine = new Set(item.genres || []);
+  return itemsByCategory(cat)
+    .filter((x) => x.slug !== item.slug)
+    .map((x) => ({ it: x, s: scoreItem(x), o: (x.genres || []).filter((g) => mine.has(g)).length }))
+    .sort((a, b) => (b.o - a.o) || ((b.s.synth ?? 0) - (a.s.synth ?? 0)))
+    .slice(0, 10)
+    .map(({ it, s }) => ({ it, s }));
+}
+/* Every item sharing this item's franchise tag, across all media (chronological). */
+function franchiseItems(item) {
+  if (!item.franchiseId) return [];
+  return CATALOG
+    .filter((x) => x.franchiseId === item.franchiseId && x.slug !== item.slug)
+    .map((x) => ({ it: x, s: scoreItem(x) }))
+    .sort((a, b) => (a.it.year - b.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0)));
+}
+/* Other titles crediting the same primary creator (Director/Creator/Developer/
+ * Author), matched by name across the whole catalog. */
+function sameCreator(item) {
+  const key = CREATOR_KEY[item.category];
+  const names = new Set((item.credits?.[key] || "").split(",").map((n) => n.trim()).filter(Boolean));
+  if (!names.size) return { creator: "", rows: [] };
+  const rows = CATALOG
+    .filter((x) => x.slug !== item.slug)
+    .filter((x) => (x.credits?.[CREATOR_KEY[x.category]] || "").split(",").some((n) => names.has(n.trim())))
+    .map((x) => ({ it: x, s: scoreItem(x) }))
+    .sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0))
+    .slice(0, 12);
+  return { creator: [...names][0], rows };
+}
+
 function renderDetail(item) {
   const s = scoreItem(item);
   const metaline = [item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
@@ -811,6 +852,20 @@ function renderDetail(item) {
     .filter((x) => x.slug !== item.slug)
     .map((x) => ({ it: x, s: scoreItem(x) }))
     .sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0)).slice(0, 10);
+
+  // Related-content sections appended after "More Like This" (specificity-first:
+  // exact franchise → same creator → cross-medium discovery). Empties drop out.
+  const cr = sameCreator(item);
+  const OTHER = ["movie", "tv", "game", "book"].filter((c) => c !== item.category);
+  const relatedSecs = [
+    { title: REL.universe, sub: "", rows: franchiseItems(item) },
+    { title: REL.mind(cr.creator), sub: "", rows: cr.rows },
+    ...OTHER.map((c) => ({ title: REL.next[c], sub: "", rows: relatedInCategory(item, c) })),
+  ].filter((d) => d.rows.length);
+  const renderRelatedSec = (d, i) => `<section class="dsec rise d${Math.min(5 + i, 6)}">
+          ${secHead(d.title, d.sub)}
+          <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", d.rows)}</div></div>
+        </section>`;
 
   const hasArt = !!item.poster;
   app.innerHTML = `
@@ -886,6 +941,8 @@ function renderDetail(item) {
           ${secHead("More Like This")}
           <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", similar)}</div></div>
         </section>` : ""}
+
+        ${relatedSecs.map(renderRelatedSec).join("")}
       </div>
       ${toolbox()}
     </div>`;

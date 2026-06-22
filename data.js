@@ -81,7 +81,7 @@ export const CATALOG = [
     },
   },
   {
-    id: "movie-spiderverse-2", slug: "across-the-spider-verse", category: "movie",
+    id: "movie-spiderverse-2", slug: "across-the-spider-verse", category: "movie", franchiseId: "spider-man",
     title: "Spider-Man: Across the Spider-Verse", year: 2023, certification: "PG",
     genres: ["Animation", "Action"], runtime: "2h 20m",
     colors: ["#d6336c", "#13123a"], poster: "assets/across-the-spider-verse-poster.webp", backdrop: "assets/across-the-spider-verse-backdrop.webp",
@@ -269,7 +269,7 @@ export const CATALOG = [
     },
   },
   {
-    id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game",
+    id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game", franchiseId: "spider-man",
     title: "Marvel's Spider-Man 2", year: 2023, certification: "T",
     genres: ["Action Adventure"], runtime: "PlayStation 5",
     colors: ["#c0392b", "#0b0d1a"], poster: "assets/marvels-spider-man-2-poster.jpg", backdrop: "assets/marvels-spider-man-2-backdrop.jpg",
