@@ -581,11 +581,12 @@ body::before {
 .lists.layout-horizontal .li-year { font-size: 9px; }
 /* End-of-row "See all" tile → (future) full listing page */
 .see-all {
-  flex: 0 0 auto; width: 60px; align-self: stretch;
+  flex: 0 0 auto; width: 60px; align-self: flex-start;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   color: var(--gold); border: 1px dashed rgba(240,196,105,.5); border-radius: 10px;
-  margin-bottom: 22px;
 }
+/* Match the poster image height and top-align with the row (not the text below). */
+.lists.layout-horizontal .see-all { height: 132px; }
 .see-all .sa-ic { transform: rotate(180deg); display: grid; place-items: center; }
 .see-all .sa-ic svg { width: 22px; height: 22px; }
 .see-all .sa-t { font-size: 10px; font-weight: 800; text-transform: uppercase; line-height: 1.12; text-align: center; }
@@ -790,14 +791,19 @@ body::before {
 
 /* Section headers inside detail */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin: 12px 2px 7px; }
-.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; }
+.sec-head h2 { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-width: 0; display: flex; align-items: center; }
 .sec-head .sub { font-size: 10px; color: var(--text-faint); }
 .sec-right { display: inline-flex; align-items: center; gap: 10px; flex: none; }
 .rel-creator { color: var(--gold); }   /* creator name (2nd line) on "From the Same Mind:" */
-/* Trailing chevron marking a title as a link to its own page — flows inline
- * right after the last word of the (possibly multi-line) title, a touch larger. */
-.title-go { display: inline-flex; vertical-align: middle; margin-left: 5px; color: var(--gold); opacity: .85; }
-.title-go svg { width: 1.15em; height: 1.15em; }
+.rel-cat { color: var(--gold); }       /* category word in "Watch Next Movies" etc. */
+/* Trailing chevron marking a title as a link to its own page — vertically
+ * centred against the (possibly multi-line) title, 5% larger than it. */
+.title-go { display: inline-flex; align-items: center; margin-left: 5px; color: var(--gold); opacity: .85; flex: none; }
+.title-go svg { width: 1.05em; height: 1.05em; }
+/* Related-content lists sit closer together (≈half the default gap). */
+.rel-sec .sec-head { margin-top: 6px; margin-bottom: 4px; }
+.rel-sec .lists { padding-bottom: 7px; }
+.rel-sec .col-items { padding-bottom: 3px; }
 
 /* Collapsible detail sections (Where to Watch / Actors / More Like This …). The
  * chevron toggles .dsec-body; the title links to its own page. */
@@ -826,7 +832,7 @@ body::before {
   scroll-snap-type: x proximity;
 }
 .cast-row::-webkit-scrollbar { display: none; }
-.cast-row .see-all { margin-bottom: 0; align-self: center; height: 132px; }
+.cast-row .see-all { align-self: flex-start; height: 144px; }   /* match person-photo (108 × 4/3) */
 .person-card { flex: none; width: 108px; scroll-snap-align: start; }
 .person-photo {
   position: relative; width: 108px; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden;

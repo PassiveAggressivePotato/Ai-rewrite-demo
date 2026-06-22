@@ -858,10 +858,13 @@ const watchSub = (item) => (item.category === "movie" || item.category === "tv")
 
 /* ---- Related-content lists on the item page (all copy lives in REL) ---- */
 const CREATOR_KEY = { movie: "Director", tv: "Creator", game: "Developer", book: "Author" };
+const NEXT_VERB = { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" };
+const NEXT_CAT = { movie: "Movies", tv: "Shows", game: "Games", book: "Books" };
+/* "Watch Next Movies" etc. — the category word is gold (uppercased via CSS). */
+const nextTitle = (cat) => `${NEXT_VERB[cat]} <span class="rel-cat">${NEXT_CAT[cat]}</span>`;
 const REL = {
   universe: "The Same Universe",
   mind: (name) => `From the Same Mind:<br><span class="rel-creator">${name}</span>`,
-  next: { movie: "Watch Next", tv: "Binge Next", game: "Play Next", book: "Read Next" },
 };
 /* Other items in a category, ranked by shared-genre relevance to `item`
  * (tie-broken by score; falls back to top score when nothing overlaps). */
@@ -908,16 +911,18 @@ function renderDetail(item) {
     .map((x) => ({ it: x, s: scoreItem(x) }))
     .sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0)).slice(0, 10);
 
-  // Related-content sections appended after "More Like This" (specificity-first:
-  // exact franchise → same creator → cross-medium discovery). Empties drop out.
+  // Related-content lists (specificity-first). The top list is the page's own
+  // category ("Watch Next Movies" on a movie, etc. — replaces "More Like This"),
+  // then exact franchise → same creator → cross-medium discovery. Empties drop.
   const cr = sameCreator(item);
   const OTHER = ["movie", "tv", "game", "book"].filter((c) => c !== item.category);
   const relatedSecs = [
+    { title: nextTitle(item.category), sub: "", rows: similar },
     { title: REL.universe, sub: "", rows: franchiseItems(item) },
     { title: REL.mind(cr.creator), sub: "", rows: cr.rows },
-    ...OTHER.map((c) => ({ title: REL.next[c], sub: "", rows: relatedInCategory(item, c) })),
+    ...OTHER.map((c) => ({ title: nextTitle(c), sub: "", rows: relatedInCategory(item, c) })),
   ].filter((d) => d.rows.length);
-  const renderRelatedSec = (d, i) => `<section class="dsec rise d${Math.min(5 + i, 6)}">
+  const renderRelatedSec = (d, i) => `<section class="dsec rel-sec rise d${Math.min(4 + i, 6)}">
           ${secHead(d.title, d.sub)}
           <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", d.rows)}</div></div>
         </section>`;
@@ -991,11 +996,6 @@ function renderDetail(item) {
         </section>
 
         ${castSection(item)}
-
-        ${similar.length ? `<section class="dsec rise d4">
-          ${secHead("More Like This")}
-          <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", similar)}</div></div>
-        </section>` : ""}
 
         ${relatedSecs.map(renderRelatedSec).join("")}
       </div>
