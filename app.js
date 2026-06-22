@@ -515,11 +515,11 @@ function listColumn(title, rows, featured = false) {
         </div>
       </button>`).join("")
     : `<div class="empty">—</div>`;
-  const seeAll = rows.length
-    ? `<button class="see-all" data-seeall aria-label="See all"><span class="sa-ic">${ICON.back}</span><span class="sa-t">See<br>all</span></button>`
-    : "";
-  return `<div class="list-col">${title ? `<h3>${title}</h3>` : ""}<div class="col-items">${items}${seeAll}</div></div>`;
+  const seeAll = rows.length ? seeAllTile("More") : "";
+  return `<div class="list-col">${title ? `<h3>${titleLink(title)}</h3>` : ""}<div class="col-items">${items}${seeAll}</div></div>`;
 }
+/* A title that links to its own page gets a trailing chevron as the affordance. */
+const titleLink = (text) => `${text}<span class="title-go" aria-hidden="true">${ICON.next}</span>`;
 
 const listsClass = () => "lists cards layout-horizontal";
 
@@ -782,11 +782,24 @@ function personCard(p) {
 }
 function castSection(item) {
   if (!item.cast || !item.cast.length) return "";
-  return `<section class="cast-sec rise d3">
-    <div class="sec-head"><h2>Actors</h2><button class="cast-toggle" data-cast-toggle aria-label="Collapse">${ICON.chev}</button></div>
-    <div class="cast-row">${item.cast.map(personCard).join("")}</div>
+  return `<section class="dsec cast-sec rise d3">
+    ${secHead("Actors")}
+    <div class="dsec-body"><div class="cast-row">${item.cast.map(personCard).join("")}${seeAllTile()}</div></div>
   </section>`;
 }
+
+/* Collapsible section header (chevron toggles the section's .dsec-body). */
+function secHead(title, sub) {
+  return `<div class="sec-head"><h2>${titleLink(title)}</h2><span class="sec-right">${sub ? `<span class="sub">${sub}</span>` : ""}<button class="sec-toggle" data-collapse aria-label="Toggle section">${ICON.chev}</button></span></div>`;
+}
+/* "More" tile that caps a horizontal row (cast / poster lists). */
+function seeAllTile(label = "More") {
+  return `<button class="see-all" data-seeall aria-label="${label}"><span class="sa-ic">${ICON.back}</span><span class="sa-t">${label}</span></button>`;
+}
+/* "Where to Watch" adapts to the medium. */
+const WATCH_TITLE = { movie: "Where to Watch", tv: "Where to Watch", game: "Where to Play", book: "Where to Read" };
+const watchTitle = (item) => WATCH_TITLE[item.category] || "Where to Watch";
+const watchSub = (item) => (item.category === "movie" || item.category === "tv") ? "Powered by JustWatch" : "";
 
 function renderDetail(item) {
   const s = scoreItem(item);
@@ -862,13 +875,17 @@ function renderDetail(item) {
           </div>
         </div>
 
+        <section class="dsec rise d3">
+          ${secHead(watchTitle(item), watchSub(item))}
+          <div class="dsec-body"><div id="watch-region">${renderWatch(item)}</div></div>
+        </section>
+
         ${castSection(item)}
 
-        <div class="sec-head rise d3"><h2>Where to Watch</h2><span class="sub">Powered by JustWatch</span></div>
-        <div id="watch-region" class="rise d3">${renderWatch(item)}</div>
-
-        ${similar.length ? `<div class="sec-head rise d4"><h2>More Like This</h2></div>
-        <div class="lists cards layout-horizontal rise d4">${listColumn("", similar)}</div>` : ""}
+        ${similar.length ? `<section class="dsec rise d4">
+          ${secHead("More Like This")}
+          <div class="dsec-body"><div class="lists cards layout-horizontal">${listColumn("", similar)}</div></div>
+        </section>` : ""}
       </div>
       ${toolbox()}
     </div>`;
@@ -941,8 +958,12 @@ function renderDetail(item) {
     }
   });
 
-  app.querySelector("[data-cast-toggle]")?.addEventListener("click", (e) =>
-    e.currentTarget.closest(".cast-sec").classList.toggle("collapsed"));
+  // Collapsible sections: the chevron (or empty header area) toggles the body;
+  // a tap on the title text navigates to its full page instead.
+  app.querySelectorAll(".dsec .sec-head [data-collapse]").forEach((btn) =>
+    btn.addEventListener("click", (e) => { e.stopPropagation(); btn.closest(".dsec").classList.toggle("collapsed"); }));
+  app.querySelectorAll(".dsec .sec-head h2").forEach((h) =>
+    h.addEventListener("click", (e) => { e.stopPropagation(); toast("Full listing — coming soon"); }));
 
   wireCardClicks(app);
   applyArtwork(app);
