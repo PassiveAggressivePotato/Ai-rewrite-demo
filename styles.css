@@ -755,6 +755,9 @@ body::before {
 .hero-info h1 .yr { opacity: .7; font-weight: 700; }
 .hero-info .metaline { color: var(--text-dim); font-size: 12.5px; margin-top: 7px; line-height: 1.5; }
 .hero-info .metaline .dot { opacity: .5; margin: 0 6px; }
+/* Category-type chip leading the metaline — shows what you're looking at. */
+.meta-type { display: inline-flex; align-items: center; gap: 5px; color: var(--gold); font-weight: 700; }
+.meta-type .cat-ic { height: 1em; width: auto; background: var(--icon-default); }
 
 /* Frosted panel base */
 .panel {
