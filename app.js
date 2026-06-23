@@ -11,6 +11,7 @@
 
 import { BRAND, CATEGORIES, DEFAULT_COUNTRY } from "./config.js";
 import { CATALOG, COUNTRIES, getItem, itemsByCategory } from "./data.js";
+import { QUOTES } from "./quotes.js";
 import { scoreItem, formatReviews } from "./normalize.js";
 import { SOURCE_BADGES } from "./sources.js";
 
@@ -684,6 +685,18 @@ function closeSearch() {
   updateTabBadges();
 }
 
+/* Random homepage quote (replaces the static tagline): the line, then the
+ * character on a second line. Width-restricted + styled via --home-quote-* /
+ * --home-tag-* tokens (editable in the Studio Homepage editor). */
+const escapeHTML = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function quoteHTML(q) {
+  return `<div class="home-quote">
+    <span class="hq-text">“${escapeHTML(q.quote)}”</span>
+    <span class="hq-char">— ${escapeHTML(q.character)}</span>
+  </div>`;
+}
+const randomQuote = () => QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
 function renderLanding() {
   const selected = state.category !== null;
   const tabs = CATEGORIES.map((c) => `
@@ -712,7 +725,7 @@ function renderLanding() {
         <div class="landing ${state.searchOpen ? "searching" : ""}">
           <div class="landing-head rise">
             ${logo()}
-            <div class="tagline">${BRAND.tagline}</div>
+            ${quoteHTML(randomQuote())}
           </div>
 
           <div class="prompt rise d1">What are you looking for?</div>
@@ -1945,11 +1958,14 @@ function homeGroups() {
       { k: "--home-logo-gap-top", label: "Space above logo", val: 35, step: 1, min: 0 },
       { k: "--home-logo-gap-bot", label: "Space below logo", val: 0, step: 1, min: 0 },
     ] },
-    { name: "Tagline", items: [
-      { k: "--home-tag-size", label: "Tagline size", val: 13, step: 0.5, min: 6 },
-      { k: "--home-tag-col", label: "Tagline colour", type: "color", val: "#c98f30" },
-      { k: "--home-tag-gap", label: "Tagline spacing", val: 5, step: 1, min: 0 },
-      { k: "--home-tag-text", label: "Tagline wording", type: "text", val: BRAND.tagline },
+    { name: "Quote", items: [
+      { k: "--home-tag-size", label: "Quote size", val: 13, step: 0.5, min: 6 },
+      { k: "--home-tag-col", label: "Quote colour", type: "color", val: "rgba(255,255,255,0.78)" },
+      { k: "--home-quote-w", label: "Quote max width", val: 230, step: 5, min: 80, max: 420 },
+      { k: "--home-tag-gap", label: "Space above quote", val: 5, step: 1, min: 0 },
+      { k: "--home-quote-char-gap", label: "Quote–name gap", val: 4, step: 1, min: 0 },
+      { k: "--home-quote-char-size", label: "Name size", val: 11, step: 0.5, min: 6 },
+      { k: "--home-quote-char-col", label: "Name colour", type: "color", val: "rgba(255,255,255,0.5)" },
     ] },
     { name: "Prompt", items: [
       { k: "--home-prompt-size", label: "Prompt size", val: 13, step: 0.5, min: 6 },
@@ -1983,7 +1999,7 @@ function homePreviewHTML(bg, art) {
     <div class="home-mirror"${art ? ` style="background-image:url('${art}')"` : ""}></div>
     <div class="home-scrim"></div>
     <div class="landing">
-      <div class="landing-head">${logo()}<div class="tagline">${BRAND.tagline}</div></div>
+      <div class="landing-head">${logo()}${quoteHTML({ quote: "Not all those who wander are lost.", character: "Bilbo Baggins" })}</div>
       <div class="prompt">What are you looking for?</div>
       <div class="tabs">${tabs}</div>
       <div class="searchbar-wrap">
@@ -2024,10 +2040,10 @@ function renderStudioHomepage() {
     </div>`;
   const cand = app.querySelector("#cand");
   const applyVar = (v, val) => cand.style.setProperty(v, val);
-  // Live-edit the tagline / prompt wording in the After mini.
+  // Live-edit the prompt wording in the After mini.
   const onText = (key, val) => {
-    const sel = key === "--home-tag-text" ? ".tagline" : key === "--home-prompt-text" ? ".prompt" : null;
-    const node = sel && cand.querySelector(sel); if (node) node.textContent = val;
+    const node = key === "--home-prompt-text" && cand.querySelector(".prompt");
+    if (node) node.textContent = val;
   };
   // Both minis show the sampled top-strip fill (so Before/After match the live look).
   paintTopFill(app.querySelector("#cur"), art);

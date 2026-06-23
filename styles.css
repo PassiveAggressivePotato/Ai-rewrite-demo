@@ -249,7 +249,20 @@ body::before {
 }
 .landing-screen.show-sticky .landing-sticky { transform: translateY(0); opacity: 1; pointer-events: auto; }
 .landing-head { text-align: center; position: relative; padding-top: var(--home-logo-gap-top, 35px); margin-bottom: var(--home-logo-gap-bot, 0px); }
-.landing-head .tagline { color: var(--home-tag-col, #c98f30); font-size: var(--home-tag-size, 13px); margin-top: var(--home-tag-gap, 5px); letter-spacing: .04em; }
+/* Random quote (in place of the tagline): width-restricted so it wraps like the
+ * old tagline; character on a 2nd line. All adjustable via --home-quote/tag-*. */
+.home-quote {
+  max-width: var(--home-quote-w, 230px); margin: var(--home-tag-gap, 5px) auto 0;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.home-quote .hq-text {
+  font-size: var(--home-tag-size, 13px); color: var(--home-tag-col, rgba(255,255,255,.78));
+  line-height: 1.4; font-style: italic; letter-spacing: .01em; text-wrap: balance;
+}
+.home-quote .hq-char {
+  margin-top: var(--home-quote-char-gap, 4px); font-size: var(--home-quote-char-size, 11px);
+  color: var(--home-quote-char-col, rgba(255,255,255,.5)); font-weight: 600; letter-spacing: .02em;
+}
 
 .home-link { cursor: pointer; }
 

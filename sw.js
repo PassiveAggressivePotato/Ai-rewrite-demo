@@ -4,7 +4,7 @@
  * network fallback for navigations. Bump CACHE when assets change. Remote
  * fonts/artwork are fetched best-effort and simply skipped when offline (the
  * UI falls back to gradients and system fonts). */
-const CACHE = "scores-shell-v47";
+const CACHE = "scores-shell-v48";
 const SHELL = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const SHELL = [
   "./sources.js",
   "./normalize.js",
   "./data.js",
+  "./quotes.js",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   // Gold category icons (tabs + missing-poster placeholders).
