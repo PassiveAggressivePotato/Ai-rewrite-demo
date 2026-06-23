@@ -1942,20 +1942,20 @@ function homeGroups() {
       { k: "--home-mirror-op", label: "Mirror strength", val: 85, step: 1, min: 0, max: 100, unit: "" },
     ] },
     { name: "Logo", items: [
-      { k: "--home-logo-gap-top", label: "Space above logo", val: 16, step: 1, min: 0 },
+      { k: "--home-logo-gap-top", label: "Space above logo", val: 35, step: 1, min: 0 },
       { k: "--home-logo-gap-bot", label: "Space below logo", val: 0, step: 1, min: 0 },
     ] },
     { name: "Tagline", items: [
       { k: "--home-tag-size", label: "Tagline size", val: 13, step: 0.5, min: 6 },
-      { k: "--home-tag-col", label: "Tagline colour", type: "color", val: "#9aa1b0" },
-      { k: "--home-tag-gap", label: "Tagline spacing", val: 10, step: 1, min: 0 },
+      { k: "--home-tag-col", label: "Tagline colour", type: "color", val: "#c98f30" },
+      { k: "--home-tag-gap", label: "Tagline spacing", val: 5, step: 1, min: 0 },
       { k: "--home-tag-text", label: "Tagline wording", type: "text", val: BRAND.tagline },
     ] },
     { name: "Prompt", items: [
       { k: "--home-prompt-size", label: "Prompt size", val: 13, step: 0.5, min: 6 },
       { k: "--home-prompt-col", label: "Prompt colour", type: "color", val: "#9aa1b0" },
       { k: "--home-prompt-gap-top", label: "Space above prompt", val: 35, step: 1, min: 0 },
-      { k: "--home-prompt-gap-bot", label: "Space below prompt", val: 12, step: 1, min: 0 },
+      { k: "--home-prompt-gap-bot", label: "Space below prompt", val: 10, step: 1, min: 0 },
       { k: "--home-prompt-text", label: "Prompt wording", type: "text", val: "What are you looking for?" },
     ] },
     { name: "Spacing", items: [
