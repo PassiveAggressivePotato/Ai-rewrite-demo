@@ -982,15 +982,15 @@ body::before {
 .sp-here { display: inline-flex; align-items: center; gap: 5px; color: var(--gold); font-weight: 800; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; }
 .sp-here::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px rgba(240,196,105,.8); }
 .sp-row .result-score { font-family: var(--font-display); font-weight: 800; color: var(--gold); font-size: 16px; }
-/* Zoomed poster lightbox (tap a ratings-page poster). */
-.poster-zoom { position: absolute; inset: 0; z-index: 440; display: flex; align-items: center; justify-content: center; padding: 24px; }
+/* Zoomed poster lightbox (tap a ratings-page poster). Full poster, natural
+ * ratio (no cropping), slim standardised side margins. */
+.poster-zoom { position: absolute; inset: 0; z-index: 440; display: flex; align-items: center; justify-content: center; padding: 13px; }
 .pz-scrim { position: absolute; inset: 0; background: rgba(4,6,10,.82); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .pz-img {
-  position: relative; width: min(82vw, 360px); max-height: 86vh; aspect-ratio: 2 / 3;
-  border-radius: 14px; background-color: #0c0f16; background-size: contain; background-repeat: no-repeat; background-position: center;
-  border: 1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.7);
-  display: grid; place-items: center;
+  position: relative; max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;
+  border-radius: 12px; border: 1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.7);
 }
+.pz-fallback { width: 100%; aspect-ratio: 2 / 3; max-height: 100%; background-color: #0c0f16; display: grid; place-items: center; }
 .pz-img .hero-fallback .cat-ic { width: 42%; height: auto; }
 .pz-x { position: absolute; top: 14px; right: 14px; z-index: 2; width: 38px; height: 38px; display: grid; place-items: center; color: #fff; background: rgba(0,0,0,.5); border-radius: 50%; }
 .pz-x svg { width: 20px; height: 20px; }
