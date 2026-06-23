@@ -923,5 +923,299 @@ export const QUOTES = [
     "character": "Gandalf",
     "source": "The Lord of the Rings",
     "medium": "Books"
+  },
+  {
+    "quote": "There are dozens of us! Dozens!",
+    "character": "Tobias Fünke",
+    "source": "Arrested Development",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I've made a huge mistake.",
+    "character": "G.O.B. Bluth",
+    "source": "Arrested Development",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Her?",
+    "character": "Michael Bluth",
+    "source": "Arrested Development",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I don't understand the question, and I won't respond to it.",
+    "character": "Lucille Bluth",
+    "source": "Arrested Development",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Bears. Beets. Battlestar Galactica.",
+    "character": "Jim Halpert",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I declare bankruptcy!",
+    "character": "Michael Scott",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I am Beyoncé, always.",
+    "character": "Michael Scott",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Whenever I'm about to do something, I think, would an idiot do that?",
+    "character": "Dwight Schrute",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Pretty, pretty, pretty good.",
+    "character": "Larry David",
+    "source": "Curb Your Enthusiasm",
+    "medium": "Shows"
+  },
+  {
+    "quote": "What's the deal with airline food?",
+    "character": "Jerry Seinfeld",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Yada yada yada.",
+    "character": "Elaine Benes",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "These pretzels are making me thirsty!",
+    "character": "Kramer",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Oh boy.",
+    "character": "Sam Beckett",
+    "source": "Quantum Leap",
+    "medium": "Shows"
+  },
+  {
+    "quote": "So long, and thanks for all the fish.",
+    "character": "Dolphins",
+    "source": "The Hitchhiker's Guide to the Galaxy",
+    "medium": "Books"
+  },
+  {
+    "quote": "Time is an illusion. Lunchtime doubly so.",
+    "character": "Ford Prefect",
+    "source": "The Hitchhiker's Guide to the Galaxy",
+    "medium": "Books"
+  },
+  {
+    "quote": "I'm not superstitious, but I am a little stitious.",
+    "character": "Michael Scott",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Clear alcohols are for rich women on diets.",
+    "character": "Ron Swanson",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Never half-ass two things. Whole-ass one thing.",
+    "character": "Ron Swanson",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I have no idea what I'm doing, but I know I'm doing it really, really well.",
+    "character": "Andy Dwyer",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm allergic to sushi. Every time I eat more than 80 sushis, I barf.",
+    "character": "Andy Dwyer",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Wibble.",
+    "character": "Blackadder",
+    "source": "Blackadder",
+    "medium": "Shows"
+  },
+  {
+    "quote": "The path of my life is strewn with cowpats from the devil's own satanic herd.",
+    "character": "Blackadder",
+    "source": "Blackadder",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Yeah but no but yeah but no.",
+    "character": "Vicky Pollard",
+    "source": "Little Britain",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm the only gay in the village.",
+    "character": "Daffyd Thomas",
+    "source": "Little Britain",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Great job!",
+    "character": "David Liebe Hart",
+    "source": "Tim and Eric Awesome Show, Great Job!",
+    "medium": "Shows"
+  },
+  {
+    "quote": "It's free real estate.",
+    "character": "Tim Heidecker",
+    "source": "Tim and Eric Awesome Show, Great Job!",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Ranch me, brotendo.",
+    "character": "Eric André",
+    "source": "The Eric André Show",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Bird up!",
+    "character": "Eric André",
+    "source": "The Eric André Show",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Why would you say something so controversial yet so brave?",
+    "character": "Eric André",
+    "source": "The Eric André Show",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Did you see that ludicrous display last night?",
+    "character": "Moss",
+    "source": "The IT Crowd",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I came here in a time machine that you invented.",
+    "character": "Jimmy McGill",
+    "source": "Better Call Saul",
+    "medium": "Shows"
+  },
+  {
+    "quote": "S'all good, man.",
+    "character": "Jimmy McGill",
+    "source": "Better Call Saul",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Winner takes it all.",
+    "character": "Lalo Salamanca",
+    "source": "Better Call Saul",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Yeah, science!",
+    "character": "Jesse Pinkman",
+    "source": "Breaking Bad",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I watched Jane die.",
+    "character": "Walter White",
+    "source": "Breaking Bad",
+    "medium": "Shows"
+  },
+  {
+    "quote": "All the information is on the task.",
+    "character": "Alex Horne",
+    "source": "Taskmaster",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Smoke me a kipper, I'll be back for breakfast.",
+    "character": "Ace Rimmer",
+    "source": "Red Dwarf",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Everybody's dead, Dave.",
+    "character": "Holly",
+    "source": "Red Dwarf",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Smeeeee heeeee.",
+    "character": "Arnold Rimmer",
+    "source": "Red Dwarf",
+    "medium": "Shows"
+  },
+  {
+    "quote": "And now for something completely different.",
+    "character": "Announcer",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Nobody expects the Spanish Inquisition!",
+    "character": "Cardinal Ximénez",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Always look on the bright side of life.",
+    "character": "Prisoners",
+    "source": "Monty Python's Life of Brian",
+    "medium": "Movies"
+  },
+  {
+    "quote": "He's not the Messiah, he's a very naughty boy!",
+    "character": "Mandy Cohen",
+    "source": "Monty Python's Life of Brian",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Bring out your dead!",
+    "character": "Dead Collector",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Coral!",
+    "character": "Rick Grimes",
+    "source": "The Walking Dead",
+    "medium": "Shows"
+  },
+  {
+    "quote": "This was a triumph.",
+    "character": "GLaDOS",
+    "source": "Portal",
+    "medium": "Games"
+  },
+  {
+    "quote": "The end is never the end is never the end.",
+    "character": "Narrator",
+    "source": "The Stanley Parable",
+    "medium": "Games"
+  },
+  {
+    "quote": "Do a barrel roll!",
+    "character": "Peppy Hare",
+    "source": "Star Fox 64",
+    "medium": "Games"
+  },
+  {
+    "quote": "What are you buying?",
+    "character": "Merchant",
+    "source": "Resident Evil 4",
+    "medium": "Games"
   }
 ];
