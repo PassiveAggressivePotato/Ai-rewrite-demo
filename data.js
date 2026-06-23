@@ -21,6 +21,7 @@ export const CATALOG = [
   {
     id: "movie-dune-2", slug: "dune-part-two", category: "movie",
     title: "Dune: Part Two", year: 2024, certification: "PG-13",
+    series: "Dune", seriesIndex: 2,
     genres: ["Sci-Fi", "Adventure"], runtime: "2h 46m",
     colors: ["#c9892f", "#1a0f06"], poster: "assets/dune-part-two-poster.webp", backdrop: "assets/dune-part-two-backdrop.webp", trending: true,
     trailer: "Way9Dexny3w",
@@ -38,6 +39,27 @@ export const CATALOG = [
       US: { stream: [{ name: "Max", color: "#5b2bd6", url: "#" }], rentbuy: ["Apple TV", "Prime Video", "Netflix"] },
       GB: { stream: [{ name: "NOW", color: "#00807d", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
       AU: { stream: [{ name: "Binge", color: "#e0234e", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
+  {
+    id: "movie-dune-1", slug: "dune-part-one", category: "movie",
+    title: "Dune: Part One", year: 2021, certification: "PG-13",
+    series: "Dune", seriesIndex: 1,
+    genres: ["Sci-Fi", "Adventure"], runtime: "2h 35m",
+    colors: ["#b98a4a", "#10141a"], poster: "assets/dune-part-one-poster.webp", backdrop: "assets/dune-part-one-backdrop.webp",
+    synopsis: "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people, as malevolent forces explode into conflict over the planet's exclusive supply of the most precious resource in existence.",
+    credits: { Director: "Denis Villeneuve", Cast: "Timothée Chalamet, Rebecca Ferguson, Oscar Isaac" },
+    ratings: [
+      { sourceId: "rt_critic", value: 83, reviewCount: 460 },
+      { sourceId: "metacritic_critic", value: 74, reviewCount: 67 },
+      { sourceId: "imdb", value: 8.0, reviewCount: 820000 },
+      { sourceId: "letterboxd", value: 4.0, reviewCount: 1300000 },
+      { sourceId: "tmdb", value: 79, reviewCount: 11000 },
+      { sourceId: "google", value: 91, reviewCount: 90000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Max", color: "#5b2bd6", url: "#" }], rentbuy: ["Apple TV", "Prime Video", "Netflix"] },
+      GB: { stream: [{ name: "NOW", color: "#00807d", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
     },
   },
   {
@@ -215,6 +237,46 @@ export const CATALOG = [
       GB: { stream: [{ name: "Apple TV+", color: "#000", url: "#" }], rentbuy: [] },
     },
   },
+  {
+    id: "tv-breaking-bad", slug: "breaking-bad", category: "tv",
+    title: "Breaking Bad", year: 2008, certification: "TV-MA",
+    series: "Breaking Bad Universe", seriesIndex: 1,
+    genres: ["Drama", "Crime"], runtime: "5 seasons",
+    colors: ["#6f8a2a", "#0c0f0a"], poster: "assets/breaking-bad-poster.webp", backdrop: "assets/breaking-bad-backdrop.webp",
+    synopsis: "A struggling high-school chemistry teacher, diagnosed with terminal lung cancer, teams with a former student to manufacture and sell crystal meth to secure his family's future — and is gradually transformed into a ruthless kingpin of the drug trade.",
+    credits: { Creator: "Vince Gilligan", Cast: "Bryan Cranston, Aaron Paul, Anna Gunn" },
+    ratings: [
+      { sourceId: "rt_critic", value: 96, reviewCount: 220 },
+      { sourceId: "metacritic_critic", value: 87, reviewCount: 95 },
+      { sourceId: "imdb", value: 9.5, reviewCount: 2200000 },
+      { sourceId: "tmdb", value: 89, reviewCount: 14000 },
+      { sourceId: "google", value: 98, reviewCount: 120000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Netflix", color: "#e50914", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      GB: { stream: [{ name: "Netflix", color: "#e50914", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
+  {
+    id: "tv-better-call-saul", slug: "better-call-saul", category: "tv",
+    title: "Better Call Saul", year: 2015, certification: "TV-MA",
+    series: "Breaking Bad Universe", seriesIndex: 2,
+    genres: ["Drama", "Crime"], runtime: "6 seasons",
+    colors: ["#3a6a9c", "#0a0d12"], poster: "assets/better-call-saul-poster.webp", backdrop: "assets/better-call-saul-backdrop.webp",
+    synopsis: "The trials and tribulations of small-time lawyer Jimmy McGill in the years leading up to his fateful run-in with Walter White and Jesse Pinkman, charting his transformation into the morally compromised attorney Saul Goodman.",
+    credits: { Creator: "Vince Gilligan, Peter Gould", Cast: "Bob Odenkirk, Rhea Seehorn, Jonathan Banks" },
+    ratings: [
+      { sourceId: "rt_critic", value: 98, reviewCount: 180 },
+      { sourceId: "metacritic_critic", value: 86, reviewCount: 70 },
+      { sourceId: "imdb", value: 8.9, reviewCount: 600000 },
+      { sourceId: "tmdb", value: 87, reviewCount: 5200 },
+      { sourceId: "google", value: 97, reviewCount: 45000 },
+    ],
+    watch: {
+      US: { stream: [{ name: "Netflix", color: "#e50914", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+      GB: { stream: [{ name: "Netflix", color: "#e50914", url: "#" }], rentbuy: ["Apple TV", "Prime Video"] },
+    },
+  },
 
   /* ===== GAMES ============================================================ */
   {
@@ -271,6 +333,7 @@ export const CATALOG = [
   {
     id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game", franchiseId: "spider-man",
     title: "Marvel's Spider-Man 2", year: 2023, certification: "T",
+    series: "Marvel's Spider-Man", seriesIndex: 2,
     genres: ["Action Adventure"], runtime: "PlayStation 5",
     colors: ["#c0392b", "#0b0d1a"], poster: "assets/marvels-spider-man-2-poster.jpg", backdrop: "assets/marvels-spider-man-2-backdrop.jpg",
     synopsis: "Spider-Men Peter Parker and Miles Morales return for an exhilarating new adventure, swinging across Marvel's New York while facing the ultimate test of strength against the symbiote and the menace of Venom.",
@@ -282,6 +345,24 @@ export const CATALOG = [
     ],
     watch: {
       US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store"] },
+    },
+  },
+  {
+    id: "game-spiderman-1", slug: "marvels-spider-man", category: "game", franchiseId: "spider-man",
+    title: "Marvel's Spider-Man", year: 2018, certification: "T",
+    series: "Marvel's Spider-Man", seriesIndex: 1,
+    genres: ["Action Adventure"], runtime: "PlayStation 4",
+    colors: ["#c0392b", "#0b0d1a"], poster: "assets/marvels-spider-man-poster.jpg", backdrop: "assets/marvels-spider-man-backdrop.jpg",
+    synopsis: "Starring an experienced Peter Parker, this blockbuster open-world adventure sends Spider-Man swinging across a vast and dynamic New York City. As Peter balances the chaos of his personal life and his life as the hero, a brutal new villain threatens to destroy everything he holds dear.",
+    credits: { Developer: "Insomniac Games", Platforms: "PlayStation 4" },
+    ratings: [
+      { sourceId: "opencritic", value: 87, reviewCount: 130 },
+      { sourceId: "metacritic_critic", value: 87, reviewCount: 110 },
+      { sourceId: "steam", value: 92, reviewCount: 90000 },
+      { sourceId: "igdb", value: 86, reviewCount: 1200 },
+    ],
+    watch: {
+      US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store", "Steam"] },
     },
   },
   {
