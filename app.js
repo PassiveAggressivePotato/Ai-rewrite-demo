@@ -534,18 +534,18 @@ function wireHeader(root) {
  * ===================================================================== */
 function rankBy(items, key) {
   return [...items].map((it) => ({ it, s: scoreItem(it) }))
-    .sort((a, b) => (b.s[key] ?? 0) - (a.s[key] ?? 0)).slice(0, 5);
+    .sort((a, b) => (b.s[key] ?? 0) - (a.s[key] ?? 0)).slice(0, 10);
 }
 function rankThisMonth(items) {
   return [...items].map((it) => ({ it, s: scoreItem(it) }))
-    .sort((a, b) => (b.it.year - a.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0))).slice(0, 5);
+    .sort((a, b) => (b.it.year - a.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0))).slice(0, 10);
 }
 function rankTrending(items) {
-  // Trending titles first, then fill with the next-best so the list reaches 5.
+  // Trending titles first, then fill with the next-best so the list reaches 10.
   const scored = items.map((it) => ({ it, s: scoreItem(it) }));
   const tr = scored.filter((x) => x.it.trending).sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0));
   const rest = scored.filter((x) => !x.it.trending).sort((a, b) => (b.s.synth ?? 0) - (a.s.synth ?? 0));
-  return [...tr, ...rest].slice(0, 5);
+  return [...tr, ...rest].slice(0, 10);
 }
 
 function listColumn(title, rows, featured = false) {
@@ -941,7 +941,9 @@ function sameCreator(item) {
 
 function renderDetail(item) {
   const s = scoreItem(item);
-  const metaline = [item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
+  const TYPE_LABEL = { movie: "Movie", tv: "Show", game: "Game", book: "Book" };
+  const typeChip = `<span class="meta-type"><span class="cat-ic cat-${item.category}" aria-hidden="true"></span>${TYPE_LABEL[item.category] || ""}</span>`;
+  const metaline = [typeChip, item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
     .join('<span class="dot">•</span>');
   const credits = Object.entries(item.credits)
     .map(([k, v]) => `<div class="row"><span class="k">${k}:</span>${v}</div>`).join("");
