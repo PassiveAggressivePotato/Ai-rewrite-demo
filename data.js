@@ -333,7 +333,7 @@ export const CATALOG = [
   {
     id: "game-bg-spiderman2", slug: "marvels-spider-man-2", category: "game", franchiseId: "spider-man",
     title: "Marvel's Spider-Man 2", year: 2023, certification: "T",
-    series: "Marvel's Spider-Man", seriesIndex: 2,
+    series: "Marvel's Spider-Man", seriesIndex: 3,
     genres: ["Action Adventure"], runtime: "PlayStation 5",
     colors: ["#c0392b", "#0b0d1a"], poster: "assets/marvels-spider-man-2-poster.jpg", backdrop: "assets/marvels-spider-man-2-backdrop.jpg",
     synopsis: "Spider-Men Peter Parker and Miles Morales return for an exhilarating new adventure, swinging across Marvel's New York while facing the ultimate test of strength against the symbiote and the menace of Venom.",
@@ -360,6 +360,24 @@ export const CATALOG = [
       { sourceId: "metacritic_critic", value: 87, reviewCount: 110 },
       { sourceId: "steam", value: 92, reviewCount: 90000 },
       { sourceId: "igdb", value: 86, reviewCount: 1200 },
+    ],
+    watch: {
+      US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store", "Steam"] },
+    },
+  },
+  {
+    id: "game-spiderman-miles", slug: "marvels-spider-man-miles-morales", category: "game", franchiseId: "spider-man",
+    title: "Marvel's Spider-Man: Miles Morales", year: 2020, certification: "T",
+    series: "Marvel's Spider-Man", seriesIndex: 2,
+    genres: ["Action Adventure"], runtime: "PlayStation 5, PlayStation 4",
+    colors: ["#9c2a3a", "#0a0d16"], poster: "assets/marvels-spider-man-miles-morales-poster.jpg", backdrop: "assets/marvels-spider-man-miles-morales-backdrop.jpg",
+    synopsis: "Teenager Miles Morales is adjusting to his new home while following in the footsteps of his mentor, Peter Parker, as the new Spider-Man. When a fierce power struggle threatens to destroy his neighbourhood, Miles discovers he has incredible new powers and must rise to own the mantle.",
+    credits: { Developer: "Insomniac Games", Platforms: "PlayStation 5, PlayStation 4" },
+    ratings: [
+      { sourceId: "opencritic", value: 85, reviewCount: 140 },
+      { sourceId: "metacritic_critic", value: 85, reviewCount: 120 },
+      { sourceId: "steam", value: 90, reviewCount: 40000 },
+      { sourceId: "igdb", value: 84, reviewCount: 700 },
     ],
     watch: {
       US: { stream: [{ name: "PS Store", color: "#0070d1", url: "#" }], rentbuy: ["PS Store", "Steam"] },

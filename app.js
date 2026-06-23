@@ -1075,6 +1075,11 @@ function renderDetail(item) {
   const stage = app.querySelector("#video-stage");
   const scroller = app.querySelector(".scroll");
   stage.style.top = app.querySelector(".detail-head").offsetHeight + "px";
+  // Tap the poster (but not its Trailer/Review buttons) → zoomed poster popup.
+  app.querySelector("[data-poster]")?.addEventListener("click", (e) => {
+    if (e.target.closest(".media-btn")) return;
+    openPosterZoom(item);
+  });
   const closePlayer = () => { stage.classList.remove("playing"); stage.innerHTML = ""; };
   app.querySelectorAll("[data-play]").forEach((btn) =>
     btn.addEventListener("click", () => {
@@ -1163,6 +1168,21 @@ function openSeriesPopup(item) {
   ov.querySelector(".sp-x").addEventListener("click", close);
   ov.querySelectorAll("[data-slug]").forEach((b) =>
     b.addEventListener("click", () => { close(); location.hash = `#/item/${b.dataset.slug}`; }));
+}
+/* Tapping a ratings-page poster opens it large (full poster, contain) on a scrim. */
+function openPosterZoom(item) {
+  const bg = item.poster ? `url('${item.poster}') center / contain no-repeat, ${gradient(item)}` : gradient(item);
+  const ov = document.createElement("div");
+  ov.className = "poster-zoom";
+  ov.innerHTML = `
+    <div class="pz-scrim"></div>
+    <div class="pz-img" style="background:${bg}">${item.poster ? "" : `<span class="hero-fallback">${catIcon(item)}</span>`}</div>
+    <button class="pz-x" aria-label="Close">${ICON.close}</button>`;
+  app.appendChild(ov);
+  const close = () => ov.remove();
+  ov.querySelector(".pz-scrim").addEventListener("click", close);
+  ov.querySelector(".pz-x").addEventListener("click", close);
+  ov.querySelector(".pz-img").addEventListener("click", close);
 }
 function wireCardClicks(root) {
   root.querySelectorAll("[data-slug]").forEach((c) =>
