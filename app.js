@@ -691,8 +691,8 @@ function closeSearch() {
 const escapeHTML = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function quoteHTML(q) {
   return `<div class="home-quote">
-    <span class="hq-text">“${escapeHTML(q.quote)}”</span>
-    <span class="hq-char">— ${escapeHTML(q.character)}</span>
+    <span class="hq-text">${escapeHTML(q.quote)}</span>
+    <span class="hq-char">- ${escapeHTML(q.character)}</span>
   </div>`;
 }
 const randomQuote = () => QUOTES[Math.floor(Math.random() * QUOTES.length)];

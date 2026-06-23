@@ -257,7 +257,7 @@ body::before {
 }
 .home-quote .hq-text {
   font-size: var(--home-tag-size, 13px); color: var(--home-tag-col, rgba(255,255,255,.78));
-  line-height: 1.4; font-style: italic; letter-spacing: .01em; text-wrap: balance;
+  line-height: 1.4; letter-spacing: .04em; text-wrap: balance;
 }
 .home-quote .hq-char {
   margin-top: var(--home-quote-char-gap, 4px); font-size: var(--home-quote-char-size, 11px);
