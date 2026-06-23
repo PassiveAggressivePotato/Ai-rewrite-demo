@@ -173,12 +173,12 @@ body::before {
   --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 0px 6px 20px rgba(0,0,0,0.55)));
 }
 .landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
-  font-size: var(--logo-hd-size, 30px);
-  --logo-fill: var(--logo-hd-fill, var(--logo-gold));
+  font-size: var(--logo-hd-size, 30px);   /* header keeps its smaller size */
+  --logo-fill: var(--logo-hd-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 100%));
   --logo-op: var(--logo-hd-op, 1);
   --logo-rot: var(--logo-hd-rot, 0deg);
   --logo-outline-filter: var(--logo-hd-outline, );
-  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 3px 4px 2px rgba(0,0,0,.65)));
+  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 0px 6px 20px rgba(0,0,0,0.55)));
 }
 
 /* =====================================================================
