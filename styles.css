@@ -383,7 +383,18 @@ body::before {
     var(--tab-idle-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
   box-shadow: var(--tab-idle-shadow, none);
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
+  position: relative;
 }
+/* Result-count badge on inactive tabs during a search (app-notification style). */
+.tab-badge {
+  position: absolute; top: 5px; right: 5px; z-index: 4;
+  min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 10.5px; font-weight: 800; line-height: 1;
+  color: #241a05; background: var(--gold); border-radius: 999px;
+  border: 1.5px solid #0e0f16; box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.tab-badge[hidden] { display: none; }
 /* Fixed-height icon zone: every icon is vertically centred within it, so all the
  * icons line up horizontally regardless of height; the icon shadow lives here (on
  * the zone, not the masked icon, so it actually renders). */
@@ -532,6 +543,15 @@ body::before {
   transition: transform .18s var(--ease), box-shadow .18s;
 }
 .list-item:hover .poster-card { transform: translateY(-3px); box-shadow: 0 9px 18px rgba(0,0,0,.5); }
+/* Small category-type icon, top-right of every poster. */
+.poster-type {
+  position: absolute; top: 3px; right: 3px; z-index: 2;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(8,10,14,.6); box-shadow: 0 1px 2px rgba(0,0,0,.45);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.poster-card .poster-type .cat-ic { width: 62%; height: auto; background: #fff; filter: none; }
 /* Score badge: square gold tile + "Critikl Score" label in a chip. Driven by
  * --b-* tokens (defaults in :root) so the Studio and the live cards stay in sync. */
 .score-badge {
