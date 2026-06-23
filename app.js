@@ -2277,11 +2277,11 @@ function renderStudioBrand() {
  * label-size) sit alongside that state's own visual tokens (--tab-<state>-*). */
 const GOLD_GRAD = "linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)";
 const FAINT_GOLD = "linear-gradient(160deg, rgba(243,205,118,0.55), rgba(140,100,40,0.22))";
-const DARK_FILL = "linear-gradient(180deg, #16161f, #0e0f16)";
-const ICON_GOLD = "radial-gradient(circle at 38% 30%, #fff0cf, #f3cd76 45%, #dca63f 80%, #a9761f)";
+const DARK_FILL = "linear-gradient(180deg, #222230 0%, #0f101a 100%)";
+const ICON_GOLD = "linear-gradient(124deg, #fff0cf 0%, #f3cd76 45%, #dca63f 80%, #a9761f 100%)";
 const ACT_FILL = "radial-gradient(circle at 50% 50%, #222b35 0%, #222b35 56%, #161b1f 100%)";
 const ACT_OUTLINE = "linear-gradient(164deg, #dfb24b 0%, #fff0cf 90%)";
-const ACT_ICON = "radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)";
+const ACT_ICON = "linear-gradient(124deg, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)";
 const TAB_STATES = {
   active: { title: "Active Tab", key: "ActiveTab", prefix: "act", cls: "tab active", sx: 1.04, sy: 1.04,
     d: { fill: ACT_FILL, bg: "transparent", outline: ACT_OUTLINE, outlineW: 1.5,

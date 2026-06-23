@@ -395,7 +395,7 @@ body::before {
    * background layer, so "no fill" is a transparent gradient, not `transparent`. */
   background:
     var(--tab-idle-fill, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
-    var(--tab-idle-bg, linear-gradient(180deg, #16161f, #0e0f16)) padding-box,
+    var(--tab-idle-bg, linear-gradient(180deg, #222230 0%, #0f101a 100%)) padding-box,
     var(--tab-idle-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
   box-shadow: var(--tab-idle-shadow, none);
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
@@ -425,7 +425,7 @@ body::before {
   color: var(--tab-idle-icon-ol-col, transparent);
   filter: var(--tab-idle-icon-ol-filter, none) drop-shadow(var(--tab-idle-icon-shadow, 0 0 0 transparent));
 }
-.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, var(--icon-default)); transform: scale(var(--tab-idle-icon-sx, 1), var(--tab-idle-icon-sy, 1)); transition: transform .25s; }
+.tab .cat-ic { width: var(--tab-icon-size, 40px); height: auto; display: block; background: var(--tab-idle-icon, linear-gradient(124deg, #fff0cf 0%, #f3cd76 45%, #dca63f 80%, #a9761f 100%)); transform: scale(var(--tab-idle-icon-sx, 1), var(--tab-idle-icon-sy, 1)); transition: transform .25s; }
 .tab .tab-label { font-size: var(--tab-label-size, 13px); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--tab-idle-label, var(--gold)); text-shadow: var(--tab-idle-label-shadow, none); transform: scale(var(--tab-idle-label-sx, 1), var(--tab-idle-label-sy, 1)); }
 .tab:hover { transform: translateY(-1px); }
 
@@ -456,7 +456,7 @@ body::before {
   position: relative; z-index: 3;
   box-shadow: var(--tab-act-shadow, none);
 }
-.tab.active .cat-ic { background: var(--tab-act-icon, radial-gradient(circle at 40% 50%, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)); transform: scale(var(--tab-act-icon-sx, 1.06), var(--tab-act-icon-sy, 1.06)); }
+.tab.active .cat-ic { background: var(--tab-act-icon, linear-gradient(124deg, #f9e2a8 0%, #f9e2a8 11%, #d6a94f 79%)); transform: scale(var(--tab-act-icon-sx, 1.06), var(--tab-act-icon-sy, 1.06)); }
 .tab.active .tab-icon { color: var(--tab-act-icon-ol-col, transparent); filter: var(--tab-act-icon-ol-filter, none) drop-shadow(var(--tab-act-icon-shadow, 0px -5px 15px rgba(206, 164, 81, 1))); }
 .tab.active .tab-label { color: var(--tab-act-label, #ddb75d); text-shadow: var(--tab-act-label-shadow, 0px 0px 5px rgba(179, 102, 0, 0.55)); transform: scale(var(--tab-act-label-sx, 1), var(--tab-act-label-sy, 1)); }
 /* Edge tabs grow inward so they never poke past the search bar's rounded ends. */
