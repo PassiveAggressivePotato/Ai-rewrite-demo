@@ -166,11 +166,11 @@ body::before {
 /* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview). */
 .landing-head .wordmark, .logo-scope-fp .wordmark {
   font-size: var(--logo-fp-size, 54px);
-  --logo-fill: var(--logo-fp-fill, var(--logo-gold));
+  --logo-fill: var(--logo-fp-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 100%));
   --logo-op: var(--logo-fp-op, 1);
   --logo-rot: var(--logo-fp-rot, 0deg);
   --logo-outline-filter: var(--logo-fp-outline, );
-  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 3px 4px 2px rgba(0,0,0,.65)));
+  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 0px 6px 20px rgba(0,0,0,0.55)));
 }
 .landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
   font-size: var(--logo-hd-size, 30px);
