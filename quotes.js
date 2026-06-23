@@ -511,7 +511,7 @@ export const QUOTES = [
     "medium": "Movies"
   },
   {
-    "quote": "Elementary, my dear Watson.",
+    "quote": "Elementary.",
     "character": "Sherlock Holmes",
     "source": "The Adventures of Sherlock Holmes",
     "medium": "Books"
@@ -1564,6 +1564,354 @@ export const QUOTES = [
     "quote": "Sufferin' succotash!",
     "character": "Sylvester",
     "source": "Looney Tunes",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Is a man not entitled to the sweat of his brow?",
+    "character": "Andrew Ryan",
+    "source": "BioShock",
+    "medium": "Games"
+  },
+  {
+    "quote": "You must construct additional pylons.",
+    "character": "Advisor",
+    "source": "StarCraft",
+    "medium": "Games"
+  },
+  {
+    "quote": "Hell, it's about time.",
+    "character": "Tychus Findlay",
+    "source": "StarCraft II",
+    "medium": "Games"
+  },
+  {
+    "quote": "Rip and tear, until it is done.",
+    "character": "King Novik",
+    "source": "DOOM Eternal",
+    "medium": "Games"
+  },
+  {
+    "quote": "War has changed.",
+    "character": "Solid Snake",
+    "source": "Metal Gear Solid 4",
+    "medium": "Games"
+  },
+  {
+    "quote": "All animals are equal, but some animals are more equal than others.",
+    "character": "Narrator",
+    "source": "Animal Farm",
+    "medium": "Books"
+  },
+  {
+    "quote": "It is our choices that show what we truly are.",
+    "character": "Albus Dumbledore",
+    "source": "Harry Potter",
+    "medium": "Books"
+  },
+  {
+    "quote": "The man who passes the sentence should swing the sword.",
+    "character": "Eddard Stark",
+    "source": "A Game of Thrones",
+    "medium": "Books"
+  },
+  {
+    "quote": "A mind needs books like a sword needs a whetstone.",
+    "character": "Tyrion Lannister",
+    "source": "A Game of Thrones",
+    "medium": "Books"
+  },
+  {
+    "quote": "Do not be sorry. Be better.",
+    "character": "Kratos",
+    "source": "God of War",
+    "medium": "Games"
+  },
+  {
+    "quote": "Truth is a matter of perspective.",
+    "character": "Captain Price",
+    "source": "Call of Duty: Modern Warfare 3",
+    "medium": "Games"
+  },
+  {
+    "quote": "You exist because we allow it, and you will end because we demand it.",
+    "character": "Sovereign",
+    "source": "Mass Effect",
+    "medium": "Games"
+  },
+  {
+    "quote": "You're finally awake.",
+    "character": "Ralof",
+    "source": "The Elder Scrolls V: Skyrim",
+    "medium": "Games"
+  },
+  {
+    "quote": "Fus ro dah!",
+    "character": "Dragonborn",
+    "source": "The Elder Scrolls V: Skyrim",
+    "medium": "Games"
+  },
+  {
+    "quote": "Stop right there, criminal scum!",
+    "character": "Guard",
+    "source": "The Elder Scrolls IV: Oblivion",
+    "medium": "Games"
+  },
+  {
+    "quote": "We apologize for the inconvenience.",
+    "character": "God's Final Message",
+    "source": "The Hitchhiker's Guide to the Galaxy",
+    "medium": "Books"
+  },
+  {
+    "quote": "There is no friend as loyal as a book.",
+    "character": "Ernest Hemingway",
+    "source": "Ernest Hemingway",
+    "medium": "Books"
+  },
+  {
+    "quote": "I understood that reference.",
+    "character": "Steve Rogers",
+    "source": "The Avengers",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Fine, I'll do it myself.",
+    "character": "Thanos",
+    "source": "Avengers: Age of Ultron",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm something of a scientist myself.",
+    "character": "Norman Osborn",
+    "source": "Spider-Man",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I missed the part where that's my problem.",
+    "character": "Peter Parker",
+    "source": "Spider-Man",
+    "medium": "Movies"
+  },
+  {
+    "quote": "See? Nobody cares.",
+    "character": "Dennis Nedry",
+    "source": "Jurassic Park",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Clever girl.",
+    "character": "Robert Muldoon",
+    "source": "Jurassic Park",
+    "medium": "Movies"
+  },
+  {
+    "quote": "So you have chosen death.",
+    "character": "Saruman",
+    "source": "The Lord of the Rings",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Fly, you fools!",
+    "character": "Gandalf",
+    "source": "The Lord of the Rings",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Isildur! Cast it into the fire!",
+    "character": "Elrond",
+    "source": "The Lord of the Rings",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Do it.",
+    "character": "Chancellor Palpatine",
+    "source": "Star Wars",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Unlimited power!",
+    "character": "Chancellor Palpatine",
+    "source": "Star Wars",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I don't like sand.",
+    "character": "Anakin Skywalker",
+    "source": "Star Wars",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You were the chosen one!",
+    "character": "Obi-Wan Kenobi",
+    "source": "Star Wars",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Look how they massacred my boy.",
+    "character": "Vito Corleone",
+    "source": "The Godfather",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Shut up, Meg.",
+    "character": "Peter Griffin",
+    "source": "Family Guy",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Freakin' sweet.",
+    "character": "Peter Griffin",
+    "source": "Family Guy",
+    "medium": "Shows"
+  },
+  {
+    "quote": "To shreds, you say?",
+    "character": "Professor Farnsworth",
+    "source": "Futurama",
+    "medium": "Shows"
+  },
+  {
+    "quote": "It's over 9000!",
+    "character": "Vegeta",
+    "source": "Dragon Ball Z",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Omae wa mou shindeiru.",
+    "character": "Kenshiro",
+    "source": "Fist of the North Star",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm surrounded by idiots.",
+    "character": "Scar",
+    "source": "The Lion King",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm in a glass case of emotion!",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "That escalated quickly.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I love lamp.",
+    "character": "Brick Tamland",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm kind of a big deal.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I immediately regret this decision.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "We're on a mission from God.",
+    "character": "Elwood Blues",
+    "source": "The Blues Brothers",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Bueller? Bueller?",
+    "character": "Economics Teacher",
+    "source": "Ferris Bueller's Day Off",
+    "medium": "Movies"
+  },
+  {
+    "quote": "It's just a jump to the left.",
+    "character": "Criminologist",
+    "source": "The Rocky Horror Picture Show",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You're killing me, Smalls!",
+    "character": "Ham Porter",
+    "source": "The Sandlot",
+    "medium": "Movies"
+  },
+  {
+    "quote": "The files are in the computer?",
+    "character": "Derek Zoolander",
+    "source": "Zoolander",
+    "medium": "Movies"
+  },
+  {
+    "quote": "What is this? A center for ants?",
+    "character": "Derek Zoolander",
+    "source": "Zoolander",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I feel like I'm taking crazy pills!",
+    "character": "Mugatu",
+    "source": "Zoolander",
+    "medium": "Movies"
+  },
+  {
+    "quote": "So hot right now.",
+    "character": "Mugatu",
+    "source": "Zoolander",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Nobody makes me bleed my own blood.",
+    "character": "White Goodman",
+    "source": "Dodgeball",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm not even mad. That's amazing.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm very important. I have many leather-bound books.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm just one stomach flu away from my goal weight.",
+    "character": "Emily Charlton",
+    "source": "The Devil Wears Prada",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I am Jack's complete lack of surprise.",
+    "character": "Narrator",
+    "source": "Fight Club",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You don't win friends with salad.",
+    "character": "Homer Simpson",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Me fail English? That's unpossible.",
+    "character": "Ralph Wiggum",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm in danger.",
+    "character": "Ralph Wiggum",
+    "source": "The Simpsons",
     "medium": "Shows"
   }
 ];
