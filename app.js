@@ -1170,14 +1170,17 @@ function openSeriesPopup(item) {
   ov.querySelectorAll("[data-slug]").forEach((b) =>
     b.addEventListener("click", () => { close(); location.hash = `#/item/${b.dataset.slug}`; }));
 }
-/* Tapping a ratings-page poster opens it large (full poster, contain) on a scrim. */
+/* Tapping a ratings-page poster opens the full poster at its natural ratio
+ * (no cropping) on a scrim, with slim standardised side margins. */
 function openPosterZoom(item) {
-  const bg = item.poster ? `url('${item.poster}') center / contain no-repeat, ${gradient(item)}` : gradient(item);
   const ov = document.createElement("div");
   ov.className = "poster-zoom";
+  const inner = item.poster
+    ? `<img class="pz-img" src="${item.poster}" alt="${escapeAttr(item.title)} poster">`
+    : `<div class="pz-img pz-fallback" style="background:${gradient(item)}"><span class="hero-fallback">${catIcon(item)}</span></div>`;
   ov.innerHTML = `
     <div class="pz-scrim"></div>
-    <div class="pz-img" style="background:${bg}">${item.poster ? "" : `<span class="hero-fallback">${catIcon(item)}</span>`}</div>
+    ${inner}
     <button class="pz-x" aria-label="Close">${ICON.close}</button>`;
   app.appendChild(ov);
   const close = () => ov.remove();
