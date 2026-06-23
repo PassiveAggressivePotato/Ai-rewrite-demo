@@ -892,6 +892,13 @@ function franchiseItems(item) {
     .map((x) => ({ it: x, s: scoreItem(x) }))
     .sort((a, b) => (a.it.year - b.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0)));
 }
+/* All titles in the same book series, in reading order (by seriesIndex). */
+function seriesItems(item) {
+  if (!item.series) return [];
+  return CATALOG
+    .filter((x) => x.series === item.series)
+    .sort((a, b) => (a.seriesIndex || 0) - (b.seriesIndex || 0) || (a.year - b.year));
+}
 /* Other titles crediting the same primary creator (Director/Creator/Developer/
  * Author), matched by name across the whole catalog. */
 function sameCreator(item) {
@@ -976,6 +983,7 @@ function renderDetail(item) {
             <div class="quick-info">
               <p class="synopsis">${item.synopsis}</p>
               <button class="read-more" hidden>Read more</button>
+              ${seriesItems(item).length > 1 ? `<button class="series-link" data-series-link>See all <span>${item.series}</span> books ${ICON.go}</button>` : ""}
               <div class="credits">${credits}</div>
             </div>
           </div>
@@ -1064,6 +1072,8 @@ function renderDetail(item) {
       requestAnimationFrame(() => scroller.scrollTo({ top: 0, behavior: "smooth" }));
     }));
 
+  app.querySelector("[data-series-link]")?.addEventListener("click", () => openSeriesPopup(item));
+
   // Read more / less for the synopsis when it overflows the 2-line clamp.
   const syn = app.querySelector(".synopsis");
   const rm = app.querySelector(".read-more");
@@ -1099,6 +1109,35 @@ function toast(msg) {
   t.className = "toast"; t.textContent = msg; app.appendChild(t);
   requestAnimationFrame(() => t.classList.add("show"));
   setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 1800);
+}
+/* Popup listing every book in a title's series (reading order); the current book
+ * is marked, the others link to their own pages. */
+function openSeriesPopup(item) {
+  const rows = seriesItems(item);
+  if (rows.length < 2) return;
+  const ov = document.createElement("div");
+  ov.className = "series-pop";
+  ov.innerHTML = `
+    <div class="sp-scrim"></div>
+    <div class="sp-sheet">
+      <div class="sp-head"><h3>${item.series}</h3><button class="sp-x" aria-label="Close">${ICON.close}</button></div>
+      <div class="sp-list">
+        ${rows.map((it) => {
+          const cur = it.slug === item.slug;
+          return `<button class="sp-row${cur ? " current" : ""}"${cur ? "" : ` data-slug="${it.slug}"`}>
+            ${posterBox(it, "thumb")}
+            <div class="meta"><div class="name">${it.seriesIndex ? `<span class="sp-num">${it.seriesIndex}.</span> ` : ""}${it.title} <span class="yr">(${it.year})</span></div><div class="genres">${cur ? "You're reading this" : it.genres.join(" · ")}</div></div>
+            <div class="result-score">${scoreItem(it).synth ?? "—"}</div>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  app.appendChild(ov);
+  const close = () => ov.remove();
+  ov.querySelector(".sp-scrim").addEventListener("click", close);
+  ov.querySelector(".sp-x").addEventListener("click", close);
+  ov.querySelectorAll("[data-slug]").forEach((b) =>
+    b.addEventListener("click", () => { close(); location.hash = `#/item/${b.dataset.slug}`; }));
 }
 function wireCardClicks(root) {
   root.querySelectorAll("[data-slug]").forEach((c) =>
