@@ -695,7 +695,43 @@ function quoteHTML(q) {
     <span class="hq-char">- ${escapeHTML(q.character)}</span>
   </div>`;
 }
-const randomQuote = () => QUOTES[Math.floor(Math.random() * QUOTES.length)];
+/* Non-repeating quote order: a shuffled "bag" of indices kept in localStorage.
+ * Each pick removes one, so every quote shows exactly once before any repeat
+ * (and never the same one twice in a row across refills). Random fallback if
+ * storage is unavailable. */
+const QUOTE_BAG_KEY = "critikl.quoteBag";
+function shuffledIdx(n, avoidLast) {
+  const a = [...Array(n).keys()];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  // The next pick is a[length-1]; keep it ≠ the last one shown.
+  if (avoidLast != null && a.length > 1 && a[a.length - 1] === avoidLast) [a[a.length - 1], a[0]] = [a[0], a[a.length - 1]];
+  return a;
+}
+function nextQuote() {
+  let bag, last;
+  try { const s = JSON.parse(localStorage.getItem(QUOTE_BAG_KEY) || "null") || {}; bag = s.bag; last = s.last; } catch (_) {}
+  if (!Array.isArray(bag) || !bag.length) bag = shuffledIdx(QUOTES.length, last);
+  const idx = bag.pop();
+  try { localStorage.setItem(QUOTE_BAG_KEY, JSON.stringify({ bag, last: idx })); } catch (_) {}
+  return QUOTES[idx] || QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+/* Swap the quote in place (tap-for-a-new-one, no reload). */
+function swapQuote(el) {
+  const q = nextQuote();
+  const t = el.querySelector(".hq-text"), c = el.querySelector(".hq-char");
+  if (t) t.textContent = q.quote;
+  if (c) c.textContent = "- " + q.character;
+}
+/* Tapping the home logo secretly swaps the blurred backdrop (no reload). */
+function swapBackdrop(screen) {
+  const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
+  const it = arts[Math.floor(Math.random() * arts.length)];
+  if (!it || !screen) return;
+  const src = backdropArt(it);
+  const bg = screen.querySelector(".home-bg"); if (bg) bg.style.background = backdropBg(it);
+  const mir = screen.querySelector(".home-mirror"); if (mir) mir.style.backgroundImage = `url('${src}')`;
+  paintTopFill(screen, src);
+}
 
 function renderLanding() {
   const selected = state.category !== null;
@@ -725,7 +761,7 @@ function renderLanding() {
         <div class="landing ${state.searchOpen ? "searching" : ""}">
           <div class="landing-head rise">
             ${logo()}
-            ${quoteHTML(randomQuote())}
+            ${quoteHTML(nextQuote())}
           </div>
 
           <div class="prompt rise d1">What are you looking for?</div>
@@ -788,6 +824,17 @@ function renderLanding() {
     closeSearch();
   };
   document.addEventListener("click", _landingClick);
+
+  // On the home page the logos don't navigate (we're already home) — instead a
+  // tap secretly swaps the backdrop without reloading. Strip data-home so
+  // wireHeader skips them, then bind the swap.
+  app.querySelectorAll(".landing .wordmark, .landing-sticky .wordmark").forEach((el) => {
+    el.removeAttribute("data-home");
+    el.addEventListener("click", (e) => { e.stopPropagation(); swapBackdrop(screen); });
+  });
+  // Tap the quote for a fresh one (no reload).
+  const quoteEl = app.querySelector(".home-quote");
+  quoteEl?.addEventListener("click", () => swapQuote(quoteEl));
 
   wireHeader(app);
 }
