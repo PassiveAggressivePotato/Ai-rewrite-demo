@@ -2341,27 +2341,10 @@ function router() { route(); paintBookColors(); requestAnimationFrame(() => curr
 
 window.addEventListener("hashchange", router);
 applyDebug();
-/* Portrait lock. Android can truly lock: when installed as a PWA the manifest
- * handles it; in a browser tab screen.orientation.lock() only works in
- * fullscreen, so on the first tap we go fullscreen then lock. iOS Safari has no
- * orientation-lock API, so there the CSS .rotate-gate notice is the fallback
- * (it also covers any Android case where locking didn't take). */
-const _isAndroid = /Android/i.test(navigator.userAgent || "");
-function lockPortrait() { try { return screen.orientation?.lock?.("portrait"); } catch (_) { return undefined; } }
-Promise.resolve(lockPortrait()).catch(() => {});
-if (_isAndroid) {
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  window.addEventListener("pointerdown", function lockOnce() {
-    window.removeEventListener("pointerdown", lockOnce);
-    Promise.resolve(lockPortrait()).catch(() => {
-      // Browser tab: lock() needs fullscreen first.
-      if (!standalone && !document.fullscreenElement) {
-        (document.documentElement.requestFullscreen?.() || Promise.reject())
-          .then(() => lockPortrait()).catch(() => {});
-      }
-    });
-  });
-}
+// Portrait: the manifest declares it (installed PWA) and we attempt a lock where
+// supported, but browsers can't force it in a tab — the CSS .rotate-gate notice
+// is the cross-platform fallback (the only option on iOS Safari).
+try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch (_) {}
 router();
 
 // Warm the image cache so page backgrounds appear instantly on navigation.
