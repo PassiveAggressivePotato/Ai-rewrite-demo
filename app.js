@@ -2113,13 +2113,16 @@ const LOGO_GOLD = "linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%,
 const LOGO_TARGETS = { fp: { name: "Front page", size: 54 }, hd: { name: "Header", size: 30 } };
 function logoGroups(t) {
   const size = LOGO_TARGETS[t].size;
+  // Baked per-target defaults (front-page got its own fill/shadow).
+  const fill = t === "fp" ? "linear-gradient(180deg, #fdecc0 0%, #c98f30 100%)" : LOGO_GOLD;
+  const shadowDef = t === "fp" ? "0px 6px 20px rgba(0,0,0,0.55)" : "3px 4px 2px rgba(0,0,0,0.65)";
   return [
     { name: "Logo", items: [
       { k: `--logo-${t}-size`, label: "Size", val: size, step: 4, fine: 1, min: 8, max: 200 },
-      { k: `--logo-${t}-fill`, label: "Fill", type: "color", val: LOGO_GOLD },
+      { k: `--logo-${t}-fill`, label: "Fill", type: "color", val: fill },
       { k: `--logo-${t}-op`, label: "Opacity", val: 1, step: 0.1, fine: 0.05, min: 0, max: 1, unit: "" },
       { k: `--logo-${t}-rot`, label: "Rotation", val: 0, step: 5, fine: 1, min: -180, max: 180, unit: "deg" },
-      { k: `--logo-${t}-shadow`, label: "Drop shadow", type: "shadow", def: "3px 4px 2px rgba(0,0,0,0.65)" },
+      { k: `--logo-${t}-shadow`, label: "Drop shadow", type: "shadow", def: shadowDef },
     ] },
     { name: "Outline", items: [
       { k: `--logo-${t}-outline`, label: "Outline (width + colour)", type: "outline" },
