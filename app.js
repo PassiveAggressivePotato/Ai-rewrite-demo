@@ -983,8 +983,8 @@ function renderDetail(item) {
             <div class="quick-info">
               <p class="synopsis">${item.synopsis}</p>
               <button class="read-more" hidden>Read more</button>
-              ${seriesItems(item).length > 1 ? `<button class="series-link" data-series-link>See all <span>${item.series}</span> books ${ICON.go}</button>` : ""}
               <div class="credits">${credits}</div>
+              ${seriesItems(item).length > 1 ? `<button class="series-link" data-series-link>In this series ${ICON.go}</button>` : ""}
             </div>
           </div>
         </div>

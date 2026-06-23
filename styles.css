@@ -919,17 +919,15 @@ body::before {
   letter-spacing: .02em; padding: 0;
 }
 .read-more[hidden] { display: none; }
-/* Noticeable gold link under the description → opens the series popup. */
+/* Gold text link under author/publisher → opens the series popup. Sized like the
+ * front-page "Popular Right Now" heading. */
 .series-link {
-  margin-top: 11px; display: inline-flex; align-items: center; gap: 3px;
-  font-size: 12.5px; font-weight: 800; letter-spacing: .01em; text-align: left;
-  color: #1a1206; background: var(--logo-gold, linear-gradient(180deg,#fdecc0,#e3ad44 55%,#b9791f));
-  border: none; border-radius: 10px; padding: 7px 13px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.4);
+  margin-top: 12px; display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  color: var(--gold); background: none; border: none; padding: 0;
 }
-.series-link span { font-weight: 900; }
-.series-link svg { width: 1.05em; height: 1.05em; }
-.series-link:active { transform: scale(.97); }
+.series-link svg { width: .82em; height: .82em; }
+.series-link:active { opacity: .7; }
 /* Series popup */
 .series-pop { position: absolute; inset: 0; z-index: 430; display: flex; align-items: center; justify-content: center; padding: 18px; }
 .sp-scrim { position: absolute; inset: 0; background: rgba(4,6,10,.66); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
