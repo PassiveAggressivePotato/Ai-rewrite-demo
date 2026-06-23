@@ -336,6 +336,7 @@ export const CATALOG = [
   {
     id: "book-fourth-wing", slug: "fourth-wing", category: "book",
     title: "Fourth Wing", year: 2023, certification: "",
+    series: "The Empyrean", seriesIndex: 1,
     genres: ["Fantasy", "Romance"], runtime: "528 pages",
     colors: ["#8a2e4a", "#0e0a0c"], poster: "assets/fourth-wing-poster.jpg", trending: true,
     synopsis: "Twenty-year-old Violet Sorrengail is forced to join the deadly riders quadrant of an elite war college for dragon riders, where the friends she makes are few and the death toll is high. With fewer dragons than candidates, most cadets won't survive.",
@@ -366,6 +367,7 @@ export const CATALOG = [
   {
     id: "book-iron-flame", slug: "iron-flame", category: "book",
     title: "Iron Flame", year: 2023, certification: "",
+    series: "The Empyrean", seriesIndex: 2,
     genres: ["Fantasy", "Romance"], runtime: "640 pages",
     colors: ["#6f2a3a", "#0e0a0c"], poster: "assets/iron-flame-poster.jpg", trending: true,
     synopsis: "Everyone expected Violet Sorrengail to die during her first year at Basgiath War College — but now the real test begins under a brutal new leadership intent on breaking her. With the world on the brink of war, she must keep the dragons' secrets and her own.",
