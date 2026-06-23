@@ -554,6 +554,7 @@ function listColumn(title, rows, featured = false) {
       <button class="list-item" data-slug="${it.slug}">
         <div class="poster-card" style="background:${posterBg(it)}">
           ${it.poster ? "" : catIcon(it)}
+          <span class="poster-type" aria-hidden="true">${catIconSvg(it.category)}</span>
           <span class="score-badge"><span class="sb-num">${s.synth ?? "—"}</span><span class="sb-lab"><span>Critikl</span><span>Score</span></span></span>
         </div>
         <div class="li-text">
@@ -571,6 +572,21 @@ function listColumn(title, rows, featured = false) {
 const titleLink = (text) => `<span class="title-text">${text}<span class="title-go" aria-hidden="true">${ICON.go}</span></span>`;
 
 const listsClass = () => "lists cards layout-horizontal";
+
+/* A title matches a query if its name or any genre contains it. */
+const queryMatches = (it, q) => it.title.toLowerCase().includes(q) || it.genres.join(" ").toLowerCase().includes(q);
+const categoryMatchCount = (catId, q) => itemsByCategory(catId).filter((it) => queryMatches(it, q)).length;
+/* Notification-style count badges on the inactive tabs while a search is active. */
+function updateTabBadges() {
+  const q = state.query.trim().toLowerCase();
+  app.querySelectorAll(".tabs .tab").forEach((tab) => {
+    const badge = tab.querySelector(".tab-badge");
+    if (!badge) return;
+    const n = (q && !tab.classList.contains("active")) ? categoryMatchCount(tab.dataset.cat, q) : 0;
+    badge.textContent = n > 99 ? "99+" : n;
+    badge.hidden = n === 0;
+  });
+}
 
 function renderResultsArea() {
   const area = document.getElementById("results-area");
@@ -594,7 +610,7 @@ function renderResultsArea() {
 
   if (q) {
     const matches = itemsByCategory(state.category)
-      .filter((it) => it.title.toLowerCase().includes(q) || it.genres.join(" ").toLowerCase().includes(q))
+      .filter((it) => queryMatches(it, q))
       .map((it) => ({ it, s: scoreItem(it) }));
     area.innerHTML = `
       <div class="section-title">Results in ${cat().plural || ""} <span class="count">${matches.length}</span></div>
@@ -639,6 +655,7 @@ function selectCategory(c) {
   if (clearText) clearText.hidden = !state.query.trim();
   openSearch();
   renderResultsArea();
+  updateTabBadges();
 }
 
 function openSearch() {
@@ -664,6 +681,7 @@ function closeSearch() {
   const input = document.getElementById("search-input");
   if (input) input.value = "";
   renderResultsArea();
+  updateTabBadges();
 }
 
 function renderLanding() {
@@ -672,6 +690,7 @@ function renderLanding() {
     <button class="tab ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
       <span class="tab-icon">${catIconSvg(c.id)}</span>
       <span class="tab-label">${c.plural}</span>
+      <span class="tab-badge" hidden></span>
     </button>`).join("");
 
   const hasText = !!state.query.trim();
@@ -721,6 +740,7 @@ function renderLanding() {
   paintTopFill(app.querySelector(".landing-screen"), randSrc);
 
   renderResultsArea();
+  updateTabBadges();
 
   app.querySelectorAll(".tab").forEach((t) =>
     t.addEventListener("click", (e) => { e.stopPropagation(); selectCategory(t.dataset.cat); }));
@@ -731,10 +751,11 @@ function renderLanding() {
     state.query = e.target.value;
     if (clearText) clearText.hidden = !e.target.value.trim();
     renderResultsArea();
+    updateTabBadges();
   });
   clearText?.addEventListener("click", () => {
     state.query = ""; input.value = ""; clearText.hidden = true;
-    renderResultsArea(); input.focus();
+    renderResultsArea(); updateTabBadges(); input.focus();
   });
   app.querySelector(".search-clear")?.addEventListener("click", closeSearch);
 
