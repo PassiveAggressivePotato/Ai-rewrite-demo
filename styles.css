@@ -252,11 +252,13 @@ body::before {
 /* Random quote (in place of the tagline): width-restricted so it wraps like the
  * old tagline; character on a 2nd line. All adjustable via --home-quote/tag-*. */
 .home-quote {
-  max-width: var(--home-quote-w, 230px); margin: var(--home-tag-gap, 5px) auto 0;
+  max-width: var(--home-quote-w, calc(var(--logo-fp-size, 54px) * 5.52)); /* ≈ 2× the logo width */
+  margin: var(--home-tag-gap, 5px) auto 0;
   display: flex; flex-direction: column; align-items: center; text-align: center;
 }
+/* Quote line = full original tagline style (incl. its gold colour). */
 .home-quote .hq-text {
-  font-size: var(--home-tag-size, 13px); color: var(--home-tag-col, rgba(255,255,255,.78));
+  font-size: var(--home-tag-size, 13px); color: var(--home-tag-col, #c98f30);
   line-height: 1.4; letter-spacing: .04em; text-wrap: balance;
 }
 .home-quote .hq-char {

@@ -1960,8 +1960,8 @@ function homeGroups() {
     ] },
     { name: "Quote", items: [
       { k: "--home-tag-size", label: "Quote size", val: 13, step: 0.5, min: 6 },
-      { k: "--home-tag-col", label: "Quote colour", type: "color", val: "rgba(255,255,255,0.78)" },
-      { k: "--home-quote-w", label: "Quote max width", val: 230, step: 5, min: 80, max: 420 },
+      { k: "--home-tag-col", label: "Quote colour", type: "color", val: "#c98f30" },
+      { k: "--home-quote-w", label: "Quote max width", val: 298, step: 5, min: 80, max: 480 },
       { k: "--home-tag-gap", label: "Space above quote", val: 5, step: 1, min: 0 },
       { k: "--home-quote-char-gap", label: "Quote–name gap", val: 4, step: 1, min: 0 },
       { k: "--home-quote-char-size", label: "Name size", val: 11, step: 0.5, min: 6 },
