@@ -913,13 +913,17 @@ function franchiseItems(item) {
     .map((x) => ({ it: x, s: scoreItem(x) }))
     .sort((a, b) => (a.it.year - b.it.year) || ((b.s.synth ?? 0) - (a.s.synth ?? 0)));
 }
-/* All titles in the same book series, in reading order (by seriesIndex). */
+/* All same-medium titles in one series/franchise, in order (by seriesIndex).
+ * Same category only: sequels/prequels (film, games), spin-offs (TV), series (books). */
 function seriesItems(item) {
   if (!item.series) return [];
   return CATALOG
-    .filter((x) => x.series === item.series)
+    .filter((x) => x.series === item.series && x.category === item.category)
     .sort((a, b) => (a.seriesIndex || 0) - (b.seriesIndex || 0) || (a.year - b.year));
 }
+/* Category-appropriate label for the "more in this series" link. */
+const SERIES_LINK = { movie: "Sequels & prequels", tv: "Spin-offs & related", game: "Sequels & prequels", book: "In this series" };
+const seriesLinkLabel = (item) => SERIES_LINK[item.category] || "In this series";
 /* Other titles crediting the same primary creator (Director/Creator/Developer/
  * Author), matched by name across the whole catalog. */
 function sameCreator(item) {
@@ -1005,7 +1009,7 @@ function renderDetail(item) {
               <p class="synopsis">${item.synopsis}</p>
               <button class="read-more" hidden>Read more</button>
               <div class="credits">${credits}</div>
-              ${seriesItems(item).length > 1 ? `<button class="series-link" data-series-link>In this series ${ICON.go}</button>` : ""}
+              ${seriesItems(item).length > 1 ? `<button class="series-link" data-series-link>${seriesLinkLabel(item)} ${ICON.go}</button>` : ""}
             </div>
           </div>
         </div>
@@ -1147,7 +1151,7 @@ function openSeriesPopup(item) {
           const cur = it.slug === item.slug;
           return `<button class="sp-row${cur ? " current" : ""}"${cur ? "" : ` data-slug="${it.slug}"`}>
             ${posterBox(it, "thumb")}
-            <div class="meta"><div class="name">${it.seriesIndex ? `<span class="sp-num">${it.seriesIndex}.</span> ` : ""}${it.title} <span class="yr">(${it.year})</span></div><div class="genres">${cur ? "You're reading this" : it.genres.join(" · ")}</div></div>
+            <div class="meta"><div class="name">${it.seriesIndex ? `<span class="sp-num">${it.seriesIndex}.</span> ` : ""}${it.title} <span class="yr">(${it.year})</span></div><div class="genres">${cur ? `<span class="sp-here">Viewing now</span>` : it.genres.join(" · ")}</div></div>
             <div class="result-score">${scoreItem(it).synth ?? "—"}</div>
           </button>`;
         }).join("")}
