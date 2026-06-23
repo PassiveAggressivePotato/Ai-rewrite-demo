@@ -248,8 +248,8 @@ body::before {
   transition: transform .3s var(--ease), opacity .25s var(--ease);
 }
 .landing-screen.show-sticky .landing-sticky { transform: translateY(0); opacity: 1; pointer-events: auto; }
-.landing-head { text-align: center; position: relative; padding-top: var(--home-logo-gap-top, 16px); margin-bottom: var(--home-logo-gap-bot, 0px); }
-.landing-head .tagline { color: var(--home-tag-col, var(--text-dim)); font-size: var(--home-tag-size, 13px); margin-top: var(--home-tag-gap, 10px); letter-spacing: .04em; }
+.landing-head { text-align: center; position: relative; padding-top: var(--home-logo-gap-top, 35px); margin-bottom: var(--home-logo-gap-bot, 0px); }
+.landing-head .tagline { color: var(--home-tag-col, #c98f30); font-size: var(--home-tag-size, 13px); margin-top: var(--home-tag-gap, 5px); letter-spacing: .04em; }
 
 .home-link { cursor: pointer; }
 
@@ -365,7 +365,7 @@ body::before {
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
-.prompt { text-align: center; color: var(--home-prompt-col, var(--text-dim)); font-size: var(--home-prompt-size, 13px); font-weight: 600; margin: var(--home-prompt-gap-top, 35px) 0 var(--home-prompt-gap-bot, 12px); letter-spacing: .02em; }
+.prompt { text-align: center; color: var(--home-prompt-col, var(--text-dim)); font-size: var(--home-prompt-size, 13px); font-weight: 600; margin: var(--home-prompt-gap-top, 35px) 0 var(--home-prompt-gap-bot, 10px); letter-spacing: .02em; }
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--home-tabs-gap, 8px); align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
