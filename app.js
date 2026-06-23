@@ -941,9 +941,7 @@ function sameCreator(item) {
 
 function renderDetail(item) {
   const s = scoreItem(item);
-  const TYPE_LABEL = { movie: "Movie", tv: "Show", game: "Game", book: "Book" };
-  const typeChip = `<span class="meta-type"><span class="cat-ic cat-${item.category}" aria-hidden="true"></span>${TYPE_LABEL[item.category] || ""}</span>`;
-  const metaline = [typeChip, item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
+  const metaline = [item.genres.join(" · "), item.certification, item.runtime].filter(Boolean)
     .join('<span class="dot">•</span>');
   const credits = Object.entries(item.credits)
     .map(([k, v]) => `<div class="row"><span class="k">${k}:</span>${v}</div>`).join("");
@@ -993,6 +991,7 @@ function renderDetail(item) {
         <div class="hero rise">
           <div class="hero-poster${hasArt ? " has-art" : ""}" data-poster style="background:${posterBg(item)}">
             <span class="hero-fallback">${catIcon(item)}</span>
+            <span class="poster-type" aria-hidden="true">${catIconSvg(item.category)}</span>
             <div class="media-bar">
               ${item.category !== "book" ? `<button class="media-btn" data-play="trailer">
                 <span class="play-ic">${ICON.play}</span>

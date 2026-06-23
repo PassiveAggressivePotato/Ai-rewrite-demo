@@ -755,9 +755,13 @@ body::before {
 .hero-info h1 .yr { opacity: .7; font-weight: 700; }
 .hero-info .metaline { color: var(--text-dim); font-size: 12.5px; margin-top: 7px; line-height: 1.5; }
 .hero-info .metaline .dot { opacity: .5; margin: 0 6px; }
-/* Category-type chip leading the metaline — shows what you're looking at. */
-.meta-type { display: inline-flex; align-items: center; gap: 5px; color: var(--gold); font-weight: 700; }
-.meta-type .cat-ic { height: 1em; width: auto; background: var(--icon-default); }
+/* Category-type badge on the hero poster — indicates what you're viewing. */
+.hero-poster .poster-type {
+  top: 7px; right: 7px; width: 30px; height: 30px;
+  background: rgba(8,10,14,.6); border: 1px solid rgba(240,196,105,.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.hero-poster .poster-type .cat-ic { width: 58%; height: auto; background: var(--icon-default); filter: none; }
 
 /* Frosted panel base */
 .panel {
