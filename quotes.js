@@ -1217,5 +1217,353 @@ export const QUOTES = [
     "character": "Merchant",
     "source": "Resident Evil 4",
     "medium": "Games"
+  },
+  {
+    "quote": "I'm not even supposed to be here today!",
+    "character": "Dante Hicks",
+    "source": "Clerks",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Chaos is a ladder.",
+    "character": "Petyr Baelish",
+    "source": "Game of Thrones",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Cool. Cool cool cool.",
+    "character": "Abed Nadir",
+    "source": "Community",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I regret nothing. The end.",
+    "character": "Ron Swanson",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not interested in caring about people.",
+    "character": "April Ludgate",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm having an old friend for dinner.",
+    "character": "Hannibal Lecter",
+    "source": "The Silence of the Lambs",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Groovy.",
+    "character": "Ash Williams",
+    "source": "Evil Dead II",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Hail to the king, baby.",
+    "character": "Ash Williams",
+    "source": "Army of Darkness",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I typed your symptoms into the thing up here, and it says you could have network connectivity problems.",
+    "character": "Andy Dwyer",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Burt Macklin, FBI.",
+    "character": "Andy Dwyer",
+    "source": "Parks and Recreation",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Don't mention the war!",
+    "character": "Basil Fawlty",
+    "source": "Fawlty Towers",
+    "medium": "Shows"
+  },
+  {
+    "quote": "This is an ex-parrot!",
+    "character": "Customer",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "My hovercraft is full of eels.",
+    "character": "Hungarian Tourist",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm Brian, and so's my wife!",
+    "character": "Man in Crowd",
+    "source": "Monty Python's Life of Brian",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I reject your reality and substitute my own.",
+    "character": "Adam Savage",
+    "source": "MythBusters",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Am I bovvered?",
+    "character": "Lauren Cooper",
+    "source": "The Catherine Tate Show",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Computer says yes.",
+    "character": "Carol Beer",
+    "source": "Little Britain",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Lovely jubbly.",
+    "character": "Del Boy",
+    "source": "Only Fools and Horses",
+    "medium": "Shows"
+  },
+  {
+    "quote": "You plonker!",
+    "character": "Del Boy",
+    "source": "Only Fools and Horses",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Que?",
+    "character": "Manuel",
+    "source": "Fawlty Towers",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm a lady!",
+    "character": "Emily Howard",
+    "source": "Little Britain",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Cheese, Gromit!",
+    "character": "Wallace",
+    "source": "Wallace and Gromit",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm disabled.",
+    "character": "Roy Trenneman",
+    "source": "The IT Crowd",
+    "medium": "Shows"
+  },
+  {
+    "quote": "People. What a bunch of bastards.",
+    "character": "Roy Trenneman",
+    "source": "The IT Crowd",
+    "medium": "Shows"
+  },
+  {
+    "quote": "How rude!",
+    "character": "Stephanie Tanner",
+    "source": "Full House",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Did I do that?",
+    "character": "Steve Urkel",
+    "source": "Family Matters",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Whatchu talkin' 'bout, Willis?",
+    "character": "Arnold Jackson",
+    "source": "Diff'rent Strokes",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Marcia, Marcia, Marcia!",
+    "character": "Jan Brady",
+    "source": "The Brady Bunch",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Smelly cat, smelly cat, what are they feeding you?",
+    "character": "Phoebe Buffay",
+    "source": "Friends",
+    "medium": "Shows"
+  },
+  {
+    "quote": "No TV and no beer make Homer something something.",
+    "character": "Homer Simpson",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Worst. Episode. Ever.",
+    "character": "Comic Book Guy",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Everything's coming up Milhouse!",
+    "character": "Milhouse Van Houten",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I, for one, welcome our new insect overlords.",
+    "character": "Kent Brockman",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Good news, everyone!",
+    "character": "Professor Farnsworth",
+    "source": "Futurama",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Bite my shiny metal ass!",
+    "character": "Bender",
+    "source": "Futurama",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Shut up and take my money!",
+    "character": "Fry",
+    "source": "Futurama",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Identity theft is not a joke, Jim!",
+    "character": "Dwight Schrute",
+    "source": "The Office",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I am not a crook.",
+    "character": "Richard Nixon's Head",
+    "source": "Futurama",
+    "medium": "Shows"
+  },
+  {
+    "quote": "It's business time.",
+    "character": "Bret McKenzie",
+    "source": "Flight of the Conchords",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm the Hiphopopotamus, my lyrics are bottomless.",
+    "character": "Bret McKenzie",
+    "source": "Flight of the Conchords",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Be more constructive with your feedback, please.",
+    "character": "Bret McKenzie",
+    "source": "Flight of the Conchords",
+    "medium": "Shows"
+  },
+  {
+    "quote": "We're werewolves, not swearwolves.",
+    "character": "Anton",
+    "source": "What We Do in the Shadows",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I may be dead, but I'm still pretty.",
+    "character": "Buffy Summers",
+    "source": "Buffy the Vampire Slayer",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Make it so.",
+    "character": "Jean-Luc Picard",
+    "source": "Star Trek",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Dumbass.",
+    "character": "Red Forman",
+    "source": "That '70s Show",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Shiny.",
+    "character": "Kaylee Frye",
+    "source": "Firefly",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Curse your sudden but inevitable betrayal!",
+    "character": "Hoban Washburne",
+    "source": "Firefly",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Eat my shorts.",
+    "character": "Bart Simpson",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Don't have a cow, man.",
+    "character": "Bart Simpson",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Excellent.",
+    "character": "Mr. Burns",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Ha-ha!",
+    "character": "Nelson Muntz",
+    "source": "The Simpsons",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Holy guacamole!",
+    "character": "Robin",
+    "source": "Batman",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I have the power!",
+    "character": "He-Man",
+    "source": "He-Man and the Masters of the Universe",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Hellooooo, nurse!",
+    "character": "Yakko Warner",
+    "source": "Animaniacs",
+    "medium": "Shows"
+  },
+  {
+    "quote": "What's up, Doc?",
+    "character": "Bugs Bunny",
+    "source": "Looney Tunes",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I tawt I taw a puddy tat!",
+    "character": "Tweety Bird",
+    "source": "Looney Tunes",
+    "medium": "Shows"
+  },
+  {
+    "quote": "That's all, folks!",
+    "character": "Porky Pig",
+    "source": "Looney Tunes",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Sufferin' succotash!",
+    "character": "Sylvester",
+    "source": "Looney Tunes",
+    "medium": "Shows"
   }
 ];
