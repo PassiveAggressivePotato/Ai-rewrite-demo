@@ -630,11 +630,13 @@ function selectCategory(c) {
   // Tapping the already-active tab toggles the whole thing closed again.
   if (state.category === c && state.searchOpen) { closeSearch(); return; }
   state.category = c;
-  state.query = "";
   app.querySelector(".tabs")?.classList.add("has-sel");
   app.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.cat === c));
+  // Keep any typed query so switching tabs simply re-filters the new category.
   const input = document.getElementById("search-input");
-  if (input) { input.value = ""; input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`; }
+  if (input) input.placeholder = `Search ${(cat().plural || "").toLowerCase()}…`;
+  const clearText = app.querySelector(".search-cleartext");
+  if (clearText) clearText.hidden = !state.query.trim();
   openSearch();
   renderResultsArea();
 }
