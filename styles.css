@@ -53,8 +53,10 @@
   --border: rgba(255,255,255,.10);
   --border-strong: rgba(255,255,255,.18);
   --text: #f3f4f8;
-  --text-dim: #9aa1b0;
-  --text-faint: #6b7080;
+  /* EXPERIMENT: all grey text unified to the quote-attribution colour.
+     To revert, restore:  --text-dim: #9aa1b0;  --text-faint: #6b7080; */
+  --text-dim: rgba(255,255,255,.5);
+  --text-faint: rgba(255,255,255,.5);
   --shadow: 6px 9px 28px rgba(0,0,0,.5);
   --gold: var(--gold-1);
   --teal: var(--teal-1);
