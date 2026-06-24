@@ -397,7 +397,7 @@ body::before {
    * background layer, so "no fill" is a transparent gradient, not `transparent`. */
   background:
     var(--tab-idle-fill, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
-    var(--tab-idle-bg, linear-gradient(180deg, #222230 0%, #0f101a 100%)) padding-box,
+    var(--tab-idle-bg, linear-gradient(180deg, #222b35 0%, #0f101a 100%)) padding-box,
     var(--tab-idle-outline, linear-gradient(160deg, rgba(243,205,118,.55), rgba(140,100,40,.22))) border-box;
   box-shadow: var(--tab-idle-shadow, none);
   transition: transform .25s var(--ease), background .25s, color .25s, box-shadow .25s, opacity .25s, filter .25s;
