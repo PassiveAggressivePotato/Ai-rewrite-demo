@@ -2277,7 +2277,7 @@ function renderStudioBrand() {
  * label-size) sit alongside that state's own visual tokens (--tab-<state>-*). */
 const GOLD_GRAD = "linear-gradient(122deg, #fff0cf 0%, #dfb24b 33%, #fff8ee 67%, #634515 100%)";
 const FAINT_GOLD = "linear-gradient(160deg, rgba(243,205,118,0.55), rgba(140,100,40,0.22))";
-const DARK_FILL = "linear-gradient(180deg, #222230 0%, #0f101a 100%)";
+const DARK_FILL = "linear-gradient(180deg, #222b35 0%, #0f101a 100%)";
 const ICON_GOLD = "linear-gradient(124deg, #fff0cf 0%, #f3cd76 45%, #dca63f 80%, #a9761f 100%)";
 const ACT_FILL = "radial-gradient(circle at 50% 50%, #222b35 0%, #222b35 56%, #161b1f 100%)";
 const ACT_OUTLINE = "linear-gradient(164deg, #dfb24b 0%, #fff0cf 90%)";
