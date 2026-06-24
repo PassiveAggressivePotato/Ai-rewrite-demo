@@ -61,9 +61,23 @@ const LOGO_PATH = "M55 0 H164 L215 57 V142 H135 V83 H83 V313 H135 V254 H215 V339
 const LOGO_SVG = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1333 396"><path fill-rule="evenodd" d="${LOGO_PATH}"/></svg>`)}`;
 document.documentElement.style.setProperty("--logo-src", `url("${LOGO_SVG}")`);
+/* Real outline = the glyph path STROKED (no fill) used as a second mask layer,
+ * so the outline can take any colour/gradient (CSS background) and reads crisp.
+ * Width is in control units (≈ rendered px); ×OUTLINE_W_MULT → viewBox stroke. */
+const OUTLINE_W_MULT = 18;
+function logoOutlineSrc(w) {
+  const sw = Math.max(0, (+w || 0) * OUTLINE_W_MULT);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1333 396"><path fill="none" stroke="#000" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd" d="${LOGO_PATH}"/></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+// Baked outline widths per instance (0 = off). Drive the live default masks.
+const LOGO_OL_W = { fp: 0, hd: 0 };
+document.documentElement.style.setProperty("--logo-fp-ol-src", logoOutlineSrc(LOGO_OL_W.fp));
+document.documentElement.style.setProperty("--logo-hd-ol-src", logoOutlineSrc(LOGO_OL_W.hd));
 function logo(cls = "") {
   return `<span class="wordmark home-link ${cls}" data-home role="button" aria-label="${BRAND.name} — home">
-    <span class="logo" role="img" aria-label="${BRAND.name}"></span></span>`;
+    <span class="logo" role="img" aria-label="${BRAND.name}"></span>
+    <span class="logo-ol" aria-hidden="true"></span></span>`;
 }
 
 /* Polished category icons — rendered as CSS masks so their colour/gradient is
@@ -2111,30 +2125,36 @@ function renderStudioHomepage() {
 /* ---- Studio: Logo (wordmark — fully customisable, header + front-page) ---- */
 const LOGO_GOLD = "linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%, #b9791f 100%)";
 const LOGO_TARGETS = { fp: { name: "Front page", size: 54 }, hd: { name: "Header", size: 30 } };
+const OL_PLACE_OPTS = [{ v: "outside", l: "Outside" }, { v: "inside", l: "Inside" }];
+// Session memory of logo edits per target, so the clone button can copy them.
+const LOGO_STUDIO = { fp: {}, hd: {} };
 function logoGroups(t) {
   const size = LOGO_TARGETS[t].size;
-  // Shared baked fill + shadow for every logo instance; only the size differs.
   const fill = "linear-gradient(180deg, #fdecc0 0%, #c98f30 100%)";
   const shadowDef = "0px 6px 20px rgba(0,0,0,0.55)";
   return [
     { name: "Logo", items: [
       { k: `--logo-${t}-size`, label: "Size", val: size, step: 4, fine: 1, min: 8, max: 200 },
-      { k: `--logo-${t}-fill`, label: "Fill", type: "color", val: fill },
-      { k: `--logo-${t}-op`, label: "Opacity", val: 1, step: 0.1, fine: 0.05, min: 0, max: 1, unit: "" },
+      { k: `--logo-${t}-fill`, label: "Fill (colour / gradient)", type: "color", val: fill },
       { k: `--logo-${t}-rot`, label: "Rotation", val: 0, step: 5, fine: 1, min: -180, max: 180, unit: "deg" },
-      { k: `--logo-${t}-shadow`, label: "Drop shadow", type: "shadow", def: shadowDef },
     ] },
     { name: "Outline", items: [
-      { k: `--logo-${t}-outline`, label: "Outline (width + colour)", type: "outline" },
+      { k: `--logo-${t}-ol-w`, label: "Width", val: 0, step: 0.5, fine: 0.25, min: 0, max: 8, unit: "" },
+      { k: `--logo-${t}-ol-fill`, label: "Colour / gradient", type: "color", val: "#ffffff" },
+      { k: `--logo-${t}-ol-place`, label: "Placement", type: "select", val: "outside", opts: OL_PLACE_OPTS },
+    ] },
+    { name: "Shadows", items: [
+      { k: `--logo-${t}-shadow`, label: "Drop shadow 1", type: "shadow", def: shadowDef },
+      { k: `--logo-${t}-shadow2`, label: "Drop shadow 2", type: "shadow", def: "0 0 0 transparent" },
     ] },
   ];
 }
 function renderStudioLogo(target) {
-  const t = LOGO_TARGETS[target] ? target : "fp";
+  const t = LOGO_TARGETS[target] ? target : "fp", other = t === "fp" ? "hd" : "fp";
   const groups = logoGroups(t);
   const initStyle = studioInitStyle(groups);
   const seg = (id, label) => `<a class="st-seg ${id === t ? "on" : ""}" href="#/studio/logo${id === "hd" ? "-header" : ""}">${label}</a>`;
-  const prev = (id, style) => `<div class="logo-prev"><div class="logo-scope-${t}" id="${id}"${style ? ` style="${style}"` : ""}><span class="wordmark"><span class="logo" role="img" aria-label="${BRAND.name}"></span></span></div></div>`;
+  const prev = (id, style) => `<div class="logo-prev"><div class="logo-scope-${t}" id="${id}"${style ? ` style="${style}"` : ""}><span class="wordmark"><span class="logo" role="img" aria-label="${BRAND.name}"></span><span class="logo-ol" aria-hidden="true"></span></span></div></div>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
@@ -2143,6 +2163,7 @@ function renderStudioLogo(target) {
           <h1>Logo</h1>
         </div>
         <div class="st-segs">${seg("fp", "Front page")}${seg("hd", "Header")}</div>
+        <button class="st-clone" id="st-clone">Copy all settings from ${LOGO_TARGETS[other].name}</button>
         <div class="st-stage st-compare">
           <figure class="st-cmp">${prev("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
           <figure class="st-cmp">${prev("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
@@ -2157,9 +2178,42 @@ function renderStudioLogo(target) {
       ${toolbox()}
     </div>`;
   const cand = app.querySelector("#cand");
-  const applyVar = (v, val) => cand.style.setProperty(v, val);
-  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  const root = app.querySelector("#st-controls-root");
+  // applyVar also: regenerates the outline mask from width, maps placement to the
+  // composite vars, and records the value so the other editor can clone it.
+  const applyVar = (v, val) => {
+    cand.style.setProperty(v, val);
+    if (v === `--logo-${t}-ol-w`) cand.style.setProperty(`--logo-${t}-ol-src`, logoOutlineSrc(parseFloat(val) || 0));
+    else if (v === `--logo-${t}-ol-place`) {
+      const inside = (val || "").trim() === "inside";
+      cand.style.setProperty(`--logo-${t}-ol-comp`, inside ? "intersect" : "subtract");
+      cand.style.setProperty(`--logo-${t}-ol-wcomp`, inside ? "source-in" : "source-out");
+    }
+    const suffix = v.replace(`--logo-${t}-`, "");
+    LOGO_STUDIO[t][suffix] = val;
+  };
+  wireGroupControls(root, applyVar);
   app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
+
+  // Clone: replay the other target's session edits onto this editor's controls.
+  app.querySelector("#st-clone").addEventListener("click", () => {
+    const src = LOGO_STUDIO[other];
+    Object.entries(src).forEach(([suffix, val]) => {
+      if (suffix === "size") return;                 // keep this instance's own size
+      const token = `--logo-${t}-${suffix}`;
+      const step = root.querySelector(`.step[data-var="${token}"]`);
+      const sw = root.querySelector(`.swatch[data-var="${token}"]`);
+      const sel = root.querySelector(`.st-select[data-var="${token}"]`);
+      const sh = root.querySelector(`.shadow-btn[data-var="${token}"]`);
+      if (step) { step.querySelector(".step-val").value = parseFloat(val) || 0; applyVar(token, val); }
+      else if (sw) { sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val; sw.querySelector(".swatch-val").textContent = val; applyVar(token, val); }
+      else if (sel) { sel.value = (val || "").trim(); applyVar(token, val); }
+      else if (sh) { const ov = SHADOWS[`--logo-${other}-${suffix}`]; if (ov) { SHADOWS[token] = { ...ov }; } applyVar(token, val); }
+    });
+    const btn = app.querySelector("#st-clone");
+    btn.textContent = "Copied ✓"; setTimeout(() => (btn.textContent = `Copy all settings from ${LOGO_TARGETS[other].name}`), 1600);
+  });
+
   app.querySelector("#st-export").addEventListener("click", () => {
     const text = JSON.stringify({ [`Logo (${LOGO_TARGETS[t].name})`]: readGroupValues(groups) }, null, 2);
     app.querySelector("#st-out").value = text;
