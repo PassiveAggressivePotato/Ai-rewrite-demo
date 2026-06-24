@@ -71,11 +71,20 @@ function logoOutlineSrc(w) {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 // Baked outline widths per instance (0 = off). Drive the live default masks.
-const LOGO_OL_W = { fp: 0, hd: 0 };
+const LOGO_OL_W = { fp: 0.5, hd: 0 };
 document.documentElement.style.setProperty("--logo-fp-ol-src", logoOutlineSrc(LOGO_OL_W.fp));
 document.documentElement.style.setProperty("--logo-hd-ol-src", logoOutlineSrc(LOGO_OL_W.hd));
+/* Two INDEPENDENT shadows = two blurred, offset, masked copies of the glyph
+ * behind the fill (stacked CSS drop-shadows chain, so blurring one bleeds into
+ * the other — these don't). Parse a shadow string into its parts. */
+function parseShadowStr(str) {
+  const m = String(str || "").trim().match(/^(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px\s+(.+)$/);
+  return m ? { x: m[1] + "px", y: m[2] + "px", blur: m[3] + "px", col: m[4] } : null;
+}
 function logo(cls = "") {
   return `<span class="wordmark home-link ${cls}" data-home role="button" aria-label="${BRAND.name} — home">
+    <span class="logo-sh logo-sh1" aria-hidden="true"></span>
+    <span class="logo-sh logo-sh2" aria-hidden="true"></span>
     <span class="logo" role="img" aria-label="${BRAND.name}"></span>
     <span class="logo-ol" aria-hidden="true"></span></span>`;
 }
@@ -2137,14 +2146,16 @@ function renderStudioHomepage() {
 
 /* ---- Studio: Logo (wordmark — fully customisable, header + front-page) ---- */
 const LOGO_GOLD = "linear-gradient(180deg, #fdecc0 0%, #f4cf72 32%, #e3ad44 55%, #b9791f 100%)";
-const LOGO_TARGETS = { fp: { name: "Front page", size: 54 }, hd: { name: "Header", size: 30 } };
+const LOGO_TARGETS = { fp: { name: "Front page", size: 60 }, hd: { name: "Header", size: 30 } };
 const OL_PLACE_OPTS = [{ v: "outside", l: "Outside" }, { v: "inside", l: "Inside" }];
 // Session memory of logo edits per target, so the clone button can copy them.
 const LOGO_STUDIO = { fp: {}, hd: {} };
 function logoGroups(t) {
-  const size = LOGO_TARGETS[t].size;
-  const fill = "linear-gradient(180deg, #fdecc0 0%, #c98f30 100%)";
-  const shadowDef = "0px 6px 20px rgba(0,0,0,0.55)";
+  const fp = t === "fp", size = LOGO_TARGETS[t].size;
+  // Baked per-target defaults (match the CSS fallbacks).
+  const fill = fp ? "linear-gradient(180deg, #fdecc0 0%, #c98f30 62%, #dec05d 100%)" : "linear-gradient(180deg, #fdecc0 0%, #c98f30 100%)";
+  const olW = fp ? 0.5 : 0, olFill = fp ? "linear-gradient(180deg, #ba842c 0%, #ffe5b0 66%, #f0ca7d 100%)" : "#ffffff", olPlace = fp ? "inside" : "outside";
+  const sh1Def = fp ? "none" : "0px 6px 20px rgba(0,0,0,0.55)";
   return [
     { name: "Logo", items: [
       { k: `--logo-${t}-size`, label: "Size", val: size, step: 4, fine: 1, min: 8, max: 200 },
@@ -2152,13 +2163,13 @@ function logoGroups(t) {
       { k: `--logo-${t}-rot`, label: "Rotation", val: 0, step: 5, fine: 1, min: -180, max: 180, unit: "deg" },
     ] },
     { name: "Outline", items: [
-      { k: `--logo-${t}-ol-w`, label: "Width", val: 0, step: 0.5, fine: 0.25, min: 0, max: 8, unit: "" },
-      { k: `--logo-${t}-ol-fill`, label: "Colour / gradient", type: "color", val: "#ffffff" },
-      { k: `--logo-${t}-ol-place`, label: "Placement", type: "select", val: "outside", opts: OL_PLACE_OPTS },
+      { k: `--logo-${t}-ol-w`, label: "Width", val: olW, step: 0.5, fine: 0.25, min: 0, max: 8, unit: "" },
+      { k: `--logo-${t}-ol-fill`, label: "Colour / gradient", type: "color", val: olFill },
+      { k: `--logo-${t}-ol-place`, label: "Placement", type: "select", val: olPlace, opts: OL_PLACE_OPTS },
     ] },
     { name: "Shadows", items: [
-      { k: `--logo-${t}-shadow`, label: "Drop shadow 1", type: "shadow", def: shadowDef },
-      { k: `--logo-${t}-shadow2`, label: "Drop shadow 2", type: "shadow", def: "0 0 0 transparent" },
+      { k: `--logo-${t}-shadow`, label: "Drop shadow 1", type: "shadow", def: sh1Def },
+      { k: `--logo-${t}-shadow2`, label: "Drop shadow 2", type: "shadow", def: "none" },
     ] },
   ];
 }
@@ -2167,7 +2178,7 @@ function renderStudioLogo(target) {
   const groups = logoGroups(t);
   const initStyle = studioInitStyle(groups);
   const seg = (id, label) => `<a class="st-seg ${id === t ? "on" : ""}" href="#/studio/logo${id === "hd" ? "-header" : ""}">${label}</a>`;
-  const prev = (id, style) => `<div class="logo-prev"><div class="logo-scope-${t}" id="${id}"${style ? ` style="${style}"` : ""}><span class="wordmark"><span class="logo" role="img" aria-label="${BRAND.name}"></span><span class="logo-ol" aria-hidden="true"></span></span></div></div>`;
+  const prev = (id, style) => `<div class="logo-prev"><div class="logo-scope-${t}" id="${id}"${style ? ` style="${style}"` : ""}><span class="wordmark"><span class="logo-sh logo-sh1" aria-hidden="true"></span><span class="logo-sh logo-sh2" aria-hidden="true"></span><span class="logo" role="img" aria-label="${BRAND.name}"></span><span class="logo-ol" aria-hidden="true"></span></span></div></div>`;
   app.innerHTML = `
     <div class="screen studio">
       <div class="scroll">
@@ -2201,6 +2212,15 @@ function renderStudioLogo(target) {
       const inside = (val || "").trim() === "inside";
       cand.style.setProperty(`--logo-${t}-ol-comp`, inside ? "intersect" : "subtract");
       cand.style.setProperty(`--logo-${t}-ol-wcomp`, inside ? "source-in" : "source-out");
+    } else if (v === `--logo-${t}-shadow` || v === `--logo-${t}-shadow2`) {
+      const n = v.endsWith("2") ? "2" : "1", ps = parseShadowStr(val);
+      cand.style.setProperty(`--logo-${t}-s${n}on`, ps ? 1 : 0);
+      if (ps) {
+        cand.style.setProperty(`--logo-${t}-s${n}x`, ps.x);
+        cand.style.setProperty(`--logo-${t}-s${n}y`, ps.y);
+        cand.style.setProperty(`--logo-${t}-s${n}blur`, ps.blur);
+        cand.style.setProperty(`--logo-${t}-s${n}col`, ps.col);
+      }
     }
     const suffix = v.replace(`--logo-${t}-`, "");
     LOGO_STUDIO[t][suffix] = val;
