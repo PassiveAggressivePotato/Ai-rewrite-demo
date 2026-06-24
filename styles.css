@@ -149,38 +149,49 @@ body::before {
 /* The wordmark is a CSS-masked box: the shape is --logo-src (registered in JS),
  * the fill is any colour/gradient, and outline/shadow ride the filter chain. All
  * styling tokens are scoped per instance (front-page vs header) further down. */
-.wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; }
-/* Outline + shadow live on the WORDMARK (parent), not the masked .logo. Applying
- * filters to the mask element itself is unreliable in Safari; on the parent they
- * filter the child's rendered (masked) shape, so they work everywhere. Outline =
- * a ring of offset drop-shadows; shadow = one drop-shadow (both set per-instance). */
+.wordmark { display: inline-flex; align-items: center; line-height: 0; font-size: 40px; cursor: pointer; position: relative; }
+/* Fill = a CSS-masked box (any colour/gradient). Outline = a 2nd masked box whose
+ * mask is the STROKED path, composited against the glyph (subtract = outside,
+ * intersect = inside). Shadows ride a filter on the parent (works in Safari). */
 .wordmark .logo {
-  height: .82em; aspect-ratio: 1333 / 396; display: block;
+  height: .82em; aspect-ratio: 1333 / 396; display: block; position: relative; z-index: 1;
   background: var(--logo-fill, var(--logo-gold));
   -webkit-mask: var(--logo-src) no-repeat center / contain;
   mask: var(--logo-src) no-repeat center / contain;
-  opacity: var(--logo-op, 1);
   transform: rotate(var(--logo-rot, 0deg));
   transition: transform .2s var(--ease);
 }
-.wordmark { filter: var(--logo-outline-filter, ) var(--logo-shadow-filter, drop-shadow(3px 4px 2px rgba(0,0,0,.65))); }
+.wordmark .logo-ol {
+  position: absolute; top: 50%; left: 50%; height: .82em; aspect-ratio: 1333 / 396; z-index: 2; pointer-events: none;
+  transform: translate(-50%, -50%) rotate(var(--logo-rot, 0deg));
+  background: var(--logo-ol-fill, #fff);
+  -webkit-mask: var(--logo-ol-src, none) no-repeat center / contain, var(--logo-src) no-repeat center / contain;
+          mask: var(--logo-ol-src, none) no-repeat center / contain, var(--logo-src) no-repeat center / contain;
+  -webkit-mask-composite: var(--logo-ol-wcomp, source-out);   /* outside = stroke minus glyph */
+          mask-composite: var(--logo-ol-comp, subtract);
+}
+.wordmark { filter: var(--logo-shadow-filter, drop-shadow(0px 6px 20px rgba(0,0,0,0.55))); }
 .wordmark:hover .logo { transform: rotate(var(--logo-rot, 0deg)) scale(1.03); }
 /* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview). */
 .landing-head .wordmark, .logo-scope-fp .wordmark {
   font-size: var(--logo-fp-size, 54px);
   --logo-fill: var(--logo-fp-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 100%));
-  --logo-op: var(--logo-fp-op, 1);
   --logo-rot: var(--logo-fp-rot, 0deg);
-  --logo-outline-filter: var(--logo-fp-outline, );
-  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 0px 6px 20px rgba(0,0,0,0.55)));
+  --logo-ol-src: var(--logo-fp-ol-src);
+  --logo-ol-fill: var(--logo-fp-ol-fill, #ffffff);
+  --logo-ol-comp: var(--logo-fp-ol-comp, subtract);
+  --logo-ol-wcomp: var(--logo-fp-ol-wcomp, source-out);
+  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 0px 6px 20px rgba(0,0,0,0.55))) drop-shadow(var(--logo-fp-shadow2, 0 0 0 transparent));
 }
 .landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
   font-size: var(--logo-hd-size, 30px);   /* header keeps its smaller size */
   --logo-fill: var(--logo-hd-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 100%));
-  --logo-op: var(--logo-hd-op, 1);
   --logo-rot: var(--logo-hd-rot, 0deg);
-  --logo-outline-filter: var(--logo-hd-outline, );
-  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 0px 6px 20px rgba(0,0,0,0.55)));
+  --logo-ol-src: var(--logo-hd-ol-src);
+  --logo-ol-fill: var(--logo-hd-ol-fill, #ffffff);
+  --logo-ol-comp: var(--logo-hd-ol-comp, subtract);
+  --logo-ol-wcomp: var(--logo-hd-ol-wcomp, source-out);
+  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 0px 6px 20px rgba(0,0,0,0.55))) drop-shadow(var(--logo-hd-shadow2, 0 0 0 transparent));
 }
 
 /* =====================================================================
@@ -1162,6 +1173,8 @@ body::before {
 .st-segs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; }
 .st-seg { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-dim); text-decoration: none; }
 .st-seg.on { background: var(--gold); color: #1a1206; }
+.st-clone { display: block; margin: 0 0 12px; padding: 9px 14px; width: 100%; font-size: 13px; font-weight: 700; color: var(--gold); background: var(--surface); border: 1px dashed rgba(240,196,105,.5); border-radius: 11px; }
+.st-clone:active { opacity: .7; }
 .sc-thumb-logo { background: var(--logo-gold); -webkit-mask: var(--logo-src) no-repeat center / 70% auto; mask: var(--logo-src) no-repeat center / 70% auto; }
 /* Active-tab preview: a single tab at a realistic width. */
 .tabwrap { width: 96px; }
