@@ -170,18 +170,34 @@ body::before {
   -webkit-mask-composite: var(--logo-ol-wcomp, source-out);   /* outside = stroke minus glyph */
           mask-composite: var(--logo-ol-comp, subtract);
 }
-.wordmark { filter: var(--logo-shadow-filter, drop-shadow(0px 6px 20px rgba(0,0,0,0.55))); }
+/* Two independent drop shadows: blurred + offset masked copies of the glyph,
+ * behind the fill. (Stacked CSS drop-shadows chain; these don't.) */
+.wordmark .logo-sh {
+  position: absolute; top: 50%; left: 50%; height: .82em; aspect-ratio: 1333 / 396; z-index: 0; display: block; pointer-events: none;
+  -webkit-mask: var(--logo-src) no-repeat center / contain; mask: var(--logo-src) no-repeat center / contain;
+}
+.wordmark .logo-sh1 {
+  background: var(--logo-s1col, rgba(0,0,0,.55)); opacity: var(--logo-s1on, 0);
+  transform: translate(-50%, -50%) translate(var(--logo-s1x, 0px), var(--logo-s1y, 0px)) rotate(var(--logo-rot, 0deg));
+  filter: blur(var(--logo-s1blur, 0px));
+}
+.wordmark .logo-sh2 {
+  background: var(--logo-s2col, rgba(0,0,0,.55)); opacity: var(--logo-s2on, 0);
+  transform: translate(-50%, -50%) translate(var(--logo-s2x, 0px), var(--logo-s2y, 0px)) rotate(var(--logo-rot, 0deg));
+  filter: blur(var(--logo-s2blur, 0px));
+}
 .wordmark:hover .logo { transform: rotate(var(--logo-rot, 0deg)) scale(1.03); }
 /* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview). */
 .landing-head .wordmark, .logo-scope-fp .wordmark {
-  font-size: var(--logo-fp-size, 54px);
-  --logo-fill: var(--logo-fp-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 100%));
+  font-size: var(--logo-fp-size, 60px);
+  --logo-fill: var(--logo-fp-fill, linear-gradient(180deg, #fdecc0 0%, #c98f30 62%, #dec05d 100%));
   --logo-rot: var(--logo-fp-rot, 0deg);
   --logo-ol-src: var(--logo-fp-ol-src);
-  --logo-ol-fill: var(--logo-fp-ol-fill, #ffffff);
-  --logo-ol-comp: var(--logo-fp-ol-comp, subtract);
-  --logo-ol-wcomp: var(--logo-fp-ol-wcomp, source-out);
-  --logo-shadow-filter: drop-shadow(var(--logo-fp-shadow, 0px 6px 20px rgba(0,0,0,0.55))) drop-shadow(var(--logo-fp-shadow2, 0 0 0 transparent));
+  --logo-ol-fill: var(--logo-fp-ol-fill, linear-gradient(180deg, #ba842c 0%, #ffe5b0 66%, #f0ca7d 100%));
+  --logo-ol-comp: var(--logo-fp-ol-comp, intersect);
+  --logo-ol-wcomp: var(--logo-fp-ol-wcomp, source-in);
+  --logo-s1on: var(--logo-fp-s1on, 0); --logo-s1x: var(--logo-fp-s1x, 0px); --logo-s1y: var(--logo-fp-s1y, 0px); --logo-s1blur: var(--logo-fp-s1blur, 0px); --logo-s1col: var(--logo-fp-s1col, rgba(0,0,0,.55));
+  --logo-s2on: var(--logo-fp-s2on, 0); --logo-s2x: var(--logo-fp-s2x, 0px); --logo-s2y: var(--logo-fp-s2y, 0px); --logo-s2blur: var(--logo-fp-s2blur, 0px); --logo-s2col: var(--logo-fp-s2col, rgba(0,0,0,.55));
 }
 .landing-sticky .wordmark, .detail-head .wordmark, .logo-scope-hd .wordmark {
   font-size: var(--logo-hd-size, 30px);   /* header keeps its smaller size */
@@ -191,7 +207,8 @@ body::before {
   --logo-ol-fill: var(--logo-hd-ol-fill, #ffffff);
   --logo-ol-comp: var(--logo-hd-ol-comp, subtract);
   --logo-ol-wcomp: var(--logo-hd-ol-wcomp, source-out);
-  --logo-shadow-filter: drop-shadow(var(--logo-hd-shadow, 0px 6px 20px rgba(0,0,0,0.55))) drop-shadow(var(--logo-hd-shadow2, 0 0 0 transparent));
+  --logo-s1on: var(--logo-hd-s1on, 1); --logo-s1x: var(--logo-hd-s1x, 0px); --logo-s1y: var(--logo-hd-s1y, 6px); --logo-s1blur: var(--logo-hd-s1blur, 20px); --logo-s1col: var(--logo-hd-s1col, rgba(0,0,0,.55));
+  --logo-s2on: var(--logo-hd-s2on, 0); --logo-s2x: var(--logo-hd-s2x, 0px); --logo-s2y: var(--logo-hd-s2y, 0px); --logo-s2blur: var(--logo-hd-s2blur, 0px); --logo-s2col: var(--logo-hd-s2col, rgba(0,0,0,.55));
 }
 
 /* =====================================================================
