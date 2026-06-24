@@ -1378,7 +1378,10 @@ body::before {
 .cp-grad-tog input { width: 16px; height: 16px; accent-color: var(--gold); }
 .cp-grad.hidden { display: none; }
 .cp-grad { margin-bottom: 12px; }
-.cp-grad-prev { position: relative; height: 30px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; }
+.cp-grad-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
+.cp-grad-prev { position: relative; flex: 1; min-width: 0; height: 30px; border-radius: 8px; border: 1px solid var(--border); }
+/* Live preview square — shows the real gradient (angle / radial position). */
+.cp-grad-sq { flex: none; width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border); background-color: #0c0f16; }
 /* Stop markers: a small circle at each stop's position; active one filled. */
 .cp-grad-marks { position: absolute; inset: 0; pointer-events: none; }
 .cp-mark {
