@@ -1728,11 +1728,11 @@ function openColorPicker(initial, onChange) {
           </div>
         </div>
         <div class="cp-grow cp-grow-angle"><span class="cp-anglab">Angle°</span>
-          <input class="cp-angle" type="range" min="0" max="360" step="1"><span class="cp-val cp-angle-v"></span></div>
+          <input class="cp-angle" type="range" min="0" max="360" step="1"></div>
         <div class="cp-grow cp-grow-cy hidden"><span>Centre Y %</span>
-          <input class="cp-offy" type="range" min="0" max="100" step="1"><span class="cp-val cp-offy-v"></span></div>
+          <input class="cp-offy" type="range" min="0" max="100" step="1"></div>
         <div class="cp-grow"><span>Stop offset %</span>
-          <input class="cp-stoppos" type="range" min="0" max="100" step="1"><span class="cp-val cp-stoppos-v"></span></div>
+          <input class="cp-stoppos" type="range" min="0" max="100" step="1"></div>
       </div>
       <div class="cp-sv"><div class="cp-sv-thumb"></div></div>
       <div class="cp-row"><span>Hue</span><input class="cp-hue" type="range" min="0" max="360" step="1"></div>
@@ -1756,6 +1756,30 @@ function openColorPicker(initial, onChange) {
   const sat = $(".cp-sat"), bri = $(".cp-bri");
   const hex = $(".cp-hex"), Ri = $(".cp-r"), Gi = $(".cp-g"), Bi = $(".cp-b"), Ai = $(".cp-a");
   const gradBox = $(".cp-grad"), gradOn = $(".cp-grad-on");
+
+  // Fine controls: a −/＋ stepper + editable number box bound to each slider, so
+  // every value can be nudged precisely or typed in directly. Synced whenever the
+  // slider value is set (drag, render, or paintGradUI).
+  const fineSyncs = [];
+  function fineCtl(range, fine = 1) {
+    const lo = +range.min, hi = +range.max;
+    const box = document.createElement("span");
+    box.className = "cp-fine";
+    box.innerHTML = `<button class="cp-fb" type="button" tabindex="-1">−</button><input class="cp-num" type="number" inputmode="decimal"><button class="cp-fb" type="button" tabindex="-1">＋</button>`;
+    const dec = box.children[0], num = box.querySelector(".cp-num"), inc = box.children[2];
+    num.min = lo; num.max = hi;
+    range.after(box);
+    const clamp = (n) => Math.max(lo, Math.min(hi, n));
+    const apply = (n) => { if (!isFinite(n)) return; range.value = clamp(n); range.dispatchEvent(new Event("input", { bubbles: true })); };
+    dec.addEventListener("click", () => apply((+range.value || 0) - fine));
+    inc.addEventListener("click", () => apply((+range.value || 0) + fine));
+    num.addEventListener("input", () => { if (num.value !== "") apply(+num.value); });
+    const sync = () => { if (document.activeElement !== num) num.value = Math.round(+range.value); };
+    range.addEventListener("input", sync);
+    fineSyncs.push(sync);
+  }
+  [hue, sat, bri, alpha, $(".cp-angle"), $(".cp-offy"), $(".cp-stoppos")].forEach((el) => fineCtl(el));
+  const syncFine = () => fineSyncs.forEach((f) => f());
 
   // load a colour string into the HSV editor state
   function loadColor(str) { const c = parseColor(str); a = c.a; const hsv = rgbToHsv(c.r, c.g, c.b); h = hsv.h; s = hsv.s; v = hsv.v; }
@@ -1789,14 +1813,12 @@ function openColorPicker(initial, onChange) {
     const angLab = $(".cp-anglab"), ang = $(".cp-angle");
     angLab.textContent = isRadial ? "Centre X %" : "Angle°";
     ang.value = isRadial ? grad.off : grad.angle;
-    $(".cp-angle-v").textContent = isRadial ? Math.round(grad.off) + "%" : Math.round(grad.angle) + "°";
     $(".cp-grow-cy").classList.toggle("hidden", !isRadial);
     if (grad.offY == null) grad.offY = 50;
     $(".cp-offy").value = Math.round(grad.offY);
-    $(".cp-offy-v").textContent = Math.round(grad.offY) + "%";
     $(".cp-stoppos").value = Math.round(grad.stops[active].pos);
-    $(".cp-stoppos-v").textContent = Math.round(grad.stops[active].pos) + "%";
     paintMarks();
+    syncFine();
   }
 
   function render(emitNow = true) {
@@ -1809,6 +1831,7 @@ function openColorPicker(initial, onChange) {
     alpha.style.setProperty("--cp-solid", hx);
     hex.value = hx; Ri.value = Math.round(r); Gi.value = Math.round(g); Bi.value = Math.round(b); Ai.value = Math.round(a * 100);
     if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); paintGradPrev(); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; const mk = $(`.cp-mark.on`); if (mk) mk.style.setProperty("--mk", grad.stops[active].color); }
+    syncFine();
     if (emitNow) emit();
   }
   function fromRgb() { const hsv = rgbToHsv(+Ri.value || 0, +Gi.value || 0, +Bi.value || 0); h = hsv.h; s = hsv.s; v = hsv.v; render(); }
@@ -1849,9 +1872,9 @@ function openColorPicker(initial, onChange) {
     const bt = e.target.closest("button"); if (!bt) return;
     grad.type = bt.dataset.t; paintGradUI(); render();
   });
-  $(".cp-angle").addEventListener("input", (e) => { const val = +e.target.value; if (grad.type === "radial") { grad.off = val; $(".cp-angle-v").textContent = val + "%"; } else { grad.angle = val; $(".cp-angle-v").textContent = val + "°"; } paintGradPrev(); emit(); });
-  $(".cp-offy").addEventListener("input", (e) => { grad.offY = +e.target.value; $(".cp-offy-v").textContent = grad.offY + "%"; paintGradPrev(); emit(); });
-  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; $(".cp-stoppos-v").textContent = e.target.value + "%"; paintMarks(); paintGradPrev(); emit(); });
+  $(".cp-angle").addEventListener("input", (e) => { const val = +e.target.value; if (grad.type === "radial") grad.off = val; else grad.angle = val; paintGradPrev(); emit(); });
+  $(".cp-offy").addEventListener("input", (e) => { grad.offY = +e.target.value; paintGradPrev(); emit(); });
+  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; paintMarks(); paintGradPrev(); emit(); });
 
   // brand swatches (current values from :root, fall back to defaults)
   $(".cp-brand-btn").addEventListener("click", () => {

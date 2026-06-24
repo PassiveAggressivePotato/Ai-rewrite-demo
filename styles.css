@@ -1360,14 +1360,30 @@ body::before {
 .cp-head span { font-family: var(--font-display); font-weight: 800; font-size: 15px; }
 .cp-done { color: var(--gold); font-weight: 800; font-size: 13px; padding: 4px 10px; }
 .cp-sv {
-  position: relative; width: 100%; height: 150px; border-radius: 10px; margin-bottom: 12px;
+  position: relative; height: 135px; border-radius: 10px; margin: 0 32px 12px;
   cursor: crosshair; touch-action: none;
   background-image: linear-gradient(to top,#000,rgba(0,0,0,0)), linear-gradient(to right,#fff,rgba(255,255,255,0));
   background-color: var(--cp-hue, #f00);
 }
 .cp-sv-thumb { position: absolute; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); transform: translate(-50%,-50%); pointer-events: none; }
-.cp-row { display: grid; grid-template-columns: 46px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cp-row span { font-size: 11px; color: var(--text-dim); }
+.cp-row { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cp-row > span { font-size: 11px; color: var(--text-dim); }
+/* −/＋ stepper + editable number box bound to a slider (fine control). */
+.cp-fine { display: inline-flex; align-items: center; gap: 4px; }
+.cp-fb {
+  flex: none; width: 26px; height: 26px; border-radius: 7px; line-height: 1;
+  font-size: 16px; font-weight: 700; color: var(--text-dim);
+  background: var(--surface); border: 1px solid var(--border);
+}
+.cp-fb:active { background: rgba(240,196,105,.16); color: var(--gold); }
+.cp-num {
+  width: 46px; height: 26px; text-align: center; font-size: 12px;
+  font-variant-numeric: tabular-nums; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 7px; outline: none;
+  -moz-appearance: textfield;
+}
+.cp-num::-webkit-outer-spin-button, .cp-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cp-num:focus { border-color: var(--gold); }
 .cp-hue, .cp-alpha, .cp-sat, .cp-bri { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; }
 .cp-hue { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
 .cp-sat { background: linear-gradient(90deg, #808080, var(--cp-hue, #f00)); }
@@ -1410,10 +1426,8 @@ body::before {
 .cp-stops { display: flex; gap: 8px; margin-bottom: 10px; }
 .cp-stop { width: 34px; height: 26px; border-radius: 7px; border: 2px solid var(--border); }
 .cp-stop.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,196,105,.3); }
-.cp-grow { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cp-grow:has(.cp-val) { grid-template-columns: 92px 1fr 42px; }
+.cp-grow { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; }
 .cp-grow > span { font-size: 11px; color: var(--text-dim); }
-.cp-val { font-size: 11px; font-weight: 700; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
 .cp-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .cp-seg button { flex: 1; padding: 6px 0; font-size: 12px; font-weight: 700; color: var(--text-dim); background: var(--surface); }
 .cp-seg button.on { background: rgba(240,196,105,.16); color: var(--gold); }
