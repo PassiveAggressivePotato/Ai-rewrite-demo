@@ -1308,6 +1308,11 @@ function gradCss(g) {
     ? `radial-gradient(circle at ${Math.round(g.off)}% ${Math.round(g.offY == null ? 50 : g.offY)}%, ${stops})`
     : `linear-gradient(${Math.round(g.angle)}deg, ${stops})`;
 }
+/* Flat left→right representation of the stops (for the marker bar — independent
+ * of the gradient's actual angle/type, so the dots always line up). */
+function stopsBarCss(g) {
+  return `linear-gradient(90deg, ${g.stops.map((s) => `${s.color} ${Math.round(s.pos)}%`).join(", ")})`;
+}
 /* Parse any colour-or-gradient string into a uniform editor model. */
 function parseValue(str) {
   str = String(str || "").trim();
@@ -1696,7 +1701,10 @@ function openColorPicker(initial, onChange) {
       <div class="cp-head"><span>Colour</span><button class="cp-done">Done</button></div>
       <label class="cp-grad-tog"><input class="cp-grad-on" type="checkbox"> Gradient</label>
       <div class="cp-grad hidden">
-        <div class="cp-grad-prev"><div class="cp-grad-marks"></div></div>
+        <div class="cp-grad-row">
+          <div class="cp-grad-prev"><div class="cp-grad-marks"></div></div>
+          <div class="cp-grad-sq" title="Live gradient preview"></div>
+        </div>
         <div class="cp-stops"></div>
         <div class="cp-grow">
           <span>Stops</span>
@@ -1751,11 +1759,16 @@ function openColorPicker(initial, onChange) {
     $(".cp-grad-marks").innerHTML = grad.stops.map((st, i) =>
       `<span class="cp-mark ${i === active ? "on" : ""}" style="left:${Math.round(st.pos)}%;--mk:${st.color}"></span>`).join("");
   }
+  // Bar = flat stop order (so dots line up); square = the real gradient applied.
+  function paintGradPrev() {
+    $(".cp-grad-prev").style.background = stopsBarCss(grad);
+    $(".cp-grad-sq").style.background = gradCss(grad);
+  }
   function paintGradUI() {
     gradBox.classList.toggle("hidden", mode !== "grad");
     gradOn.checked = mode === "grad";
     if (mode !== "grad") return;
-    $(".cp-grad-prev").style.background = gradCss(grad);
+    paintGradPrev();
     $(".cp-stops").innerHTML = grad.stops.map((st, i) =>
       `<button class="cp-stop ${i === active ? "on" : ""}" data-i="${i}" style="background:${st.color}"></button>`).join("");
     $(".cp-stops").querySelectorAll(".cp-stop").forEach((bt) => bt.addEventListener("click", () => {
@@ -1786,7 +1799,7 @@ function openColorPicker(initial, onChange) {
     sat.value = Math.round(s * 100); bri.value = Math.round(v * 100);
     alpha.style.setProperty("--cp-solid", hx);
     hex.value = hx; Ri.value = Math.round(r); Gi.value = Math.round(g); Bi.value = Math.round(b); Ai.value = Math.round(a * 100);
-    if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); $(".cp-grad-prev").style.background = gradCss(grad); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; const mk = $(`.cp-mark.on`); if (mk) mk.style.setProperty("--mk", grad.stops[active].color); }
+    if (mode === "grad") { grad.stops[active].color = colorStr(r, g, b, a); paintGradPrev(); const sb = $(`.cp-stop[data-i="${active}"]`); if (sb) sb.style.background = grad.stops[active].color; const mk = $(`.cp-mark.on`); if (mk) mk.style.setProperty("--mk", grad.stops[active].color); }
     if (emitNow) emit();
   }
   function fromRgb() { const hsv = rgbToHsv(+Ri.value || 0, +Gi.value || 0, +Bi.value || 0); h = hsv.h; s = hsv.s; v = hsv.v; render(); }
@@ -1827,9 +1840,9 @@ function openColorPicker(initial, onChange) {
     const bt = e.target.closest("button"); if (!bt) return;
     grad.type = bt.dataset.t; paintGradUI(); render();
   });
-  $(".cp-angle").addEventListener("input", (e) => { const val = +e.target.value; if (grad.type === "radial") { grad.off = val; $(".cp-angle-v").textContent = val + "%"; } else { grad.angle = val; $(".cp-angle-v").textContent = val + "°"; } $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
-  $(".cp-offy").addEventListener("input", (e) => { grad.offY = +e.target.value; $(".cp-offy-v").textContent = grad.offY + "%"; $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
-  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; $(".cp-stoppos-v").textContent = e.target.value + "%"; paintMarks(); $(".cp-grad-prev").style.background = gradCss(grad); emit(); });
+  $(".cp-angle").addEventListener("input", (e) => { const val = +e.target.value; if (grad.type === "radial") { grad.off = val; $(".cp-angle-v").textContent = val + "%"; } else { grad.angle = val; $(".cp-angle-v").textContent = val + "°"; } paintGradPrev(); emit(); });
+  $(".cp-offy").addEventListener("input", (e) => { grad.offY = +e.target.value; $(".cp-offy-v").textContent = grad.offY + "%"; paintGradPrev(); emit(); });
+  $(".cp-stoppos").addEventListener("input", (e) => { grad.stops[active].pos = +e.target.value; $(".cp-stoppos-v").textContent = e.target.value + "%"; paintMarks(); paintGradPrev(); emit(); });
 
   // brand swatches (current values from :root, fall back to defaults)
   $(".cp-brand-btn").addEventListener("click", () => {
