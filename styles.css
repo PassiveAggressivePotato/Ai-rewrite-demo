@@ -287,14 +287,20 @@ body::before {
   display: flex; flex-direction: column; align-items: center; text-align: center;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-/* Quote line = full original tagline style (incl. its gold colour). */
+/* Quote line = full original tagline style (incl. its gold colour). Typography
+ * driven by the Studio "Type" editor (--home-tag-* sub-tokens). */
 .home-quote .hq-text {
-  font-size: var(--home-tag-size, 13px); color: var(--home-tag-col, #f0c469);
-  line-height: 1.4; letter-spacing: .04em; text-wrap: balance;
+  font-family: var(--home-tag-ff, var(--font)); font-weight: var(--home-tag-w, 400);
+  font-style: var(--home-tag-it, normal); font-size: var(--home-tag-fs, 13px);
+  letter-spacing: var(--home-tag-ls, 0.5px); line-height: var(--home-tag-lh, 1.4);
+  color: var(--home-tag-col, #f0c469); text-wrap: balance;
 }
 .home-quote .hq-char {
-  margin-top: var(--home-quote-char-gap, 3px); font-size: var(--home-quote-char-size, 10px);
-  color: var(--home-quote-char-col, rgba(255,255,255,.5)); font-weight: 600; letter-spacing: .02em;
+  margin-top: var(--home-quote-char-gap, 3px);
+  font-family: var(--home-quote-char-ff, var(--font)); font-weight: var(--home-quote-char-w, 600);
+  font-style: var(--home-quote-char-it, normal); font-size: var(--home-quote-char-fs, 10px);
+  letter-spacing: var(--home-quote-char-ls, 0.2px); line-height: var(--home-quote-char-lh, 1.2);
+  color: var(--home-quote-char-col, rgba(255,255,255,.5));
 }
 
 .home-link { cursor: pointer; }
@@ -411,7 +417,13 @@ body::before {
 .thumb.sm { width: 26px; height: 36px; font-size: 12px; border-radius: 5px; }
 
 /* "What are you looking for?" + vertical category tabs */
-.prompt { text-align: center; color: var(--home-prompt-col, var(--text-dim)); font-size: var(--home-prompt-size, 13px); font-weight: 600; margin: var(--home-prompt-gap-top, 35px) 0 var(--home-prompt-gap-bot, 10px); letter-spacing: .02em; }
+.prompt {
+  text-align: center; font-family: var(--home-prompt-ff, var(--font));
+  color: var(--home-prompt-col, #9aa1b0); font-size: var(--home-prompt-fs, 13px);
+  font-weight: var(--home-prompt-w, 600); font-style: var(--home-prompt-it, normal);
+  line-height: var(--home-prompt-lh, 1.3); letter-spacing: var(--home-prompt-ls, 0.3px);
+  margin: var(--home-prompt-gap-top, 35px) 0 var(--home-prompt-gap-bot, 10px);
+}
 .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--home-tabs-gap, 8px); align-items: stretch; position: relative; z-index: 2; }
 .tab {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--tab-gap, 8px);
@@ -517,31 +529,35 @@ body::before {
 .landing.searching .searchbar-wrap { z-index: 2; overflow: visible; }
 .searchbar {
   display: flex; align-items: center;
-  padding: 7px;
-  /* Outer bar: lighter fill under a gold gradient outline. */
-  border: 1.5px solid transparent;
+  padding: var(--sb-pad, 7px);
+  /* Outer bar: lighter fill under a gold gradient outline. Driven by --sb-*
+   * tokens (Studio "Search Bar" editor); defaults match the baked look. */
+  border: var(--sb-bw, 1.5px) solid transparent;
   background:
-    linear-gradient(180deg, #1b1c26, #14151d) padding-box,
-    linear-gradient(160deg, #fff0cf, #f3cd76 40%, #b9822b) border-box;
-  border-radius: 26px;
-  box-shadow: 0 10px 26px -12px rgba(243,205,118,.85), inset 0 1px 0 rgba(255,255,255,.07);
+    var(--sb-bar-fill, linear-gradient(180deg, #1b1c26, #14151d)) padding-box,
+    var(--sb-outline, linear-gradient(160deg, #fff0cf, #f3cd76 40%, #b9822b)) border-box;
+  border-radius: var(--sb-radius, 26px);
+  box-shadow: var(--sb-shadow, 0 10px 26px -12px rgba(243,205,118,.85)), inset 0 1px 0 rgba(255,255,255,.07);
 }
 /* Inner "field" pill — darker than the bar, its own outline; this is where you
  * actually type. A little taller than the close button so the X has breathing room. */
 .search-field {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
-  height: 38px; padding: 0 5px 0 13px;
-  background: #090a0e;
-  border: 1px solid rgba(243,205,118,.32);
-  border-radius: 999px;
+  height: var(--sb-field-h, 38px); padding: 0 5px 0 13px;
+  background: var(--sb-field-bg, #090a0e);
+  border: 1px solid var(--sb-field-outline, rgba(243,205,118,.32));
+  border-radius: var(--sb-field-radius, 999px);
 }
-.searchbar .search-ic { flex: none; display: grid; place-items: center; color: var(--gold); }
-.searchbar .search-ic svg { width: 24px; height: 24px; display: block; }
+.searchbar .search-ic { flex: none; display: grid; place-items: center; color: var(--sb-ic-col, var(--gold)); }
+.searchbar .search-ic svg { width: var(--sb-ic-size, 24px); height: var(--sb-ic-size, 24px); display: block; }
 .searchbar input {
   flex: 1; min-width: 0; background: none; border: none; outline: none;
-  color: var(--text); font-size: 16px;   /* >=16px stops iOS auto-zoom on focus */
+  font-family: var(--sb-text-ff, var(--font)); font-weight: var(--sb-text-w, 400);
+  font-style: var(--sb-text-it, normal); letter-spacing: var(--sb-text-ls, 0px);
+  line-height: var(--sb-text-lh, 1.3);
+  color: var(--sb-text-col, var(--text)); font-size: var(--sb-text-fs, 16px);   /* >=16px stops iOS auto-zoom on focus */
 }
-.searchbar input::placeholder { color: var(--text-faint); }
+.searchbar input::placeholder { color: var(--sb-ph-col, var(--text-faint)); }
 .search-clear {
   flex: none; width: 30px; height: 30px; border-radius: 50%;
   display: grid; place-items: center; color: var(--text-dim);
@@ -589,15 +605,17 @@ body::before {
   transition: transform .18s var(--ease), box-shadow .18s;
 }
 .list-item:hover .poster-card { transform: translateY(-3px); box-shadow: 0 9px 18px rgba(0,0,0,.5); }
-/* Small category-type icon, top-right of every poster. */
+/* Small category-type icon, top-right of every poster. Driven by --pt-* tokens
+ * (Studio "Corner Icon" editor); defaults match the baked look. */
 .poster-type {
-  position: absolute; top: 3px; right: 3px; z-index: 2;
-  width: 16px; height: 16px; border-radius: 50%;
+  position: absolute; top: var(--pt-top, 3px); right: var(--pt-right, 3px); z-index: 2;
+  width: var(--pt-size, 16px); height: var(--pt-size, 16px); border-radius: var(--pt-radius, 50%);
   display: grid; place-items: center;
-  background: rgba(8,10,14,.6); box-shadow: 0 1px 2px rgba(0,0,0,.45);
-  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  background: var(--pt-bg, rgba(8,10,14,.6)); box-shadow: var(--pt-shadow, 0 1px 2px rgba(0,0,0,.45));
+  border: var(--pt-bw, 0px) solid var(--pt-bc, transparent);
+  -webkit-backdrop-filter: blur(var(--pt-blur, 2px)); backdrop-filter: blur(var(--pt-blur, 2px));
 }
-.poster-card .poster-type .cat-ic { width: 62%; height: auto; background: #fff; filter: none; }
+.poster-card .poster-type .cat-ic { width: var(--pt-ic-size, 62%); height: auto; background: var(--pt-ic-col, #fff); filter: none; }
 /* Score badge: square gold tile + "Critikl Score" label in a chip. Driven by
  * --b-* tokens (defaults in :root) so the Studio and the live cards stay in sync. */
 .score-badge {
@@ -1187,6 +1205,15 @@ body::before {
 .home-mini .landing { min-height: 100%; }
 /* Logo editor: wordmark on a neutral chip, + segmented target switch + thumb. */
 .logo-prev { display: flex; align-items: center; justify-content: center; min-width: 150px; min-height: 120px; padding: 22px 18px; background: linear-gradient(180deg, #1a2230, #0c0f16); border-radius: 12px; }
+/* Corner-icon editor: an enlarged poster card so the small badge is editable. */
+.pt-prev { display: grid; place-items: center; min-width: 130px; padding: 16px; background: linear-gradient(180deg, #1a2230, #0c0f16); border-radius: 12px; }
+.pt-card { height: 150px; }
+/* Search-bar editor: full-width bar on a neutral chip. */
+.st-search { display: block; }
+.st-search .st-cmp { width: 100%; }
+.sb-prev { width: 100%; padding: 16px; background: linear-gradient(180deg, #1a2230, #0c0f16); border-radius: 12px; }
+.sc-thumb-search { display: grid; place-items: center; background: linear-gradient(180deg,#171726,#0c0d14); }
+.sc-thumb-search > span { width: 70%; height: 34%; border-radius: 999px; background: #090a0e; border: 1.5px solid #f3cd76; }
 .st-segs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; }
 .st-seg { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-dim); text-decoration: none; }
 .st-seg.on { background: var(--gold); color: #1a1206; }
@@ -1253,8 +1280,8 @@ body::before {
 .st-controls { display: grid; gap: 14px; }
 .ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; }
 .ctl-l { font-size: 12px; color: var(--text-dim); flex: 1; min-width: 0; }
-.shadow-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
-.shadow-btn:active { background: rgba(240,196,105,.16); }
+.shadow-btn, .outline-btn, .type-btn { flex: none; font-size: 12px; font-weight: 700; color: var(--gold); border: 1px solid var(--border); border-radius: 9px; padding: 7px 12px; background: var(--surface); }
+.shadow-btn:active, .outline-btn:active, .type-btn:active { background: rgba(240,196,105,.16); }
 /* Enable/disable toggle (colours & shadows). Off dims + locks the control. */
 .ctl-tog, .scale-lock { flex: none; width: 17px; height: 17px; margin: 0; accent-color: var(--gold); cursor: pointer; }
 .ctl.off .ctl-l, .ctl.off .swatch, .ctl.off .shadow-btn { opacity: .4; }
@@ -1433,6 +1460,21 @@ body::before {
 .cp-seg button.on { background: rgba(240,196,105,.16); color: var(--gold); }
 .cp-angle, .cp-offy, .cp-stoppos { width: 100%; height: 16px; -webkit-appearance: none; appearance: none; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); }
 .cp-angle::-webkit-slider-thumb, .cp-offy::-webkit-slider-thumb, .cp-stoppos::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; }
+
+/* Universal "Type" editor (bottom-sheet; reuses .cp-sheet chrome). Sits just
+ * below .cp (402) so the colour picker opens on top of it; below the sticky
+ * stage (410) like the other sheets. */
+.tp { position: absolute; inset: 0; z-index: 401; pointer-events: none; }
+.tp .cp-scrim { display: block; position: absolute; inset: 0; background: rgba(0,0,0,.4); pointer-events: auto; }
+.tp-prev { display: grid; place-items: center; min-height: 56px; padding: 10px; margin-bottom: 12px;
+  border-radius: 12px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
+.tp-prev-txt { text-align: center; max-width: 100%; }
+.tp-row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tp-row > span { font-size: 12px; color: var(--text-dim); }
+.tp-row .step { justify-self: start; }
+.tp-check { cursor: pointer; }
+.tp-check .tp-it { justify-self: start; width: 18px; height: 18px; accent-color: var(--gold); }
+.tp-ff { width: 100%; }
 
 .st-note { font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; line-height: 1.45; }
 .st-export {

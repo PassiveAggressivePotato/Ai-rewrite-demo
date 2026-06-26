@@ -1370,6 +1370,20 @@ const FONT_OPTS = [
   { v: "Georgia, 'Times New Roman', serif", l: "Serif" },
   { v: "ui-monospace, Menlo, Consolas, monospace", l: "Mono" },
 ];
+/* Richer family list for the universal "Type" editor — the curated Google Fonts
+ * loaded in index.html plus generic system stacks. */
+const FONT_FAMILY_OPTS = [
+  { v: "var(--font)", l: "Inter (Body)" },
+  { v: "var(--font-display)", l: "Sora (Display)" },
+  { v: "'Playfair Display', Georgia, serif", l: "Playfair (serif)" },
+  { v: "'Roboto Slab', Georgia, serif", l: "Roboto Slab (slab)" },
+  { v: "'Oswald', 'Arial Narrow', sans-serif", l: "Oswald (condensed)" },
+  { v: "'Space Grotesk', sans-serif", l: "Space Grotesk" },
+  { v: "'Caveat', cursive", l: "Caveat (handwritten)" },
+  { v: "'JetBrains Mono', ui-monospace, monospace", l: "JetBrains Mono" },
+  { v: "system-ui, sans-serif", l: "System sans" },
+  { v: "Georgia, 'Times New Roman', serif", l: "System serif" },
+];
 function selectHTML(v, val, opts) {
   return `<select class="st-select" data-var="${v}">${opts.map((o) => `<option value="${o.v}"${o.v === val ? " selected" : ""}>${o.l}</option>`).join("")}</select>`;
 }
@@ -1401,9 +1415,10 @@ function controlRow(it) {
   else if (it.type === "shadow") ctrl = `<button class="shadow-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "outline") ctrl = `<button class="outline-btn" data-var="${it.k}">Edit ▸</button>`;
   else if (it.type === "text") ctrl = `<input class="st-text" type="text" data-var="${it.k}" value="${escapeAttr(String(it.val))}">`;
+  else if (it.type === "font") ctrl = `<button class="type-btn" data-var="${it.k}">Type ▸</button>`;
   else if (it.type === "select") ctrl = selectHTML(it.k, it.val, it.opts || FONT_OPTS);
   else ctrl = stepperHTML(it.k, it.val, it.step || 1, it.min == null ? 0 : it.min, it.max, it.unit, it.fine, it.noauto);
-  const def = (it.type === "shadow" || it.type === "outline") ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
+  const def = (it.type === "shadow" || it.type === "outline" || it.type === "font") ? "" : ` data-default="${escapeAttr(String(it.val))}"`;
   const tog = toggleable ? `<input type="checkbox" class="ctl-tog"${startOff ? "" : " checked"} aria-label="Enable ${it.label}">` : "";
   return `<div class="ctl${toggleable ? " has-tog" : ""}${startOff ? " off" : ""}"${def}>${tog}<span class="ctl-l">${it.label}</span>${ctrl}<button class="ctl-reset" data-reset aria-label="Reset ${it.label}">${ICON.reset}</button></div>`;
 }
@@ -1412,7 +1427,7 @@ function controlRow(it) {
 function studioInitStyle(groups) {
   const out = [];
   groups.forEach((g) => g.items.forEach((it) => {
-    if (it.type === "lock" || it.type === "text" || it.type === "shadow" || it.type === "outline") return;
+    if (it.type === "lock" || it.type === "text" || it.type === "shadow" || it.type === "outline" || it.type === "font") return;
     if (it.type === "color" || it.type === "select") out.push(`${it.k}:${it.val}`);
     else if (it.type === "radius") out.push(`${it.k}:${it.val}px`);
     else out.push(`${it.k}:${it.val}${it.unit == null ? "px" : it.unit}`);
@@ -1498,6 +1513,7 @@ function wireGroupControls(root, applyVar, onText) {
   });
   root.querySelectorAll(".shadow-btn").forEach((btn) => btn.addEventListener("click", () => openShadowEditor(btn.dataset.var, applyVar)));
   root.querySelectorAll(".outline-btn").forEach((btn) => btn.addEventListener("click", () => openOutlineEditor(btn.dataset.var, applyVar)));
+  root.querySelectorAll(".type-btn").forEach((btn) => btn.addEventListener("click", () => openTypeEditor(btn.dataset.var, applyVar)));
   // Enable/disable toggles (colours & shadows). Off = transparent / no shadow.
   root.querySelectorAll(".ctl-tog").forEach((cb) => {
     const ctl = cb.closest(".ctl");
@@ -1513,6 +1529,7 @@ function wireGroupControls(root, applyVar, onText) {
       const sel = ctl.querySelector(":scope > .st-select");
       const sh = ctl.querySelector(":scope > .shadow-btn");
       const ol = ctl.querySelector(":scope > .outline-btn");
+      const tp = ctl.querySelector(":scope > .type-btn");
       const txt = ctl.querySelector(":scope > .st-text");
       if (step) { step.querySelector(".step-val").value = def; applyVar(step.dataset.var, def + (step.dataset.unit ?? "px")); }
       else if (sw) { sw.dataset.val = def; sw.querySelector(".swatch-chip > span").style.background = def; sw.querySelector(".swatch-val").textContent = def; applyVar(sw.dataset.var, sw.dataset.layer ? asImage(def) : def); }
@@ -1520,6 +1537,7 @@ function wireGroupControls(root, applyVar, onText) {
       else if (txt) { txt.value = def; onText?.(txt.dataset.var, def); }
       else if (sh) { const v = sh.dataset.var; SHADOWS[v] = { ...SHADOW_DEFAULT }; applyVar(v, shadowCss(SHADOWS[v])); }
       else if (ol) { const v = ol.dataset.var; OUTLINES[v] = { ...OUTLINE_DEFAULT }; applyVar(v, ""); }
+      else if (tp) { const v = tp.dataset.var; TYPES[v] = { ...(TYPE_DEF[v] || {}) }; applyType(v, TYPES[v], applyVar); }
     });
   });
 }
@@ -1531,6 +1549,14 @@ function readGroupValues(groups, changedOnly = true) {
   const isOff = (sel) => { const c = app.querySelector(sel)?.closest(".ctl"); return !!c && c.classList.contains("off"); };
   groups.forEach((g) => g.items.forEach((it) => {
     if (it.type === "lock") return;
+    if (it.type === "font") {
+      const m = TYPES[it.k] || it.def, d = it.def || {};
+      TYPE_KEYS.forEach(([key, sufx, u]) => {
+        const cv = m[key] + u, dv = d[key] + u;
+        if (!changedOnly || cv !== dv) out[it.k + sufx] = cv;
+      });
+      return;
+    }
     let cur, def, off = false;
     if (it.type === "color") { off = isOff(`.swatch[data-var="${it.k}"]`); cur = off ? "transparent" : app.querySelector(`.swatch[data-var="${it.k}"]`).dataset.val; def = it.val; }
     else if (it.type === "select") { cur = app.querySelector(`.st-select[data-var="${it.k}"]`).value; def = it.val; }
@@ -1895,6 +1921,71 @@ function openColorPicker(initial, onChange) {
   paintGradUI(); render(false);
 }
 
+/* ---- Universal "Type" editor ----------------------------------------------
+ * A reusable bottom-sheet (sibling of the colour picker) for styling any text
+ * element: font family, weight, italic, size, letter-spacing, line-height and
+ * colour (the colour delegates to the picker, so transparency comes for free).
+ * A "font" control bundles these into one button; it writes a set of sub-tokens
+ * under a prefix: <prefix>-ff / -w / -it / -fs / -ls / -lh / -col. TYPES holds
+ * the live model per prefix; TYPE_DEF holds the seeded defaults (for reset). */
+const TYPES = {}, TYPE_DEF = {};
+const TYPE_KEYS = [["ff", "-ff", ""], ["w", "-w", ""], ["it", "-it", ""], ["fs", "-fs", "px"], ["ls", "-ls", "px"], ["lh", "-lh", ""], ["col", "-col", ""]];
+function seedTypes(groups) {
+  groups.forEach((g) => g.items.forEach((it) => {
+    if (it.type === "font") { TYPE_DEF[it.k] = { ...it.def }; TYPES[it.k] = { ...it.def }; }
+  }));
+}
+function applyType(prefix, m, applyVar) {
+  applyVar(`${prefix}-ff`, m.ff); applyVar(`${prefix}-w`, m.w); applyVar(`${prefix}-it`, m.it);
+  applyVar(`${prefix}-fs`, m.fs + "px"); applyVar(`${prefix}-ls`, m.ls + "px"); applyVar(`${prefix}-lh`, m.lh);
+  applyVar(`${prefix}-col`, m.col);
+}
+function closeTypeEditor() { app.querySelector(".tp")?.remove(); }
+function openTypeEditor(prefix, applyVar) {
+  closeTypeEditor();
+  const m = TYPES[prefix] || (TYPES[prefix] = { ...(TYPE_DEF[prefix] || { ff: "var(--font)", w: 400, it: "normal", fs: 13, ls: 0, lh: 1.3, col: "#ffffff" }) });
+  const wrap = document.createElement("div");
+  wrap.className = "tp";
+  const fam = FONT_FAMILY_OPTS.map((o) => `<option value="${escapeAttr(o.v)}"${o.v === m.ff ? " selected" : ""}>${o.l}</option>`).join("");
+  wrap.innerHTML = `
+    <div class="cp-scrim"></div>
+    <div class="cp-sheet tp-sheet">
+      <div class="cp-head"><span>Type</span><button class="cp-done tp-done">Done</button></div>
+      <div class="tp-prev"><span class="tp-prev-txt">The quick brown fox</span></div>
+      <div class="tp-row"><span>Font</span><select class="st-select tp-ff">${fam}</select></div>
+      <div class="tp-row"><span>Weight</span>${stepperHTML("", m.w, 100, 100, 900, "", 50, true)}</div>
+      <label class="tp-row tp-check"><span>Italic</span><input type="checkbox" class="tp-it"${m.it === "italic" ? " checked" : ""}></label>
+      <div class="tp-row"><span>Size</span>${stepperHTML("", m.fs, 1, 4, 200, "px", 0.5, true)}</div>
+      <div class="tp-row"><span>Letter spacing</span>${stepperHTML("", m.ls, 0.5, -10, 40, "px", 0.1, true)}</div>
+      <div class="tp-row"><span>Line height</span>${stepperHTML("", m.lh, 0.1, 0.5, 3, "", 0.05, true)}</div>
+      <div class="tp-row"><span>Colour</span>${swatchHTML("", m.col)}</div>
+    </div>`;
+  app.appendChild(wrap);
+  placeSheet(wrap);
+  const $ = (s) => wrap.querySelector(s);
+  const prev = $(".tp-prev-txt");
+  const paint = () => {
+    prev.style.fontFamily = m.ff; prev.style.fontWeight = m.w; prev.style.fontStyle = m.it;
+    prev.style.fontSize = Math.max(13, Math.min(30, m.fs * 1.3)) + "px";
+    prev.style.letterSpacing = m.ls + "px"; prev.style.lineHeight = m.lh; prev.style.color = m.col;
+  };
+  $(".tp-ff").addEventListener("change", (e) => { m.ff = e.target.value; applyVar(`${prefix}-ff`, m.ff); paint(); });
+  $(".tp-it").addEventListener("change", (e) => { m.it = e.target.checked ? "italic" : "normal"; applyVar(`${prefix}-it`, m.it); paint(); });
+  const steps = wrap.querySelectorAll(".step");
+  attachStepper(steps[0], (n) => { m.w = n; applyVar(`${prefix}-w`, n); paint(); });
+  attachStepper(steps[1], (n) => { m.fs = n; applyVar(`${prefix}-fs`, n + "px"); paint(); });
+  attachStepper(steps[2], (n) => { m.ls = n; applyVar(`${prefix}-ls`, n + "px"); paint(); });
+  attachStepper(steps[3], (n) => { m.lh = n; applyVar(`${prefix}-lh`, n); paint(); });
+  const sw = $(".swatch");
+  sw.addEventListener("click", () => openColorPicker(m.col, (val) => {
+    m.col = val; sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
+    sw.querySelector(".swatch-val").textContent = val; applyVar(`${prefix}-col`, val); paint();
+  }));
+  $(".cp-scrim").addEventListener("click", closeTypeEditor);
+  $(".tp-done").addEventListener("click", closeTypeEditor);
+  paint();
+}
+
 /* ---- Studio hub ---- */
 const STUDIO_COMPONENTS = [
   { id: "home", name: "Homepage", desc: "Backdrop, top blend, type + spacing",
@@ -1903,6 +1994,10 @@ const STUDIO_COMPONENTS = [
     thumb: `<span class="sc-thumb sc-thumb-logo"></span>` },
   { id: "poster", name: "Poster Card", desc: "List poster + score badge",
     thumb: `<span class="sc-thumb" style="background:url('assets/poor-things-poster.webp') center/cover"></span>` },
+  { id: "corner", name: "Corner Icon", desc: "Poster type badge (top-right)",
+    thumb: `<span class="sc-thumb" style="background:url('assets/across-the-spider-verse-poster.webp') center/cover"></span>` },
+  { id: "search", name: "Search Bar", desc: "Landing search field",
+    thumb: `<span class="sc-thumb sc-thumb-search"><span></span></span>` },
   { id: "tab", name: "Active Tab", desc: "Selected category tab",
     thumb: `<span class="sc-thumb sc-thumb-pad"><img src="assets/icons/movie.svg" alt=""></span>` },
   { id: "tab-idle", name: "Idle Tab", desc: "Resting tab (no selection yet)",
@@ -2065,17 +2160,14 @@ function homeGroups() {
       { k: "--home-logo-gap-bot", label: "Space below logo", val: 0, step: 1, min: 0 },
     ] },
     { name: "Quote", items: [
-      { k: "--home-tag-size", label: "Quote size", val: 13, step: 0.5, min: 6 },
-      { k: "--home-tag-col", label: "Quote colour", type: "color", val: "#f0c469" },
+      { k: "--home-tag", label: "Quote text", type: "font", def: { ff: "var(--font)", w: 400, it: "normal", fs: 13, ls: 0.5, lh: 1.4, col: "#f0c469" } },
       { k: "--home-quote-w", label: "Quote max width", val: 298, step: 5, min: 80, max: 480 },
       { k: "--home-tag-gap", label: "Space above quote", val: 5, step: 1, min: 0 },
       { k: "--home-quote-char-gap", label: "Quote–name gap", val: 3, step: 1, min: 0 },
-      { k: "--home-quote-char-size", label: "Name size", val: 10, step: 0.5, min: 6 },
-      { k: "--home-quote-char-col", label: "Name colour", type: "color", val: "rgba(255,255,255,0.5)" },
+      { k: "--home-quote-char", label: "Name text", type: "font", def: { ff: "var(--font)", w: 600, it: "normal", fs: 10, ls: 0.2, lh: 1.2, col: "rgba(255,255,255,0.5)" } },
     ] },
     { name: "Prompt", items: [
-      { k: "--home-prompt-size", label: "Prompt size", val: 13, step: 0.5, min: 6 },
-      { k: "--home-prompt-col", label: "Prompt colour", type: "color", val: "#9aa1b0" },
+      { k: "--home-prompt", label: "Prompt text", type: "font", def: { ff: "var(--font)", w: 600, it: "normal", fs: 13, ls: 0.3, lh: 1.3, col: "#9aa1b0" } },
       { k: "--home-prompt-gap-top", label: "Space above prompt", val: 35, step: 1, min: 0 },
       { k: "--home-prompt-gap-bot", label: "Space below prompt", val: 10, step: 1, min: 0 },
       { k: "--home-prompt-text", label: "Prompt wording", type: "text", val: "What are you looking for?" },
@@ -2119,6 +2211,7 @@ function homePreviewHTML(bg, art) {
 }
 function renderStudioHomepage() {
   const groups = homeGroups();
+  seedTypes(groups);
   const arts = CATALOG.filter((i) => i.category !== "book" && backdropArt(i));
   const item = arts[Math.floor(Math.random() * arts.length)] || CATALOG[0];
   const bg = backdropBg(item), art = backdropArt(item);
@@ -2345,6 +2438,144 @@ function renderStudioPoster() {
   wireHeader(app);
 }
 
+/* ---- Studio: Corner Icon (poster type badge) ---- */
+function cornerGroups() {
+  return [
+    { name: "Badge", items: [
+      { k: "--pt-size", label: "Badge size", val: 16, step: 1, min: 6, max: 60 },
+      { k: "--pt-radius", label: "Corner radius", val: 50, step: 5, min: 0, max: 50, unit: "%" },
+      { k: "--pt-bg", label: "Background", type: "color", val: "rgba(8,10,14,0.6)" },
+      { k: "--pt-blur", label: "Backdrop blur", val: 2, step: 1, min: 0, max: 20 },
+      { k: "--pt-bw", label: "Border width", val: 0, step: 0.5, min: 0, max: 6, unit: "px" },
+      { k: "--pt-bc", label: "Border colour", type: "color", val: "transparent" },
+      { k: "--pt-shadow", label: "Drop shadow", type: "shadow", def: "0px 1px 2px rgba(0,0,0,0.45)" },
+    ] },
+    { name: "Position", items: [
+      { k: "--pt-top", label: "Top offset", val: 3, step: 1, min: 0, max: 40 },
+      { k: "--pt-right", label: "Right offset", val: 3, step: 1, min: 0, max: 40 },
+    ] },
+    { name: "Icon", items: [
+      { k: "--pt-ic-size", label: "Icon size", val: 62, step: 2, min: 20, max: 100, unit: "%" },
+      { k: "--pt-ic-col", label: "Icon colour", type: "color", val: "#ffffff" },
+    ] },
+  ];
+}
+function renderStudioCorner() {
+  let sample = getItem("across-the-spider-verse") || CATALOG[0];
+  const groups = cornerGroups();
+  const initStyle = studioInitStyle(groups);
+  const card = (item) => `<div class="poster-card pt-card" style="background:${posterBg(item)}"><span class="poster-type" aria-hidden="true">${catIconSvg(item.category)}</span></div>`;
+  const prev = (id, style) => `<div class="pt-prev"><div class="pt-scope" id="${id}"${style ? ` style="${style}"` : ""}>${card(sample)}</div></div>`;
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>CornerIcon</h1>
+        </div>
+        <div class="st-stage st-compare">
+          ${cycleArrows()}
+          <figure class="st-cmp">${prev("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${prev("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+        </div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
+        <section class="st-sec">
+          <h2>Export</h2>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="8" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+  const cand = app.querySelector("#cand");
+  const applyVar = (v, val) => cand.style.setProperty(v, val);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
+  // Cycle the poster behind the badge through the catalogue (different categories).
+  wireCycle(CATALOG.length, Math.max(0, CATALOG.indexOf(sample)), (i) => {
+    sample = CATALOG[i];
+    ["#cur", "#cand"].forEach((sel) => {
+      const pc = app.querySelector(`${sel} .poster-card`); if (pc) pc.style.background = posterBg(sample);
+      const ic = app.querySelector(`${sel} .poster-type`); if (ic) ic.innerHTML = catIconSvg(sample.category);
+    });
+  });
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ CornerIcon: readGroupValues(groups) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+  wireHeader(app);
+}
+
+/* ---- Studio: Search Bar ---- */
+function searchGroups() {
+  return [
+    { name: "Bar", items: [
+      { k: "--sb-bar-fill", label: "Bar fill", type: "color", val: "linear-gradient(180deg, #1b1c26, #14151d)", layer: true },
+      { k: "--sb-outline", label: "Outline", type: "color", val: "linear-gradient(160deg, #fff0cf, #f3cd76 40%, #b9822b)", layer: true },
+      { k: "--sb-bw", label: "Outline width", val: 1.5, step: 0.5, min: 0, max: 8, unit: "px" },
+      { k: "--sb-radius", label: "Corner radius", val: 26, step: 1, min: 0, max: 40 },
+      { k: "--sb-pad", label: "Padding", val: 7, step: 1, min: 0, max: 24 },
+      { k: "--sb-shadow", label: "Glow / shadow", type: "shadow", def: "0px 10px 26px -12px rgba(243,205,118,0.85)" },
+    ] },
+    { name: "Field", items: [
+      { k: "--sb-field-bg", label: "Field fill", type: "color", val: "#090a0e" },
+      { k: "--sb-field-outline", label: "Field outline", type: "color", val: "rgba(243,205,118,0.32)" },
+      { k: "--sb-field-h", label: "Field height", val: 38, step: 1, min: 24, max: 64 },
+      { k: "--sb-field-radius", label: "Field radius", val: 999, step: 5, min: 0, max: 999 },
+    ] },
+    { name: "Text & icon", items: [
+      { k: "--sb-ic-col", label: "Icon colour", type: "color", val: "#f0c469" },
+      { k: "--sb-ic-size", label: "Icon size", val: 24, step: 1, min: 12, max: 40 },
+      { k: "--sb-text", label: "Input text", type: "font", def: { ff: "var(--font)", w: 400, it: "normal", fs: 16, ls: 0, lh: 1.3, col: "#f3f4f8" } },
+      { k: "--sb-ph-col", label: "Placeholder colour", type: "color", val: "rgba(255,255,255,0.35)" },
+    ] },
+  ];
+}
+function renderStudioSearch() {
+  const groups = searchGroups();
+  seedTypes(groups);
+  const initStyle = studioInitStyle(groups);
+  const bar = `<div class="searchbar"><div class="search-field"><span class="search-ic">${ICON.search}</span><input type="search" placeholder="Search ${BRAND.name.toLowerCase()}…" value="" tabindex="-1" disabled></div></div>`;
+  const prev = (id, style) => `<div class="sb-prev"><div class="sb-scope" id="${id}"${style ? ` style="${style}"` : ""}>${bar}</div></div>`;
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>SearchBar</h1>
+        </div>
+        <div class="st-stage st-compare st-search">
+          <figure class="st-cmp">${prev("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+          <figure class="st-cmp">${prev("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
+        </div>
+        <div id="st-controls-root">${groups.map((g, i) => groupHTML(g, i === 0)).join("")}</div>
+        <section class="st-sec">
+          <h2>Export</h2>
+          <button class="st-export" id="st-export">Copy values for Claude</button>
+          <textarea class="st-out" id="st-out" readonly rows="10" placeholder="Values appear here…"></textarea>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+  const cand = app.querySelector("#cand");
+  const applyVar = (v, val) => cand.style.setProperty(v, val);
+  wireGroupControls(app.querySelector("#st-controls-root"), applyVar);
+  app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ SearchBar: readGroupValues(groups) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy values for Claude"), 2200);
+  });
+  wireHeader(app);
+}
+
 /* ---- Studio: Brand Tokens ---- */
 function renderStudioBrand() {
   const group = { name: "Colours", items: [
@@ -2495,6 +2726,8 @@ function route() {
   if (hash === "#/studio/logo") { renderStudioLogo("fp"); return; }
   if (hash === "#/studio/logo-header") { renderStudioLogo("hd"); return; }
   if (hash === "#/studio/poster") { renderStudioPoster(); return; }
+  if (hash === "#/studio/corner") { renderStudioCorner(); return; }
+  if (hash === "#/studio/search") { renderStudioSearch(); return; }
   if (hash === "#/studio/tab") { renderStudioTab("active"); return; }
   if (hash === "#/studio/tab-idle") { renderStudioTab("idle"); return; }
   if (hash === "#/studio/tab-dim") { renderStudioTab("dim"); return; }
