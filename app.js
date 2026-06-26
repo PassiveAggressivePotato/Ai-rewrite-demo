@@ -2177,11 +2177,11 @@ function homeGroups() {
       { k: "--home-logo-gap-bot", label: "Space below logo", val: 0, step: 1, min: 0 },
     ] },
     { name: "Quote", items: [
-      { k: "--home-tag", label: "Quote text", type: "font", def: { ff: "var(--font)", w: 500, it: "normal", fs: 13, ls: 0.5, lh: 1.4, col: "#f0c469" } },
+      { k: "--home-tag", label: "Quote text", type: "font", def: { ff: "var(--font)", w: 400, it: "normal", fs: 13, ls: 0.5, lh: 1.4, col: "#f0c469" } },
       { k: "--home-quote-w", label: "Quote max width", val: 298, step: 5, min: 80, max: 480 },
       { k: "--home-tag-gap", label: "Space above quote", val: 5, step: 1, min: 0 },
       { k: "--home-quote-char-gap", label: "Quote–name gap", val: 3, step: 1, min: 0 },
-      { k: "--home-quote-char", label: "Name text", type: "font", def: { ff: "var(--font)", w: 400, it: "normal", fs: 9, ls: 0.2, lh: 1.2, col: "rgba(255,255,255,0.5)" } },
+      { k: "--home-quote-char", label: "Name text", type: "font", def: { ff: "var(--font)", w: 400, it: "normal", fs: 10, ls: 0.2, lh: 1.2, col: "rgba(255,255,255,0.5)" } },
     ] },
     { name: "Prompt", items: [
       { k: "--home-prompt", label: "Prompt text", type: "font", def: { ff: "var(--font)", w: 600, it: "normal", fs: 13, ls: 0.3, lh: 1.3, col: "#9aa1b0" } },
