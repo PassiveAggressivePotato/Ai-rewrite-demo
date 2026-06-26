@@ -752,7 +752,6 @@ function swapBackdrop(screen) {
   if (!it || !screen) return;
   const src = backdropArt(it);
   const bg = screen.querySelector(".home-bg"); if (bg) bg.style.background = backdropBg(it);
-  const mir = screen.querySelector(".home-mirror"); if (mir) mir.style.backgroundImage = `url('${src}')`;
   paintTopFill(screen, src);
 }
 
@@ -774,8 +773,8 @@ function renderLanding() {
     <div class="screen landing-screen">
       ${randArt ? `<div class="home-bg" style="background:${backdropBg(randArt)}"></div>
       <div class="home-fill"></div>
-      <div class="home-mirror" style="background-image:url('${randSrc}')"></div>
-      <div class="home-scrim"></div>` : ""}
+      <div class="home-scrim"></div>
+      <div class="home-overlay"></div>` : ""}
       <div class="landing-sticky">
         <div class="head-left">${logo()}</div>
         <div class="head-actions">${headSearch()}</div>
@@ -2139,21 +2138,18 @@ function wireCycle(len, start, onIdx) {
 }
 
 /* ---- Studio: Homepage (landing backdrop, top blend + type & spacing) ---- */
-const TOP_MODE_OPTS = [{ v: "0", l: "Colour fill" }, { v: "1", l: "Mirror" }];
 function homeGroups() {
   return [
-    { name: "Background", items: [
-      { k: "--home-blur", label: "Backdrop blur", val: 5, step: 1, min: 0, max: 80 },
-      { k: "--home-fade-col", label: "Base colour", type: "color", val: "#0f0f1a" },
-      { k: "--home-fade-soft", label: "Image top offset", val: 35, step: 1, min: 0, max: 95, unit: "" },
+    { name: "Backdrop", items: [
+      { k: "--home-img-top", label: "Image starts (from top)", val: 209, step: 4, fine: 1, min: 0, max: 600 },
+      { k: "--home-seam", label: "Blend distance", val: 60, step: 2, fine: 1, min: 0, max: 400 },
+      { k: "--home-blur", label: "Image blur", val: 5, step: 1, min: 0, max: 80 },
+      { k: "--home-fill-col", label: "Top colour (auto-sampled)", type: "color", val: "#0f0f1a" },
     ] },
-    { name: "Top blend", items: [
-      { k: "--home-top-mode", label: "Top extension", type: "select", val: "0", opts: TOP_MODE_OPTS },
-      { k: "--home-fill-col", label: "Fill colour", type: "color", val: "#0f0f1a" },
-      { k: "--home-seam", label: "Seam feather", val: 48, step: 1, min: 0, max: 400 },
-      { k: "--home-mirror-h", label: "Mirror height", val: 220, step: 2, min: 0, max: 600 },
-      { k: "--home-mirror-blur", label: "Mirror blur", val: 18, step: 1, min: 0, max: 80 },
-      { k: "--home-mirror-op", label: "Mirror strength", val: 85, step: 1, min: 0, max: 100, unit: "" },
+    { name: "Top colour overlay", items: [
+      { k: "--home-ov-col", label: "Overlay colour", type: "color", val: "transparent" },
+      { k: "--home-ov-solid", label: "Solid height", val: 0, step: 4, fine: 1, min: 0, max: 500 },
+      { k: "--home-ov-blend", label: "Blend distance", val: 120, step: 4, fine: 1, min: 0, max: 600 },
     ] },
     { name: "Logo", items: [
       { k: "--home-logo-gap-top", label: "Space above logo", val: 35, step: 1, min: 0 },
@@ -2194,8 +2190,8 @@ function homePreviewHTML(bg, art) {
   return `
     <div class="home-bg" style="background:${bg}"></div>
     <div class="home-fill"></div>
-    <div class="home-mirror"${art ? ` style="background-image:url('${art}')"` : ""}></div>
     <div class="home-scrim"></div>
+    <div class="home-overlay"></div>
     <div class="landing">
       <div class="landing-head">${logo()}${quoteHTML({ quote: "Not all those who wander are lost.", character: "Bilbo Baggins" })}</div>
       <div class="prompt">What are you looking for?</div>

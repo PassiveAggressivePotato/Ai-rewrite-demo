@@ -186,7 +186,13 @@ body::before {
   transform: translate(-50%, -50%) translate(var(--logo-s2x, 0px), var(--logo-s2y, 0px)) rotate(var(--logo-rot, 0deg));
   filter: blur(var(--logo-s2blur, 0px));
 }
-.wordmark:hover .logo { transform: rotate(var(--logo-rot, 0deg)) scale(1.03); }
+/* Hover lift scales the WHOLE wordmark (fill + outline + shadows together) so the
+ * outline never drifts out of register. Gated to real pointers so a tap on touch
+ * devices doesn't leave a sticky :hover state. */
+.wordmark { transition: transform .2s var(--ease); }
+@media (hover: hover) {
+  .wordmark:hover { transform: scale(1.03); }
+}
 /* Per-instance token mapping (also reused by the Studio's .logo-scope-* preview). */
 .landing-head .wordmark, .logo-scope-fp .wordmark {
   font-size: var(--logo-fp-size, 60px);
@@ -220,48 +226,43 @@ body::before {
  * .scroll rolls over it (it's transparent where the lists are). Its top edge is
  * anchored part-way down (tracks --home-img-top); the region above is extended
  * upward by the "top blend" layers below so there's no flat seam. */
-.landing-screen, .home-mini {
-  --home-img-top: calc(340px * (100 - var(--home-fade-soft, 35)) / 100 - 12px);
-}
 .home-bg {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 0;
-  top: var(--home-img-top);
+  top: var(--home-img-top, 209px);
   background-size: cover !important; background-position: center top !important;
   filter: blur(var(--home-blur, 5px)) saturate(1.15) brightness(.66);
   transform: scale(1.2); transform-origin: center top;
 }
 .home-bg::after { content: ""; position: absolute; inset: 0; background: rgba(10,12,16,.28); }
-.landing-screen { background: var(--home-fade-col, #0f0f1a); }
+.landing-screen { background: var(--bg, #06070c); }
 .landing-screen .scroll { position: relative; z-index: 1; }
 
-/* ---- Top blend: extend the backdrop above its framed top (two modes) ------- */
-/* Colour-fill mode (default): a flat band in the sampled top-strip colour
- * (--home-fill-col, set in JS), feathered into the image over --home-seam. */
+/* ---- Top blend ------------------------------------------------------------- */
+/* Sampled top-strip fill: a flat band in the colour sampled from the image's top
+ * few pixels (--home-fill-col, set in JS), running from the very top down past
+ * where the image begins (--home-img-top) and feathering into the image over the
+ * blend distance (--home-seam). This is what extends the photo seamlessly up. */
 .home-fill {
   position: absolute; left: 0; right: 0; top: 0; z-index: 0;
-  height: calc(var(--home-img-top) + var(--home-seam, 48px));
-  background: var(--home-fill-col, var(--home-fade-col, #0f0f1a));
-  opacity: calc(1 - var(--home-top-mode, 0));
-  -webkit-mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 48px)), transparent 100%);
-  mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 48px)), transparent 100%);
+  height: calc(var(--home-img-top, 209px) + var(--home-seam, 60px));
+  background: var(--home-fill-col, #0f0f1a);
+  -webkit-mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 60px)), transparent 100%);
+  mask: linear-gradient(180deg, #000 0, #000 calc(100% - var(--home-seam, 60px)), transparent 100%);
 }
-/* Mirror mode: a vertically-flipped, blurred copy of the backdrop sitting above
- * the seam as a soft reflection; fades out towards the top. */
-.home-mirror {
-  position: absolute; left: 0; right: 0; z-index: 0;
-  top: calc(var(--home-img-top) - var(--home-mirror-h, 220px));
-  height: var(--home-mirror-h, 220px);
-  background-size: cover; background-position: center top;
-  transform: scaleY(-1); transform-origin: bottom;
-  filter: blur(var(--home-mirror-blur, 18px)) saturate(1.15) brightness(.6);
-  opacity: calc(var(--home-top-mode, 0) * var(--home-mirror-op, 85) / 100);
-  -webkit-mask: linear-gradient(180deg, transparent 0, #000 100%);
-  mask: linear-gradient(180deg, transparent 0, #000 100%);
+/* Optional defined-colour overlay from the top: a solid band of --home-ov-col for
+ * --home-ov-solid px, then a feather to transparent over --home-ov-blend px.
+ * Off by default (transparent colour). Sits above the image + sampled fill. */
+.home-overlay {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 0; pointer-events: none;
+  height: calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px));
+  background: var(--home-ov-col, transparent);
+  -webkit-mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 0px), transparent calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px)));
+          mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 0px), transparent calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px)));
 }
 /* Static legibility scrim over the head area (keeps text readable on any image). */
 .home-scrim {
   position: absolute; left: 0; right: 0; top: 0; z-index: 0; pointer-events: none;
-  height: calc(var(--home-img-top) + 90px);
+  height: calc(var(--home-img-top, 209px) + 90px);
   background: linear-gradient(180deg, rgba(8,10,14,.6) 0%, rgba(8,10,14,.28) 45%, transparent 100%);
 }
 /* Compact header that slides down once you scroll past the hero (same bar as the
@@ -1201,7 +1202,7 @@ body::before {
 .st-compare.st-home { gap: 16px; }
 .home-frame { width: 156px; height: 300px; overflow: hidden; border-radius: 14px; border: 1px solid var(--border); flex: none; box-shadow: var(--shadow-dir-sm); }
 .home-frame > .home-mini { transform: scale(0.3628); transform-origin: top left; }
-.home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--home-fade-col, #0f0f1a); }
+.home-mini { position: relative; width: 430px; height: 827px; overflow: hidden; background: var(--bg, #06070c); }
 .home-mini .landing { min-height: 100%; }
 /* Logo editor: wordmark on a neutral chip, + segmented target switch + thumb. */
 .logo-prev { display: flex; align-items: center; justify-content: center; min-width: 150px; min-height: 120px; padding: 22px 18px; background: linear-gradient(180deg, #1a2230, #0c0f16); border-radius: 12px; }
