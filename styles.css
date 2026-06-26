@@ -291,7 +291,7 @@ body::before {
 /* Quote line = full original tagline style (incl. its gold colour). Typography
  * driven by the Studio "Type" editor (--home-tag-* sub-tokens). */
 .home-quote .hq-text {
-  font-family: var(--home-tag-ff, var(--font)); font-weight: var(--home-tag-w, 500);
+  font-family: var(--home-tag-ff, var(--font)); font-weight: var(--home-tag-w, 400);
   font-style: var(--home-tag-it, normal); font-size: var(--home-tag-fs, 13px);
   letter-spacing: var(--home-tag-ls, 0.5px); line-height: var(--home-tag-lh, 1.4);
   color: var(--home-tag-col, #f0c469); text-wrap: balance;
@@ -299,7 +299,7 @@ body::before {
 .home-quote .hq-char {
   margin-top: var(--home-quote-char-gap, 3px);
   font-family: var(--home-quote-char-ff, var(--font)); font-weight: var(--home-quote-char-w, 400);
-  font-style: var(--home-quote-char-it, normal); font-size: var(--home-quote-char-fs, 9px);
+  font-style: var(--home-quote-char-it, normal); font-size: var(--home-quote-char-fs, 10px);
   letter-spacing: var(--home-quote-char-ls, 0.2px); line-height: var(--home-quote-char-lh, 1.2);
   color: var(--home-quote-char-col, rgba(255,255,255,.5));
 }
