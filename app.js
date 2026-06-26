@@ -773,14 +773,14 @@ function renderLanding() {
     <div class="screen landing-screen">
       ${randArt ? `<div class="home-bg" style="background:${backdropBg(randArt)}"></div>
       <div class="home-fill"></div>
-      <div class="home-scrim"></div>
-      <div class="home-overlay"></div>` : ""}
+      <div class="home-scrim"></div>` : ""}
       <div class="landing-sticky">
         <div class="head-left">${logo()}</div>
         <div class="head-actions">${headSearch()}</div>
       </div>
       <div class="scroll">
         <div class="landing ${state.searchOpen ? "searching" : ""}">
+          ${randArt ? `<div class="home-overlay"></div>` : ""}
           <div class="landing-head rise">
             ${logo()}
             ${quoteHTML(nextQuote())}
@@ -2221,8 +2221,8 @@ function homePreviewHTML(bg, art) {
     <div class="home-bg" style="background:${bg}"></div>
     <div class="home-fill"></div>
     <div class="home-scrim"></div>
-    <div class="home-overlay"></div>
     <div class="landing">
+      <div class="home-overlay"></div>
       <div class="landing-head">${logo()}${quoteHTML({ quote: "Not all those who wander are lost.", character: "Bilbo Baggins" })}</div>
       <div class="prompt">What are you looking for?</div>
       <div class="tabs">${tabs}</div>
