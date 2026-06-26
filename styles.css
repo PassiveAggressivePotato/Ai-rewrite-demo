@@ -1239,6 +1239,10 @@ body::before {
 .cyc-prev { left: 6px; }
 .cyc-next { right: 6px; }
 .cyc-next svg { transform: scaleX(1); }
+/* Homepage stage: cycle the backdrop image — buttons in the bottom corners. */
+.st-home .cyc-btn { top: auto; bottom: 8px; transform: none; }
+.st-home .cyc-prev { left: 8px; }
+.st-home .cyc-next { right: 8px; }
 
 /* Preview PosterCard + the candidate ScoreBadge (driven by --pc-* / --b-* tokens) */
 .li2 { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 88px; }
