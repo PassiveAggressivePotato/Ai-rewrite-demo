@@ -2168,9 +2168,9 @@ function homeGroups() {
       { k: "--home-fill-col", label: "Top colour (auto-sampled)", type: "color", val: "#0f0f1a" },
     ] },
     { name: "Top colour overlay", items: [
-      { k: "--home-ov-col", label: "Overlay colour", type: "color", val: "transparent" },
-      { k: "--home-ov-solid", label: "Solid height", val: 0, step: 4, fine: 1, min: 0, max: 500 },
-      { k: "--home-ov-blend", label: "Blend distance", val: 120, step: 4, fine: 1, min: 0, max: 600 },
+      { k: "--home-ov-col", label: "Overlay colour", type: "color", val: "rgba(0,0,0,0.5)" },
+      { k: "--home-ov-solid", label: "Solid height", val: 20, step: 4, fine: 1, min: 0, max: 500 },
+      { k: "--home-ov-blend", label: "Blend distance", val: 100, step: 4, fine: 1, min: 0, max: 600 },
     ] },
     { name: "Logo", items: [
       { k: "--home-logo-gap-top", label: "Space above logo", val: 35, step: 1, min: 0 },
