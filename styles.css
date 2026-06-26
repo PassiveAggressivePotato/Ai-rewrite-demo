@@ -254,10 +254,10 @@ body::before {
  * Off by default (transparent colour). Sits above the image + sampled fill. */
 .home-overlay {
   position: absolute; left: 0; right: 0; top: 0; z-index: 0; pointer-events: none;
-  height: calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px));
-  background: var(--home-ov-col, transparent);
-  -webkit-mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 0px), transparent calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px)));
-          mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 0px), transparent calc(var(--home-ov-solid, 0px) + var(--home-ov-blend, 120px)));
+  height: calc(var(--home-ov-solid, 20px) + var(--home-ov-blend, 100px));
+  background: var(--home-ov-col, rgba(0, 0, 0, 0.5));
+  -webkit-mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 20px), transparent calc(var(--home-ov-solid, 20px) + var(--home-ov-blend, 100px)));
+          mask: linear-gradient(180deg, #000 0, #000 var(--home-ov-solid, 20px), transparent calc(var(--home-ov-solid, 20px) + var(--home-ov-blend, 100px)));
 }
 /* Static legibility scrim over the head area (keeps text readable on any image). */
 .home-scrim {
