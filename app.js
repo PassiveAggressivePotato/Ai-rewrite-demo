@@ -2090,15 +2090,36 @@ function openInspect(srcSel) {
     <button class="inspect-x" aria-label="Close">${ICON.close}</button>`;
   const clone = src.cloneNode(true); clone.removeAttribute("id");
   clone.style.width = cw + "px"; clone.style.height = ch + "px"; clone.style.flex = "none"; clone.style.margin = "0";
+  // Make the clone inert so nothing navigates by accident (cloneNode doesn't copy
+  // the live handlers, but also kill anchors/press states) — except the tabs.
+  clone.querySelectorAll("a, button, .list-item, .home-link").forEach((el) => {
+    if (!el.classList.contains("tab")) { el.style.pointerEvents = "none"; el.removeAttribute("href"); }
+  });
+  // The only allowed interaction: selecting a tab — reproduces the live behaviour
+  // (active tab + has-sel + the search bar sliding out with the tab tucked behind).
+  const cl = (s) => clone.querySelector(s);
+  const tabsEl = cl(".tabs"), landingEl = cl(".landing"), wrapEl = cl(".searchbar-wrap");
+  tabsEl?.querySelectorAll(".tab").forEach((tab) => {
+    tab.style.pointerEvents = "auto";
+    tab.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasActive = tab.classList.contains("active");
+      tabsEl.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      if (wasActive) { tabsEl.classList.remove("has-sel"); landingEl?.classList.remove("searching"); wrapEl?.classList.add("collapsed"); }
+      else { tab.classList.add("active"); tabsEl.classList.add("has-sel"); landingEl?.classList.add("searching"); wrapEl?.classList.remove("collapsed"); }
+    });
+  });
   const pan = ov.querySelector(".inspect-pan");
   pan.style.width = cw + "px"; pan.style.height = ch + "px";
   pan.appendChild(clone);
   app.appendChild(ov);
 
-  const fit = Math.min((app.clientWidth * 0.92) / cw, (app.clientHeight * 0.78) / ch);
+  // Open locked at fit-to-screen; panning only unlocks once you've zoomed past fit.
+  const fit = Math.min((app.clientWidth * 0.98) / cw, (app.clientHeight * 0.92) / ch);
   const S = { z: fit, x: 0, y: 0 };
-  const clampZ = (z) => Math.max(fit * 0.5, Math.min(fit * 8, z));
-  const apply = () => { pan.style.transform = `translate(${S.x}px, ${S.y}px) scale(${S.z})`; };
+  const clampZ = (z) => Math.max(fit, Math.min(fit * 8, z));
+  const canPan = () => S.z > fit * 1.01;
+  const apply = () => { if (!canPan()) { S.x = 0; S.y = 0; } pan.style.transform = `translate(${S.x}px, ${S.y}px) scale(${S.z})`; };
   apply();
 
   const stage = ov.querySelector(".inspect-stage");
@@ -2114,7 +2135,7 @@ function openInspect(srcSel) {
   stage.addEventListener("pointermove", (e) => {
     if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; S.z = clampZ(pinch.z * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d)); moved = true; apply(); }
-    else if (drag && ptrs.size === 1) { S.x = drag.ox + (e.clientX - drag.x); S.y = drag.oy + (e.clientY - drag.y); if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) moved = true; apply(); }
+    else if (drag && ptrs.size === 1) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 4) moved = true; if (canPan()) { S.x = drag.ox + dx; S.y = drag.oy + dy; apply(); } }
   });
   const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (ptrs.size === 0) drag = null; };
   stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
@@ -2178,8 +2199,17 @@ function homeGroups() {
 /* A fully-populated, static snapshot of the landing page for the preview frame.
  * Mirrors renderLanding's structure/classes so the live CSS (and the editable
  * tokens) apply 1:1. */
+/* A faithful, static snapshot of the live landing (same markup/classes as
+ * renderLanding) so the preview matches 1:1. Search bar starts collapsed like the
+ * live page; the inspect view re-enables ONLY tab selection (which opens the bar
+ * and tucks the active tab behind it, exactly like live). */
 function homePreviewHTML(bg, art) {
-  const tabs = CATEGORIES.map((c) => `<button class="tab" tabindex="-1"><span class="tab-icon">${catIconSvg(c.id)}</span><span class="tab-label">${c.plural}</span></button>`).join("");
+  const tabs = CATEGORIES.map((c) => `
+    <button class="tab" data-cat="${c.id}" tabindex="-1">
+      <span class="tab-icon">${catIconSvg(c.id)}</span>
+      <span class="tab-label">${c.plural}</span>
+      <span class="tab-badge" hidden></span>
+    </button>`).join("");
   const lists = `<div class="section-title">Popular Right Now</div>
     <div class="lists cards layout-horizontal">
       ${listColumn("Movies", rankBy(itemsByCategory("movie"), "synth"), true)}
@@ -2196,10 +2226,12 @@ function homePreviewHTML(bg, art) {
       <div class="landing-head">${logo()}${quoteHTML({ quote: "Not all those who wander are lost.", character: "Bilbo Baggins" })}</div>
       <div class="prompt">What are you looking for?</div>
       <div class="tabs">${tabs}</div>
-      <div class="searchbar-wrap">
+      <div class="searchbar-wrap collapsed">
         <div class="searchbar"><div class="search-field">
           <span class="search-ic">${ICON.search}</span>
           <input type="search" placeholder="Search ${BRAND.name.toLowerCase()}…" tabindex="-1" disabled />
+          <button class="search-cleartext" tabindex="-1" hidden>Clear</button>
+          <button class="search-clear" tabindex="-1" aria-label="Close search">${ICON.close}</button>
         </div></div>
       </div>
       ${lists}
@@ -2221,6 +2253,7 @@ function renderStudioHomepage() {
           <h1>Homepage</h1>
         </div>
         <div class="st-stage st-compare st-home">
+          ${cycleArrows()}
           <figure class="st-cmp">${mini("cur", "")}<figcaption>Before <button class="inspect-btn" data-inspect="#cur" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
           <figure class="st-cmp">${mini("cand", initStyle)}<figcaption>After <button class="inspect-btn" data-inspect="#cand" aria-label="Inspect (zoom)">${ICON.zoom}</button></figcaption></figure>
         </div>
@@ -2243,6 +2276,15 @@ function renderStudioHomepage() {
   // Both minis show the sampled top-strip fill (so Before/After match the live look).
   paintTopFill(app.querySelector("#cur"), art);
   paintTopFill(cand, art);
+  // Cycle the backdrop image shown in BOTH minis (prev/next in the stage corners).
+  wireCycle(arts.length, Math.max(0, arts.indexOf(item)), (i) => {
+    const it = arts[i], nbg = backdropBg(it), nart = backdropArt(it);
+    ["#cur", "#cand"].forEach((sel) => {
+      const m = app.querySelector(sel); if (!m) return;
+      const bgEl = m.querySelector(".home-bg"); if (bgEl) bgEl.style.background = nbg;
+      paintTopFill(m, nart);
+    });
+  });
   wireGroupControls(app.querySelector("#st-controls-root"), applyVar, onText);
   app.querySelectorAll("[data-inspect]").forEach((b) => b.addEventListener("click", () => openInspect(b.dataset.inspect)));
   app.querySelector("#st-export").addEventListener("click", () => {
