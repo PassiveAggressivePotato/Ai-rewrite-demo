@@ -2459,5 +2459,305 @@ export const QUOTES = [
     "character": "Butter Pants",
     "source": "Shrek Forever After",
     "medium": "Movies"
+  },
+  {
+    "quote": "Hello, Newman.",
+    "character": "Jerry Seinfeld",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Well, the jerk store called, and they're running out of you.",
+    "character": "George Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Festivus for the rest of us.",
+    "character": "Frank Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Begin the airing of grievances.",
+    "character": "Frank Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Stop crying and fight your father.",
+    "character": "Frank Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Top of the muffin to you!",
+    "character": "Elaine Benes",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "But I don't wanna be a pirate!",
+    "character": "Jerry Seinfeld",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Not that there's anything wrong with that.",
+    "character": "Jerry Seinfeld",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "It's not a lie if you believe it.",
+    "character": "George Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "George is getting upset!",
+    "character": "George Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "You know how to take the reservation, you just don't know how to hold the reservation.",
+    "character": "Jerry Seinfeld",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I got a lot of problems with you people!",
+    "character": "Frank Costanza",
+    "source": "Seinfeld",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Holy crap!",
+    "character": "Frank Barone",
+    "source": "Everybody Loves Raymond",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Everybody loves Raymond.",
+    "character": "Robert Barone",
+    "source": "Everybody Loves Raymond",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I go to work, people shoot at me.",
+    "character": "Robert Barone",
+    "source": "Everybody Loves Raymond",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I can't talk! There's too much fruit in the house!",
+    "character": "Marie Barone",
+    "source": "Everybody Loves Raymond",
+    "medium": "Shows"
+  },
+  {
+    "quote": "What in the holy name of crap are you talking about?",
+    "character": "Frank Barone",
+    "source": "Everybody Loves Raymond",
+    "medium": "Shows"
+  },
+  {
+    "quote": "The future is now, old man.",
+    "character": "Dewey",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I expect nothing, and I'm still let down.",
+    "character": "Dewey",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I am not a monster. I am a mother.",
+    "character": "Lois",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "You boys are the reason we can't have nice things.",
+    "character": "Lois",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I don't have anger issues. I have idiot issues.",
+    "character": "Reese",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I don't think before I act. Thinking ruins it.",
+    "character": "Reese",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I don't want to be smart. I want to be happy.",
+    "character": "Malcolm",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Nobody panic until I panic.",
+    "character": "Hal",
+    "source": "Malcolm in the Middle",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm Chandler. I make jokes when I'm uncomfortable.",
+    "character": "Chandler Bing",
+    "source": "Friends",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm full, and yet I know if I stop eating this, I'll regret it.",
+    "character": "Joey Tribbiani",
+    "source": "Friends",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Oh, I'm sorry. Did my back hurt your knife?",
+    "character": "Rachel Green",
+    "source": "Friends",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Oh. My. God.",
+    "character": "Janice Litman-Goralnik",
+    "source": "Friends",
+    "medium": "Shows"
+  },
+  {
+    "quote": "More power!",
+    "character": "Tim Taylor",
+    "source": "Home Improvement",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I don't think so, Tim.",
+    "character": "Al Borland",
+    "source": "Home Improvement",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Shut up, Al.",
+    "character": "Tim Taylor",
+    "source": "Home Improvement",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Hidey-ho, neighbor.",
+    "character": "Wilson Wilson Jr.",
+    "source": "Home Improvement",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Arr arr arr!",
+    "character": "Tim Taylor",
+    "source": "Home Improvement",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Oh my God, they killed Kenny!",
+    "character": "Stan Marsh",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Screw you guys, I'm going home!",
+    "character": "Eric Cartman",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Respect my authoritah!",
+    "character": "Eric Cartman",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not fat, I'm big boned!",
+    "character": "Eric Cartman",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "No, Kitty! This is my pot pie!",
+    "character": "Eric Cartman",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not just sure, I'm HIV positive.",
+    "character": "Eric Cartman",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Drugs are bad, m'kay?",
+    "character": "Mr. Mackey",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Timmy!",
+    "character": "Timmy Burch",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Don't forget to bring a towel!",
+    "character": "Towelie",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Howdy ho!",
+    "character": "Mr. Hankey",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not your buddy, guy.",
+    "character": "Canadian Guy",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not your guy, friend.",
+    "character": "Canadian Guy",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not your friend, buddy.",
+    "character": "Canadian Guy",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm sorry, I thought this was America!",
+    "character": "Randy Marsh",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Kick the baby!",
+    "character": "Kyle Broflovski",
+    "source": "South Park",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Member Chewbacca?",
+    "character": "Member Berries",
+    "source": "South Park",
+    "medium": "Shows"
   }
 ];
