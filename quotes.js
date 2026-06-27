@@ -1913,5 +1913,323 @@ export const QUOTES = [
     "character": "Ralph Wiggum",
     "source": "The Simpsons",
     "medium": "Shows"
+  },
+  {
+    "quote": "Pinky, are you pondering what I'm pondering?",
+    "character": "The Brain",
+    "source": "Pinky and the Brain",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not crazy. My reality is just different than yours.",
+    "character": "Cheshire Cat",
+    "source": "Alice in Wonderland",
+    "medium": "Books"
+  },
+  {
+    "quote": "Begin at the beginning, and go on till you come to the end.",
+    "character": "King of Hearts",
+    "source": "Alice's Adventures in Wonderland",
+    "medium": "Books"
+  },
+  {
+    "quote": "I love deadlines. I love the whooshing noise they make as they go by.",
+    "character": "Douglas Adams",
+    "source": "The Salmon of Doubt",
+    "medium": "Books"
+  },
+  {
+    "quote": "Open the pod bay doors, HAL.",
+    "character": "Dave Bowman",
+    "source": "2001: A Space Odyssey",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm sorry, Dave. I'm afraid I can't do that.",
+    "character": "HAL 9000",
+    "source": "2001: A Space Odyssey",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Gentlemen, you can't fight in here! This is the War Room!",
+    "character": "President Merkin Muffley",
+    "source": "Dr. Strangelove",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You're gonna need a bigger boat.",
+    "character": "Chief Brody",
+    "source": "Jaws",
+    "medium": "Movies"
+  },
+  {
+    "quote": "How d'you like them apples?",
+    "character": "Will Hunting",
+    "source": "Good Will Hunting",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm walkin' here!",
+    "character": "Ratso Rizzo",
+    "source": "Midnight Cowboy",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm funny how?",
+    "character": "Tommy DeVito",
+    "source": "Goodfellas",
+    "medium": "Movies"
+  },
+  {
+    "quote": "They may take our lives, but they'll never take our freedom!",
+    "character": "William Wallace",
+    "source": "Braveheart",
+    "medium": "Movies"
+  },
+  {
+    "quote": "If you're good at something, never do it for free.",
+    "character": "The Joker",
+    "source": "The Dark Knight",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm the guy who does his job. You must be the other guy.",
+    "character": "Dignam",
+    "source": "The Departed",
+    "medium": "Movies"
+  },
+  {
+    "quote": "A girl has no name.",
+    "character": "Arya Stark",
+    "source": "Game of Thrones",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I coulda been a contender.",
+    "character": "Terry Malloy",
+    "source": "On the Waterfront",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Attica! Attica!",
+    "character": "Sonny Wortzik",
+    "source": "Dog Day Afternoon",
+    "medium": "Movies"
+  },
+  {
+    "quote": "The horror... the horror...",
+    "character": "Colonel Kurtz",
+    "source": "Apocalypse Now",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Badges? We don't need no stinking badges!",
+    "character": "Mexican Bandit",
+    "source": "Blazing Saddles",
+    "medium": "Movies"
+  },
+  {
+    "quote": "The stuff that dreams are made of.",
+    "character": "Sam Spade",
+    "source": "The Maltese Falcon",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Wax on, wax off.",
+    "character": "Mr. Miyagi",
+    "source": "The Karate Kid",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Hasta la vista, baby.",
+    "character": "The Terminator",
+    "source": "Terminator 2: Judgment Day",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Yippee-ki-yay.",
+    "character": "John McClane",
+    "source": "Die Hard",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You were only supposed to blow the bloody doors off!",
+    "character": "Charlie Croker",
+    "source": "The Italian Job",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm Spartacus!",
+    "character": "Spartacus",
+    "source": "Spartacus",
+    "medium": "Movies"
+  },
+  {
+    "quote": "For England, James?",
+    "character": "Alec Trevelyan",
+    "source": "GoldenEye",
+    "medium": "Movies"
+  },
+  {
+    "quote": "No, Mr. Bond, I expect you to die.",
+    "character": "Auric Goldfinger",
+    "source": "Goldfinger",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You complete me.",
+    "character": "Jerry Maguire",
+    "source": "Jerry Maguire",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Stupid is as stupid does.",
+    "character": "Forrest Gump",
+    "source": "Forrest Gump",
+    "medium": "Movies"
+  },
+  {
+    "quote": "They're heeeere.",
+    "character": "Carol Anne Freeling",
+    "source": "Poltergeist",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Be afraid. Be very afraid.",
+    "character": "Ronnie Quaife",
+    "source": "The Fly",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Sometimes dead is better.",
+    "character": "Jud Crandall",
+    "source": "Pet Sematary",
+    "medium": "Movies"
+  },
+  {
+    "quote": "The call is coming from inside the house.",
+    "character": "Sgt. Sacker",
+    "source": "When a Stranger Calls",
+    "medium": "Movies"
+  },
+  {
+    "quote": "It's not a tumah!",
+    "character": "Detective John Kimble",
+    "source": "Kindergarten Cop",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Get to the choppa!",
+    "character": "Dutch",
+    "source": "Predator",
+    "medium": "Movies"
+  },
+  {
+    "quote": "If it bleeds, we can kill it.",
+    "character": "Dutch",
+    "source": "Predator",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Game over, man! Game over!",
+    "character": "Private Hudson",
+    "source": "Aliens",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm your number one fan.",
+    "character": "Annie Wilkes",
+    "source": "Misery",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I bid you welcome.",
+    "character": "Count Dracula",
+    "source": "Dracula",
+    "medium": "Movies"
+  },
+  {
+    "quote": "One morning I shot an elephant in my pajamas.",
+    "character": "Captain Spaulding",
+    "source": "Animal Crackers",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I never forget a face, but in your case I'll be glad to make an exception.",
+    "character": "Rufus T. Firefly",
+    "source": "Duck Soup",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I don't want to belong to any club that will accept me as a member.",
+    "character": "Groucho Marx",
+    "source": "Groucho Marx",
+    "medium": "Books"
+  },
+  {
+    "quote": "Yeah, well, you know, that's just like, your opinion, man.",
+    "character": "The Dude",
+    "source": "The Big Lebowski",
+    "medium": "Movies"
+  },
+  {
+    "quote": "This aggression will not stand, man.",
+    "character": "The Dude",
+    "source": "The Big Lebowski",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Mark it zero.",
+    "character": "Walter Sobchak",
+    "source": "The Big Lebowski",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You're out of your element, Donny!",
+    "character": "Walter Sobchak",
+    "source": "The Big Lebowski",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Careful, man, there's a beverage here!",
+    "character": "The Dude",
+    "source": "The Big Lebowski",
+    "medium": "Movies"
+  },
+  {
+    "quote": "What's the most you ever lost on a coin toss?",
+    "character": "Anton Chigurh",
+    "source": "No Country for Old Men",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You can't stop what's coming.",
+    "character": "Ellis",
+    "source": "No Country for Old Men",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Damn! We're in a tight spot!",
+    "character": "Ulysses Everett McGill",
+    "source": "O Brother, Where Art Thou?",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You know, for kids!",
+    "character": "Norville Barnes",
+    "source": "The Hudsucker Proxy",
+    "medium": "Movies"
+  },
+  {
+    "quote": "First time?",
+    "character": "The Cowboy",
+    "source": "The Ballad of Buster Scruggs",
+    "medium": "Movies"
+  },
+  {
+    "quote": "If you would like to kiss him, it would be all right.",
+    "character": "Undertaker",
+    "source": "True Grit",
+    "medium": "Movies"
   }
 ];
