@@ -2231,5 +2231,233 @@ export const QUOTES = [
     "character": "Undertaker",
     "source": "True Grit",
     "medium": "Movies"
+  },
+  {
+    "quote": "I fart in your general direction!",
+    "character": "French Taunter",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Your mother was a hamster and your father smelt of elderberries!",
+    "character": "French Taunter",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "We are the Knights who say Ni!",
+    "character": "Knights Who Say Ni",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Ni!",
+    "character": "Knights Who Say Ni",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "On second thought, let's not go to Camelot. It is a silly place.",
+    "character": "King Arthur",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "There are some who call me... Tim.",
+    "character": "Tim the Enchanter",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "What is the air-speed velocity of an unladen swallow?",
+    "character": "Bridgekeeper",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Blessed are the cheesemakers.",
+    "character": "Gregory",
+    "source": "Monty Python's Life of Brian",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Nudge nudge, wink wink.",
+    "character": "Arthur Nudge",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Spam, spam, spam, spam.",
+    "character": "Vikings",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm a lumberjack and I'm okay.",
+    "character": "Lumberjack",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Cardinal Fang! Fetch the comfy chair!",
+    "character": "Cardinal Ximénez",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "Help! Help! I'm being repressed!",
+    "character": "Dennis",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Strange women lying in ponds distributing swords is no basis for a system of government.",
+    "character": "Dennis",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "She turned me into a newt! I got better.",
+    "character": "Villager",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "This isn't an argument, it's just contradiction.",
+    "character": "Mr. Vibrating",
+    "source": "Monty Python's Flying Circus",
+    "medium": "Shows"
+  },
+  {
+    "quote": "I'm not the Messiah!",
+    "character": "Brian Cohen",
+    "source": "Monty Python's Life of Brian",
+    "medium": "Movies"
+  },
+  {
+    "quote": "'Tis but a scratch.",
+    "character": "Black Knight",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "What are you going to do, bleed on me?",
+    "character": "King Arthur",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Bring forth the Holy Hand Grenade.",
+    "character": "King Arthur",
+    "source": "Monty Python and the Holy Grail",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Where is my super suit?",
+    "character": "Frozone",
+    "source": "The Incredibles",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You are a sad, strange little man.",
+    "character": "Buzz Lightyear",
+    "source": "Toy Story",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You pooped in the refrigerator?",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Sixty percent of the time, it works every time.",
+    "character": "Brian Fantana",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Some of you may die, but it's a sacrifice I am willing to make.",
+    "character": "Lord Farquaad",
+    "source": "Shrek",
+    "medium": "Movies"
+  },
+  {
+    "quote": "That'll do, Donkey. That'll do.",
+    "character": "Shrek",
+    "source": "Shrek",
+    "medium": "Movies"
+  },
+  {
+    "quote": "By the beard of Zeus!",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Great Odin's raven!",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Sweet Lincoln's mullet!",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I have many leather-bound books and my apartment smells of rich mahogany.",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "And in the morning, I'm making waffles!",
+    "character": "Donkey",
+    "source": "Shrek",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Not my gumdrop buttons!",
+    "character": "Gingerbread Man",
+    "source": "Shrek",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I killed a guy with a trident.",
+    "character": "Brick Tamland",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I would like to extend to you an invitation to the pants party.",
+    "character": "Brick Tamland",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "You ate the whole wheel of cheese? How'd you do that?",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm Ron Burgundy?",
+    "character": "Ron Burgundy",
+    "source": "Anchorman",
+    "medium": "Movies"
+  },
+  {
+    "quote": "I'm sorry, the position of annoying talking animal has already been taken.",
+    "character": "Donkey",
+    "source": "Shrek 2",
+    "medium": "Movies"
+  },
+  {
+    "quote": "Do the roar.",
+    "character": "Butter Pants",
+    "source": "Shrek Forever After",
+    "medium": "Movies"
   }
 ];
