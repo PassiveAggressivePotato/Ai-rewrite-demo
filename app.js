@@ -2552,17 +2552,18 @@ function renderStudioCorner() {
 function searchGroups() {
   return [
     { name: "Bar", items: [
-      { k: "--sb-bar-fill", label: "Bar fill", type: "color", val: "linear-gradient(180deg, #1b1c26, #14151d)", layer: true },
+      { k: "--sb-bar-fill", label: "Bar fill", type: "color", val: "linear-gradient(180deg, #222b35 0%, #14151d 100%)", layer: true },
       { k: "--sb-outline", label: "Outline", type: "color", val: "linear-gradient(160deg, #fff0cf, #f3cd76 40%, #b9822b)", layer: true },
       { k: "--sb-bw", label: "Outline width", val: 1.5, step: 0.5, min: 0, max: 8, unit: "px" },
       { k: "--sb-radius", label: "Corner radius", val: 26, step: 1, min: 0, max: 40 },
-      { k: "--sb-pad", label: "Padding", val: 7, step: 1, min: 0, max: 24 },
+      { k: "--sb-pad", label: "Padding", val: 6, step: 1, min: 0, max: 24 },
       { k: "--sb-shadow", label: "Glow / shadow", type: "shadow", def: "0px 10px 26px -12px rgba(243,205,118,0.85)" },
     ] },
     { name: "Field", items: [
       { k: "--sb-field-bg", label: "Field fill", type: "color", val: "#090a0e" },
-      { k: "--sb-field-outline", label: "Field outline", type: "color", val: "rgba(243,205,118,0.32)" },
-      { k: "--sb-field-h", label: "Field height", val: 38, step: 1, min: 24, max: 64 },
+      { k: "--sb-field-outline", label: "Field outline", type: "color", val: "#343f49" },
+      { k: "--sb-field-bw", label: "Field outline width", val: 1.5, step: 0.5, min: 0, max: 8, unit: "px" },
+      { k: "--sb-field-h", label: "Field height", val: 40, step: 1, min: 24, max: 64 },
       { k: "--sb-field-radius", label: "Field radius", val: 999, step: 5, min: 0, max: 999 },
     ] },
     { name: "Text & icon", items: [
@@ -2668,7 +2669,7 @@ const TAB_STATES = {
   idle: { title: "Idle Tab", key: "IdleTab", prefix: "idle", cls: "tab", sx: 1, sy: 1,
     d: { fill: "transparent", bg: DARK_FILL, outline: FAINT_GOLD, outlineW: 1.5, icon: ICON_GOLD, iconShadow: "none", label: "#f0c469", labelShadow: "none" } },
   dim: { title: "Inactive Tab", key: "InactiveTab", prefix: "dim", cls: "tab is-dim", sx: 1, sy: 1,
-    d: { fill: "#374a57", bg: "transparent", outline: "#2c3844", outlineW: 2.5, icon: "#1f2933", iconShadow: "none", label: "#1f2933", labelShadow: "none" } },
+    d: { fill: "#374a57", bg: "transparent", outline: "#2c3844", outlineW: 2, icon: "#1f2933", iconShadow: "none", label: "#1f2933", labelShadow: "none" } },
 };
 // Discrete icon-outline widths (feMorphology filters defined in index.html).
 // Capped at radius 2 — beyond that the ring overwhelms the small icons.
