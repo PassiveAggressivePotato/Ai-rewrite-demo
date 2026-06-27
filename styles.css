@@ -476,7 +476,7 @@ body::before {
  * (.tab.is-dim is the same look applied directly, for the Studio preview.) */
 .tabs.has-sel .tab:not(.active), .tab.is-dim {
   transform: scale(var(--tab-dim-sx, 1), var(--tab-dim-sy, 1));
-  border-width: var(--tab-dim-outline-w, 2.5px);
+  border-width: var(--tab-dim-outline-w, 2px);
   background:
     var(--tab-dim-fill, linear-gradient(#374a57, #374a57)) padding-box,
     var(--tab-dim-bg, linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0))) padding-box,
@@ -530,12 +530,12 @@ body::before {
 .landing.searching .searchbar-wrap { z-index: 2; overflow: visible; }
 .searchbar {
   display: flex; align-items: center;
-  padding: var(--sb-pad, 7px);
+  padding: var(--sb-pad, 6px);
   /* Outer bar: lighter fill under a gold gradient outline. Driven by --sb-*
    * tokens (Studio "Search Bar" editor); defaults match the baked look. */
   border: var(--sb-bw, 1.5px) solid transparent;
   background:
-    var(--sb-bar-fill, linear-gradient(180deg, #1b1c26, #14151d)) padding-box,
+    var(--sb-bar-fill, linear-gradient(180deg, #222b35 0%, #14151d 100%)) padding-box,
     var(--sb-outline, linear-gradient(160deg, #fff0cf, #f3cd76 40%, #b9822b)) border-box;
   border-radius: var(--sb-radius, 26px);
   box-shadow: var(--sb-shadow, 0 10px 26px -12px rgba(243,205,118,.85)), inset 0 1px 0 rgba(255,255,255,.07);
@@ -544,9 +544,9 @@ body::before {
  * actually type. A little taller than the close button so the X has breathing room. */
 .search-field {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
-  height: var(--sb-field-h, 38px); padding: 0 5px 0 13px;
+  height: var(--sb-field-h, 40px); padding: 0 5px 0 13px;
   background: var(--sb-field-bg, #090a0e);
-  border: 1px solid var(--sb-field-outline, rgba(243,205,118,.32));
+  border: var(--sb-field-bw, 1.5px) solid var(--sb-field-outline, #343f49);
   border-radius: var(--sb-field-radius, 999px);
 }
 .searchbar .search-ic { flex: none; display: grid; place-items: center; color: var(--sb-ic-col, var(--gold)); }
