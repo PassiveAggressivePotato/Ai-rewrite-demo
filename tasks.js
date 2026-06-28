@@ -89,6 +89,8 @@ export const TASKS = [
         ],
       },
       { id: "studio.tasks", title: "Tasks checklist (this page)", status: "review" },
+      { id: "studio.lab", title: "Lab (v2) — auto-detect & edit any element (MVP)", status: "review",
+        note: "Tap any element → introspect computed styles → edit live → export selector+props. Isolated from the main Studio." },
     ],
   },
   {
@@ -96,8 +98,8 @@ export const TASKS = [
     children: [
       { id: "roadmap.studio-standalone", title: "Branch the Studio into its own standalone, reusable project (use on other sites)", status: "todo",
         note: "Extract Studio into a portable overlay/module that can attach to any site." },
-      { id: "roadmap.studio-introspect", title: "Studio auto-detects an element and exposes ALL editable properties", status: "todo",
-        note: "Read computed styles + a curated 'addable' set (e.g. add a shadow where none exists). Likely a Studio v2 / standalone effort; make a copy first so the current Studio is never at risk." },
+      { id: "roadmap.studio-introspect", title: "Studio auto-detects an element and exposes editable properties", status: "review",
+        note: "MVP shipped as Studio → Lab (beta). Future: broaden the property set, map exports onto the token system, gradient/background editing." },
       { id: "roadmap.icon-outline", title: "Optional real SVG outline for category icons", status: "todo" },
       { id: "roadmap.real-apis", title: "Real API integration (TMDB/OMDb/IGDB/OpenCritic/Steam/Goodreads) behind a proxy", status: "todo" },
       { id: "roadmap.accounts", title: "User accounts: submitted ratings, watchlist, sync", status: "todo" },

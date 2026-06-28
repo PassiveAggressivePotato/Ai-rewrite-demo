@@ -2008,6 +2008,8 @@ const STUDIO_COMPONENTS = [
     thumb: `<span class="sc-thumb sc-thumb-brand"><i style="background:#f0c469"></i><i style="background:#c98f30"></i><i style="background:#4fd0c8"></i><i style="background:#2c97a8"></i></span>` },
   { id: "tasks", name: "Tasks", desc: "Project checklist — glance, confirm, export",
     thumb: `<span class="sc-thumb sc-thumb-tasks"><i></i><i></i><i></i></span>` },
+  { id: "lab", name: "Lab (beta)", desc: "Studio v2 — auto-detect & edit any element",
+    thumb: `<span class="sc-thumb sc-thumb-lab">🔬</span>` },
 ];
 function renderStudioHome() {
   app.innerHTML = `
@@ -2905,6 +2907,162 @@ function renderStudioTasks() {
   wireHeader(app);
 }
 
+/* ---- Studio Lab (v2): auto-introspect & edit ANY element ------------------
+ * Tap any element on the live site; the Lab reads its computed styles and offers
+ * editable controls (existing values pre-filled + addable ones like a shadow).
+ * Edits are inline-only (live site not permanently changed) and recorded by a
+ * generated selector for the "Copy changes for Claude" export. Fully additive —
+ * the existing Studio is untouched. */
+const LAB = { active: false, el: null, records: {} };
+const LAB_PROPS = [
+  { label: "Text colour", prop: "color", type: "color" },
+  { label: "Background", prop: "background-color", type: "color" },
+  { label: "Font size", prop: "font-size", type: "num", unit: "px", step: 1, min: 1 },
+  { label: "Font weight", prop: "font-weight", type: "num", unit: "", step: 100, min: 100, max: 900 },
+  { label: "Letter spacing", prop: "letter-spacing", type: "num", unit: "px", step: 0.5, min: -20 },
+  { label: "Line height", prop: "line-height", type: "num", unit: "px", step: 1, min: 0 },
+  { label: "Padding", prop: "padding", type: "num", unit: "px", step: 1, min: 0 },
+  { label: "Border radius", prop: "border-radius", type: "num", unit: "px", step: 1, min: 0 },
+  { label: "Border width", prop: "border-width", type: "num", unit: "px", step: 0.5, min: 0 },
+  { label: "Border colour", prop: "border-color", type: "color" },
+  { label: "Opacity", prop: "opacity", type: "num", unit: "", step: 0.05, min: 0, max: 1 },
+  { label: "Shadow", prop: "box-shadow", type: "shadow" },
+];
+function labSelector(el) {
+  if (el.id) return "#" + el.id;
+  const parts = [];
+  let cur = el;
+  for (let d = 0; cur && cur.nodeType === 1 && d < 3 && cur !== document.body; d++) {
+    let s = cur.tagName.toLowerCase();
+    const cls = [...cur.classList].filter((c) => c !== "rise" && !/^d\d$/.test(c));
+    if (cls.length) s += "." + cls.slice(0, 3).join(".");
+    parts.unshift(s);
+    cur = cur.parentElement;
+  }
+  return parts.join(" > ");
+}
+function positionLabHighlight() {
+  const hl = document.querySelector(".lab-hl"); if (!hl || !LAB.el) return;
+  const r = LAB.el.getBoundingClientRect();
+  hl.style.left = r.left + "px"; hl.style.top = r.top + "px";
+  hl.style.width = r.width + "px"; hl.style.height = r.height + "px";
+}
+function showLabHighlight(el) {
+  let hl = document.querySelector(".lab-hl");
+  if (!hl) { hl = document.createElement("div"); hl.className = "lab-hl"; document.body.appendChild(hl); }
+  positionLabHighlight();
+}
+function labApply(prop, val) {
+  const el = LAB.el; if (!el) return;
+  const sel = labSelector(el);
+  const rec = (LAB.records[sel] = LAB.records[sel] || {});
+  if (prop === "border-width" && parseFloat(val) > 0 && getComputedStyle(el).getPropertyValue("border-style") === "none") {
+    el.style.setProperty("border-style", "solid"); rec["border-style"] = "solid";
+  }
+  el.style.setProperty(prop, val);
+  rec[prop] = val;
+  positionLabHighlight();
+}
+function labControlsHTML(cs) {
+  return LAB_PROPS.map((p) => {
+    const cur = cs.getPropertyValue(p.prop).trim();
+    let ctl;
+    if (p.type === "color") ctl = swatchHTML(p.prop, cur || "#000000");
+    else if (p.type === "shadow") ctl = `<button class="shadow-btn" data-prop="${p.prop}">Edit ▸</button>`;
+    else ctl = stepperHTML("", parseFloat(cur) || 0, p.step || 1, p.min == null ? 0 : p.min, p.max, p.unit);
+    return `<div class="lab-row"><span class="lab-l">${p.label}</span>${ctl}</div>`;
+  }).join("");
+}
+function openLabSheet(el) {
+  document.querySelector(".lab-panel")?.remove();
+  const cs = getComputedStyle(el);
+  const wrap = document.createElement("div");
+  wrap.className = "lab-panel";
+  wrap.innerHTML = `
+    <div class="cp-sheet lab-sheet">
+      <div class="cp-head"><span>Inspect element</span><button class="cp-done lab-done">Done</button></div>
+      <div class="lab-target">${escapeHTML(labSelector(el))}</div>
+      <div class="lab-controls">${labControlsHTML(cs)}</div>
+      <button class="st-ghost lab-pick-another">Pick another element</button>
+      <section class="st-sec">
+        <button class="st-export" id="lab-export">Copy changes for Claude</button>
+        <textarea class="st-out" id="lab-out" readonly rows="8" placeholder="Your edits appear here…"></textarea>
+      </section>
+    </div>`;
+  app.appendChild(wrap);
+  wrap.querySelectorAll(".lab-row").forEach((row, i) => {
+    const p = LAB_PROPS[i];
+    if (p.type === "color") {
+      const sw = row.querySelector(".swatch");
+      sw.addEventListener("click", () => openColorPicker(sw.dataset.val, (val) => {
+        sw.dataset.val = val; sw.querySelector(".swatch-chip > span").style.background = val;
+        sw.querySelector(".swatch-val").textContent = val; labApply(p.prop, val);
+      }));
+    } else if (p.type === "shadow") {
+      row.querySelector(".shadow-btn").addEventListener("click", () => openShadowEditor(p.prop, (_, val) => labApply("box-shadow", val)));
+    } else {
+      attachStepper(row.querySelector(".step"), (n) => labApply(p.prop, n + (p.unit == null ? "px" : p.unit)));
+    }
+  });
+  wrap.querySelector(".lab-done").addEventListener("click", exitLab);
+  wrap.querySelector(".lab-pick-another").addEventListener("click", () => { wrap.remove(); document.querySelector(".lab-hl")?.style.setProperty("opacity", "0"); });
+  wrap.querySelector("#lab-export").addEventListener("click", () => {
+    const text = JSON.stringify({ LabEdits: LAB.records }, null, 2);
+    wrap.querySelector("#lab-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const b = wrap.querySelector("#lab-export");
+    b.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (b.textContent = "Copy changes for Claude"), 2200);
+  });
+}
+function labClick(e) {
+  if (!LAB.active) return;
+  if (e.target.closest(".lab-panel,.lab-bar,.cp,.shed,.tp,.inspect")) return;
+  e.preventDefault(); e.stopPropagation();
+  LAB.el = e.target;
+  showLabHighlight(e.target);
+  document.querySelector(".lab-hl")?.style.setProperty("opacity", "1");
+  openLabSheet(e.target);
+}
+function enterLab() {
+  if (LAB.active) return;
+  LAB.active = true; LAB.records = {};
+  document.addEventListener("click", labClick, true);
+  window.addEventListener("scroll", positionLabHighlight, true);
+  window.addEventListener("resize", positionLabHighlight);
+  const bar = document.createElement("div");
+  bar.className = "lab-bar";
+  bar.innerHTML = `<span>🔬 Lab — tap any element to inspect &amp; edit it</span><button class="lab-exit">Exit</button>`;
+  document.body.appendChild(bar);
+  bar.querySelector(".lab-exit").addEventListener("click", exitLab);
+  if ((location.hash || "#/") !== "#/") location.hash = "#/";
+}
+function exitLab() {
+  LAB.active = false; LAB.el = null;
+  document.removeEventListener("click", labClick, true);
+  window.removeEventListener("scroll", positionLabHighlight, true);
+  window.removeEventListener("resize", positionLabHighlight);
+  document.querySelector(".lab-bar")?.remove();
+  document.querySelector(".lab-hl")?.remove();
+  document.querySelector(".lab-panel")?.remove();
+}
+function renderStudioLab() {
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>Lab</h1><span class="studio-tag">studio v2 · beta</span>
+        </div>
+        <p class="st-note">Auto-detect editing. Tap <b>Start</b>, then tap <b>any element</b> on the homepage — the inspector reads its current styles and lets you edit colour, type, spacing, borders, opacity and shadow live (a shadow can be <i>added</i> even if it has none). Edits are inline only — the live site isn't permanently changed — and <b>Copy changes for Claude</b> sends me a selector + the properties you changed so I can bake them in properly. This is separate from the main Studio, which is untouched.</p>
+        <button class="st-export" id="lab-start">Start picking elements</button>
+      </div>
+      ${toolbox()}
+    </div>`;
+  app.querySelector("#lab-start").addEventListener("click", enterLab);
+  wireHeader(app);
+}
+
 function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
@@ -2919,6 +3077,7 @@ function route() {
   if (hash === "#/studio/tab-dim") { renderStudioTab("dim"); return; }
   if (hash === "#/studio/brand") { renderStudioBrand(); return; }
   if (hash === "#/studio/tasks") { renderStudioTasks(); return; }
+  if (hash === "#/studio/lab") { renderStudioLab(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {
     const item = getItem(decodeURIComponent(m[1]));
