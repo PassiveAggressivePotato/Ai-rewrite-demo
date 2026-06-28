@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -p _site
           # Flagship app at the site root
-          cp index.html styles.css app.js config.js sources.js normalize.js data.js quotes.js \
+          cp index.html styles.css app.js config.js sources.js normalize.js data.js quotes.js tasks.js \
              manifest.webmanifest sw.js robots.txt _site/
           cp -r icons _site/
           # Static artwork (posters / backdrops)

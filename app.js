@@ -12,6 +12,7 @@
 import { BRAND, CATEGORIES, DEFAULT_COUNTRY } from "./config.js";
 import { CATALOG, COUNTRIES, getItem, itemsByCategory } from "./data.js";
 import { QUOTES } from "./quotes.js";
+import { TASKS } from "./tasks.js";
 import { scoreItem, formatReviews } from "./normalize.js";
 import { SOURCE_BADGES } from "./sources.js";
 
@@ -2005,6 +2006,8 @@ const STUDIO_COMPONENTS = [
     thumb: `<span class="sc-thumb sc-thumb-pad" style="opacity:.5"><img src="assets/icons/game.svg" alt=""></span>` },
   { id: "brand", name: "Brand Tokens", desc: "Site-wide colours",
     thumb: `<span class="sc-thumb sc-thumb-brand"><i style="background:#f0c469"></i><i style="background:#c98f30"></i><i style="background:#4fd0c8"></i><i style="background:#2c97a8"></i></span>` },
+  { id: "tasks", name: "Tasks", desc: "Project checklist — glance, confirm, export",
+    thumb: `<span class="sc-thumb sc-thumb-tasks"><i></i><i></i><i></i></span>` },
 ];
 function renderStudioHome() {
   app.innerHTML = `
@@ -2758,6 +2761,150 @@ function renderStudioTab(state) {
   });
   wireHeader(app);
 }
+
+/* ---- Studio: Tasks checklist ----------------------------------------------
+ * Canonical list lives in tasks.js (assistant-maintained). The user's taps are
+ * stored as a localStorage overlay merged on top at render; an Export button
+ * hands the merged tree back for the assistant to bake in. */
+const TASKS_KEY = "critikl.tasks";
+const STATUS_LABEL = { todo: "To do", doing: "Doing", review: "Review", done: "Done", wontdo: "Won't do" };
+const STATUS_ORDER = ["todo", "doing", "review", "done", "wontdo"];
+const TASK_DONE = new Set(["done", "wontdo"]);
+function loadTaskOverlay() {
+  try { const o = JSON.parse(localStorage.getItem(TASKS_KEY) || "null"); if (o && o.v === 1) return o; } catch (_) {}
+  return { v: 1, status: {}, notes: {}, collapsed: {}, added: [] };
+}
+function saveTaskOverlay(o) { try { localStorage.setItem(TASKS_KEY, JSON.stringify(o)); } catch (_) {} }
+function newUserTaskId() { return "u-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function sortTaskSiblings(arr) {
+  return [...arr.filter((n) => !TASK_DONE.has(n.status)), ...arr.filter((n) => TASK_DONE.has(n.status))];
+}
+/* Pure merge: canonical TASKS + overlay -> render tree (does not mutate TASKS). */
+function buildTaskTree(canonical, overlay) {
+  const addedBy = {};
+  (overlay.added || []).forEach((a) => { const p = a.parentId || "__root__"; (addedBy[p] = addedBy[p] || []).push(a); });
+  const merge = (node, level, source) => {
+    const status = overlay.status[node.id] != null ? overlay.status[node.id] : (node.status || "todo");
+    const note = overlay.notes[node.id] != null ? overlay.notes[node.id] : (node.note || "");
+    const collapsed = !!overlay.collapsed[node.id];
+    let children = [];
+    if (level < 2) {
+      if (source === "canonical") children = (node.children || []).map((c) => merge(c, level + 1, "canonical"));
+      (addedBy[node.id] || []).forEach((a) => children.push(merge(a, level + 1, "added")));
+      children = sortTaskSiblings(children);
+    }
+    return { id: node.id, title: node.title, area: node.area, status, note, collapsed, level, source, children };
+  };
+  const roots = canonical.map((n) => merge(n, 0, "canonical"));
+  (addedBy["__root__"] || []).forEach((a) => roots.push(merge(a, 0, "added")));
+  return sortTaskSiblings(roots);
+}
+/* Clean nested tree for export (strips render-only fields + empties). */
+function exportTaskTree(overlay) {
+  const clean = (n) => {
+    const o = { id: n.id, title: n.title, status: n.status };
+    if (n.area) o.area = n.area;
+    if (n.note) o.note = n.note;
+    if (n.children && n.children.length) o.children = n.children.map(clean);
+    return o;
+  };
+  return buildTaskTree(TASKS, overlay).map(clean);
+}
+function taskNodeHTML(n) {
+  const hasKids = n.children && n.children.length;
+  const completed = TASK_DONE.has(n.status);
+  return `
+    <div class="tnode lvl${n.level} ${n.collapsed ? "collapsed" : ""} ${completed ? "t-complete" : ""}" data-id="${escapeHTML(n.id)}" data-status="${n.status}" data-src="${n.source}">
+      <div class="tnode-row">
+        ${hasKids ? `<button class="tnode-twist" data-twist aria-label="Expand / collapse">${ICON.next}</button>` : `<span class="tnode-twist tnode-twist-empty"></span>`}
+        <span class="tnode-title">${escapeHTML(n.title)}</span>
+        ${n.level < 2 ? `<button class="tnode-add" data-addchild aria-label="Add subtask">+</button>` : ""}
+        <button class="tpill s-${n.status}" data-pill aria-label="Status: ${STATUS_LABEL[n.status]} — tap to change">${STATUS_LABEL[n.status]}</button>
+      </div>
+      ${n.note ? `<div class="tnode-note">${escapeHTML(n.note)}</div>` : ""}
+      ${hasKids ? `<div class="tnode-kids">${n.children.map(taskNodeHTML).join("")}</div>` : ""}
+    </div>`;
+}
+function setTaskStatus(id, next, overlay) {
+  if (id.indexOf("u-") === 0) { const a = (overlay.added || []).find((x) => x.id === id); if (a) a.status = next; }
+  else overlay.status[id] = next;
+}
+function renderTaskTree(overlay) {
+  const root = app.querySelector("#tasks-tree");
+  if (root) root.innerHTML = buildTaskTree(TASKS, overlay).map(taskNodeHTML).join("");
+}
+function renderStudioTasks() {
+  const overlay = loadTaskOverlay();
+  app.innerHTML = `
+    <div class="screen studio">
+      <div class="scroll">
+        <div class="studio-head">
+          <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
+          <h1>Tasks</h1><span class="studio-tag">checklist</span>
+        </div>
+        <p class="st-note">A live checklist. I add items and mark them <b>Review</b> when I think they're done — you tap a status pill to confirm <b>Done</b> (it gets struck through and drops to the bottom). Your taps stay on this device; use <b>Export</b> to send the list back to me to bake in.</p>
+        <div class="tasks-tree" id="tasks-tree">${buildTaskTree(TASKS, overlay).map(taskNodeHTML).join("")}</div>
+        <button class="st-ghost" id="tasks-add-root">+ Add top-level task</button>
+        <section class="st-sec">
+          <div class="st-h" data-acc><h2>Export &amp; reset</h2><span class="acc-right"><span class="acc-ic">${ICON.back}</span></span></div>
+          <div class="st-body">
+            <button class="st-export" id="st-export">Copy full list for Claude</button>
+            <textarea class="st-out" id="st-out" readonly rows="10" placeholder="The merged task list appears here…"></textarea>
+            <button class="st-ghost st-danger" id="tasks-reset">Reset my local changes</button>
+          </div>
+        </section>
+      </div>
+      ${toolbox()}
+    </div>`;
+
+  const tree = app.querySelector("#tasks-tree");
+  tree.addEventListener("click", (e) => {
+    const node = e.target.closest(".tnode"); if (!node) return;
+    const id = node.dataset.id;
+    if (e.target.closest("[data-twist]")) {
+      const collapsed = node.classList.toggle("collapsed");
+      if (collapsed) overlay.collapsed[id] = true; else delete overlay.collapsed[id];
+      saveTaskOverlay(overlay); return;
+    }
+    if (e.target.closest("[data-pill]")) {
+      const cur = node.dataset.status || "todo";
+      const next = STATUS_ORDER[(STATUS_ORDER.indexOf(cur) + 1) % STATUS_ORDER.length];
+      setTaskStatus(id, next, overlay); saveTaskOverlay(overlay); renderTaskTree(overlay); return;
+    }
+    if (e.target.closest("[data-addchild]")) {
+      const title = (prompt("New subtask:") || "").trim(); if (!title) return;
+      overlay.added.push({ id: newUserTaskId(), parentId: id, title, status: "todo" });
+      saveTaskOverlay(overlay); renderTaskTree(overlay); return;
+    }
+  });
+
+  app.querySelector("#tasks-add-root").addEventListener("click", () => {
+    const title = (prompt("New task:") || "").trim(); if (!title) return;
+    overlay.added.push({ id: newUserTaskId(), parentId: null, title, status: "todo" });
+    saveTaskOverlay(overlay); renderTaskTree(overlay);
+  });
+
+  app.querySelectorAll(".st-h[data-acc]").forEach((h) =>
+    h.addEventListener("click", () => h.closest(".st-sec").classList.toggle("collapsed")));
+
+  app.querySelector("#st-export").addEventListener("click", () => {
+    const text = JSON.stringify({ TASKS: exportTaskTree(overlay) }, null, 2);
+    app.querySelector("#st-out").value = text;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    const btn = app.querySelector("#st-export");
+    btn.textContent = "Copied ✓ — paste it in chat";
+    setTimeout(() => (btn.textContent = "Copy full list for Claude"), 2200);
+  });
+
+  app.querySelector("#tasks-reset").addEventListener("click", () => {
+    if (!confirm("Discard your local task changes and restore my committed list?")) return;
+    try { localStorage.removeItem(TASKS_KEY); } catch (_) {}
+    renderStudioTasks();
+  });
+
+  wireHeader(app);
+}
+
 function route() {
   const hash = location.hash || "#/";
   if (hash === "#/studio") { renderStudioHome(); return; }
@@ -2771,6 +2918,7 @@ function route() {
   if (hash === "#/studio/tab-idle") { renderStudioTab("idle"); return; }
   if (hash === "#/studio/tab-dim") { renderStudioTab("dim"); return; }
   if (hash === "#/studio/brand") { renderStudioBrand(); return; }
+  if (hash === "#/studio/tasks") { renderStudioTasks(); return; }
   const m = hash.match(/^#\/item\/(.+)$/);
   if (m) {
     const item = getItem(decodeURIComponent(m[1]));
