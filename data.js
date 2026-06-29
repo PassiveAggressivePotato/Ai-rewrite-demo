@@ -14,6 +14,10 @@
  * `ratings` hold RAW per-source values on each source's native scale — the
  * engine normalizes them. `watch` is keyed by ISO country code and adapts per
  * category (streaming for film/TV, stores for games, retailers for books).
+ *
+ * Ratings are a hand-curated snapshot, verified accurate as of June 2026. They
+ * are point-in-time (scores drift); live always-current numbers will come from
+ * the real-API integration (roadmap). "Where to watch" links ARE live (JustWatch).
  * ========================================================================== */
 
 export const CATALOG = [
