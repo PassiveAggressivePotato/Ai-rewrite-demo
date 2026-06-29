@@ -28,7 +28,7 @@ export const TASKS = [
     children: [
       { id: "launch.scope", title: "Lock v1 scope & 'done' definition", status: "review" },
       { id: "launch.template", title: "Build ONE real title end-to-end (Dune: Part Two) as the template", status: "review" },
-      { id: "launch.data", title: "Real ratings for ~12 titles (3 per category), sourced + dated", status: "todo" },
+      { id: "launch.data", title: "Real ratings — verified accurate, dated (snapshot; live = API, parked)", status: "review" },
       { id: "launch.watch", title: "Working 'Where to watch / get it' links per title (live via JustWatch)", status: "review" },
       { id: "launch.qa", title: "Final QA: every page renders, zero console errors, deploy", status: "todo" },
     ],
