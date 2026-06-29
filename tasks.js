@@ -94,6 +94,22 @@ export const TASKS = [
     ],
   },
   {
+    id: "monetise", title: "Monetisation (ideas)", status: "todo", area: "biz",
+    children: [
+      { id: "monetise.affiliate", title: "Affiliate 'where to watch / buy' links", status: "todo",
+        note: "Best fit; needs real availability data + affiliate accounts (or JustWatch partner)." },
+      { id: "monetise.watchlist", title: "Alerting watchlist — notify when available / on sale → convert", status: "todo",
+        note: "Owns the high-intent purchase moment. Strong earner." },
+      { id: "monetise.taste-graph", title: "Cross-media taste graph + recommendations", status: "todo",
+        note: "Unique: recommend across film/TV/games/books. Defensible asset." },
+      { id: "monetise.polarization", title: "'Overrated vs underrated' / Divisiveness Index brand", status: "todo",
+        note: "Viral marketing engine + licensable data." },
+      { id: "monetise.premium", title: "CRITIKL+ premium (ad-free, sync, custom score weighting, alerts)", status: "todo",
+        note: "Needs accounts + backend." },
+      { id: "monetise.more", title: "Others: ads, embeddable badges, group 'what to watch', price compare, white-label, AI concierge", status: "todo" },
+    ],
+  },
+  {
     id: "roadmap", title: "Roadmap / ideas", status: "todo", area: "roadmap",
     children: [
       { id: "roadmap.studio-standalone", title: "Branch the Studio into its own standalone, reusable project (use on other sites)", status: "todo",

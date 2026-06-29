@@ -2788,14 +2788,16 @@ function buildTaskTree(canonical, overlay) {
   const merge = (node, level, source) => {
     const status = overlay.status[node.id] != null ? overlay.status[node.id] : (node.status || "todo");
     const note = overlay.notes[node.id] != null ? overlay.notes[node.id] : (node.note || "");
-    const collapsed = !!overlay.collapsed[node.id];
+    // Top-level groups default to COLLAPSED (calmer first view); deeper levels open.
+    const collapsed = overlay.collapsed[node.id] != null ? !!overlay.collapsed[node.id] : (level === 0);
     let children = [];
     if (level < 2) {
       if (source === "canonical") children = (node.children || []).map((c) => merge(c, level + 1, "canonical"));
       (addedBy[node.id] || []).forEach((a) => children.push(merge(a, level + 1, "added")));
       children = sortTaskSiblings(children);
     }
-    return { id: node.id, title: node.title, area: node.area, status, note, collapsed, level, source, children };
+    const active = (TASK_DONE.has(status) ? 0 : 1) + children.reduce((s, c) => s + c.active, 0);
+    return { id: node.id, title: node.title, area: node.area, status, note, collapsed, level, source, active, children };
   };
   const roots = canonical.map((n) => merge(n, 0, "canonical"));
   (addedBy["__root__"] || []).forEach((a) => roots.push(merge(a, 0, "added")));
@@ -2812,20 +2814,37 @@ function exportTaskTree(overlay) {
   };
   return buildTaskTree(TASKS, overlay).map(clean);
 }
-function taskNodeHTML(n) {
-  const hasKids = n.children && n.children.length;
+function taskSelectHTML(n) {
+  return `<select class="tsel s-${n.status}" data-id="${escapeHTML(n.id)}" aria-label="Status">${STATUS_ORDER.map((s) => `<option value="${s}"${s === n.status ? " selected" : ""}>${STATUS_LABEL[s]}</option>`).join("")}</select>`;
+}
+/* Render a list of sibling nodes, hiding fully-completed branches unless showDone. */
+function renderTaskNodes(nodes, showDone) {
+  return nodes.filter((n) => showDone || n.active > 0).map((n) => taskNodeHTML(n, showDone)).join("");
+}
+function taskNodeHTML(n, showDone) {
+  const kidsHTML = renderTaskNodes(n.children || [], showDone);
+  const hasKids = !!kidsHTML;
   const completed = TASK_DONE.has(n.status);
+  const count = (n.collapsed && hasKids) ? `<span class="tcount">${n.active}</span>` : "";
   return `
-    <div class="tnode lvl${n.level} ${n.collapsed ? "collapsed" : ""} ${completed ? "t-complete" : ""}" data-id="${escapeHTML(n.id)}" data-status="${n.status}" data-src="${n.source}">
+    <div class="tnode lvl${n.level} ${n.collapsed ? "collapsed" : ""} ${completed ? "t-complete" : ""}" data-id="${escapeHTML(n.id)}" data-src="${n.source}">
       <div class="tnode-row">
         ${hasKids ? `<button class="tnode-twist" data-twist aria-label="Expand / collapse">${ICON.next}</button>` : `<span class="tnode-twist tnode-twist-empty"></span>`}
         <span class="tnode-title">${escapeHTML(n.title)}</span>
+        ${count}
         ${n.level < 2 ? `<button class="tnode-add" data-addchild aria-label="Add subtask">+</button>` : ""}
-        <button class="tpill s-${n.status}" data-pill aria-label="Status: ${STATUS_LABEL[n.status]} — tap to change">${STATUS_LABEL[n.status]}</button>
+        ${taskSelectHTML(n)}
       </div>
       ${n.note ? `<div class="tnode-note">${escapeHTML(n.note)}</div>` : ""}
-      ${hasKids ? `<div class="tnode-kids">${n.children.map(taskNodeHTML).join("")}</div>` : ""}
+      ${hasKids ? `<div class="tnode-kids">${kidsHTML}</div>` : ""}
     </div>`;
+}
+function taskCounts(nodes, acc) { nodes.forEach((n) => { acc[n.status] = (acc[n.status] || 0) + 1; taskCounts(n.children || [], acc); }); return acc; }
+function updateTaskSummary(overlay) {
+  const el = app.querySelector("#tasks-summary"); if (!el) return;
+  const c = taskCounts(buildTaskTree(TASKS, overlay), {});
+  const done = (c.done || 0) + (c.wontdo || 0);
+  el.innerHTML = `${c.todo || 0} to do · <b>${c.doing || 0} doing</b> · ${c.review || 0} review<span class="tdone"> · ${done} done</span>`;
 }
 function setTaskStatus(id, next, overlay) {
   if (id.indexOf("u-") === 0) { const a = (overlay.added || []).find((x) => x.id === id); if (a) a.status = next; }
@@ -2833,7 +2852,8 @@ function setTaskStatus(id, next, overlay) {
 }
 function renderTaskTree(overlay) {
   const root = app.querySelector("#tasks-tree");
-  if (root) root.innerHTML = buildTaskTree(TASKS, overlay).map(taskNodeHTML).join("");
+  if (root) root.innerHTML = renderTaskNodes(buildTaskTree(TASKS, overlay), !!overlay.showDone);
+  updateTaskSummary(overlay);
 }
 function renderStudioTasks() {
   const overlay = loadTaskOverlay();
@@ -2844,8 +2864,12 @@ function renderStudioTasks() {
           <button class="icon-btn" data-back aria-label="Back">${ICON.back}</button>
           <h1>Tasks</h1><span class="studio-tag">checklist</span>
         </div>
-        <p class="st-note">A live checklist. I add items and mark them <b>Review</b> when I think they're done — you tap a status pill to confirm <b>Done</b> (it gets struck through and drops to the bottom). Your taps stay on this device; use <b>Export</b> to send the list back to me to bake in.</p>
-        <div class="tasks-tree" id="tasks-tree">${buildTaskTree(TASKS, overlay).map(taskNodeHTML).join("")}</div>
+        <p class="st-note">Tap a group to open it; pick a status from each item's dropdown. I set things to <b>Review</b>; you choose <b>Done</b>.</p>
+        <div class="tasks-bar">
+          <div class="tasks-summary" id="tasks-summary"></div>
+          <label class="tasks-showdone"><input type="checkbox" id="tasks-showdone"${overlay.showDone ? " checked" : ""}> Show done</label>
+        </div>
+        <div class="tasks-tree" id="tasks-tree">${renderTaskNodes(buildTaskTree(TASKS, overlay), !!overlay.showDone)}</div>
         <button class="st-ghost" id="tasks-add-root">+ Add top-level task</button>
         <section class="st-sec">
           <div class="st-h" data-acc><h2>Export &amp; reset</h2><span class="acc-right"><span class="acc-ic">${ICON.back}</span></span></div>
@@ -2859,25 +2883,32 @@ function renderStudioTasks() {
       ${toolbox()}
     </div>`;
 
+  updateTaskSummary(overlay);
   const tree = app.querySelector("#tasks-tree");
+  // Status changes via the dropdown (explicit, not a guess-the-tap cycle).
+  tree.addEventListener("change", (e) => {
+    const sel = e.target.closest(".tsel"); if (!sel) return;
+    setTaskStatus(sel.dataset.id, sel.value, overlay); saveTaskOverlay(overlay); renderTaskTree(overlay);
+  });
   tree.addEventListener("click", (e) => {
     const node = e.target.closest(".tnode"); if (!node) return;
     const id = node.dataset.id;
     if (e.target.closest("[data-twist]")) {
       const collapsed = node.classList.toggle("collapsed");
-      if (collapsed) overlay.collapsed[id] = true; else delete overlay.collapsed[id];
-      saveTaskOverlay(overlay); return;
-    }
-    if (e.target.closest("[data-pill]")) {
-      const cur = node.dataset.status || "todo";
-      const next = STATUS_ORDER[(STATUS_ORDER.indexOf(cur) + 1) % STATUS_ORDER.length];
-      setTaskStatus(id, next, overlay); saveTaskOverlay(overlay); renderTaskTree(overlay); return;
+      overlay.collapsed[id] = collapsed;   // store explicitly (default is collapsed for top level)
+      const c = node.querySelector(":scope > .tnode-row .tcount"); if (c) c.remove();
+      saveTaskOverlay(overlay); renderTaskTree(overlay); return;
     }
     if (e.target.closest("[data-addchild]")) {
       const title = (prompt("New subtask:") || "").trim(); if (!title) return;
       overlay.added.push({ id: newUserTaskId(), parentId: id, title, status: "todo" });
+      overlay.collapsed[id] = false;
       saveTaskOverlay(overlay); renderTaskTree(overlay); return;
     }
+  });
+
+  app.querySelector("#tasks-showdone").addEventListener("change", (e) => {
+    overlay.showDone = e.target.checked; saveTaskOverlay(overlay); renderTaskTree(overlay);
   });
 
   app.querySelector("#tasks-add-root").addEventListener("click", () => {
