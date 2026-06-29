@@ -871,9 +871,23 @@ function watchCtas(category) {
   return { primary: "BUY NOW", opts: "MORE STORES" };
 }
 
+/* Real, region-aware "where to get it" destination. Films/TV → JustWatch (live
+ * availability per country); games/books → a sensible web search. One reliable
+ * link per title (no per-title URLs that rot); also the future affiliate surface. */
+const JW_REGION = { US: "us", GB: "uk", AU: "au" };
+function watchUrl(item) {
+  const q = encodeURIComponent(item.title);
+  if (item.category === "movie" || item.category === "tv") {
+    return `https://www.justwatch.com/${JW_REGION[state.country] || "us"}/search?q=${q}`;
+  }
+  if (item.category === "game") return `https://www.google.com/search?q=${encodeURIComponent(item.title + " game where to buy")}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(item.title + " book")}`;
+}
 function renderWatch(item) {
   const data = item.watch[state.country];
   const ctas = watchCtas(item.category);
+  const dest = watchUrl(item);
+  const isFilm = item.category === "movie" || item.category === "tv";
   const countrySelect = `
     <div class="country-row">
       ${COUNTRIES[state.country]?.flag || "🌐"}
@@ -892,20 +906,22 @@ function renderWatch(item) {
   const restStreams = hasStream ? data.stream.slice(1) : [];
   const optChips = [...restStreams.map((s) => s.name), ...(data.rentbuy || [])];
 
+  const href = (primary.url && primary.url !== "#") ? primary.url : dest;
   return `
     ${countrySelect}
     <div class="watch-grid">
-      <a class="watch-now" href="${primary.url || "#"}" style="background:linear-gradient(160deg, ${primary.color}, ${primary.color}cc)">
+      <a class="watch-now" href="${href}" target="_blank" rel="noopener" style="background:linear-gradient(160deg, ${primary.color}, ${primary.color}cc)">
         <span class="svc">${primary.name}</span>
         <span class="cta">${ctas.primary}</span>
       </a>
-      <div class="watch-opts">
+      <a class="watch-opts" href="${dest}" target="_blank" rel="noopener">
         <div class="svc-icons">
           ${optChips.length ? optChips.map((n) => `<span class="svc-chip">${n}</span>`).join("") : `<span class="svc-chip">—</span>`}
         </div>
         <span class="cta">${ctas.opts}</span>
-      </div>
-    </div>`;
+      </a>
+    </div>
+    <a class="watch-credit" href="${dest}" target="_blank" rel="noopener">${isFilm ? "Find where to watch · powered by JustWatch ↗" : "Find where to get it ↗"}</a>`;
 }
 
 function ratingColumn(kind, value, rows) {

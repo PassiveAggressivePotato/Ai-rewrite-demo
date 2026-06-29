@@ -23,6 +23,17 @@ export const TASKS = [
     ],
   },
   {
+    id: "launch", title: "▶ v1 LAUNCH — current focus", status: "doing", area: "launch",
+    note: "Make it real: a small, finishable, genuinely usable site. Everything else is parked until this ships.",
+    children: [
+      { id: "launch.scope", title: "Lock v1 scope & 'done' definition", status: "review" },
+      { id: "launch.template", title: "Build ONE real title end-to-end (Dune: Part Two) as the template", status: "review" },
+      { id: "launch.data", title: "Real ratings for ~12 titles (3 per category), sourced + dated", status: "todo" },
+      { id: "launch.watch", title: "Working 'Where to watch / get it' links per title (live via JustWatch)", status: "review" },
+      { id: "launch.qa", title: "Final QA: every page renders, zero console errors, deploy", status: "todo" },
+    ],
+  },
+  {
     id: "content", title: "Content & data", status: "doing", area: "data",
     children: [
       { id: "content.catalog", title: "Mock catalog across movies / TV / games / books", status: "done" },

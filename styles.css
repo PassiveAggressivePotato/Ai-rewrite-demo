@@ -965,13 +965,17 @@ body::before {
   background: linear-gradient(180deg, rgba(79,208,200,.16), rgba(44,151,168,.10));
   border: 1px solid rgba(79,208,200,.25);
   display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  text-decoration: none; color: inherit; transition: transform .2s, filter .2s;
 }
+.watch-opts:hover { transform: translateY(-2px); filter: brightness(1.08); }
 .watch-opts .svc-icons { display: flex; flex-wrap: wrap; gap: 7px; }
 .svc-chip {
   font-size: 10px; font-weight: 700; padding: 5px 9px; border-radius: 8px;
   background: var(--surface-2); border: 1px solid var(--border); white-space: nowrap;
 }
 .watch-opts .cta { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--text-dim); }
+.watch-credit { display: inline-block; margin-top: 9px; font-size: 11px; font-weight: 600; color: var(--text-dim); text-decoration: none; }
+.watch-credit:hover { color: var(--gold); }
 .no-watch { color: var(--text-faint); font-size: 12px; padding: 8px 2px; }
 
 /* Normalized ratings — two columns */
