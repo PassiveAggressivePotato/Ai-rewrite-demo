@@ -875,6 +875,30 @@ function watchCtas(category) {
  * availability per country); games/books → a sensible web search. One reliable
  * link per title (no per-title URLs that rot); also the future affiliate surface. */
 const JW_REGION = { US: "us", GB: "uk", AU: "au" };
+/* Verified JustWatch title-page paths (<type>/<slug>) per item slug, so links go
+ * straight to the title rather than search. Slug is shared across regions; the
+ * region prefix is added at build time. Anything not listed falls back to search
+ * (never a dead end). */
+const JW_PATH = {
+  "dune-part-two": "movie/dune-part-two-2023",
+  "dune-part-one": "movie/dune-2021",
+  "oppenheimer": "movie/oppenheimer",
+  "poor-things": "movie/poor-things",
+  "across-the-spider-verse": "movie/spider-man-into-the-spider-verse-2",
+  "everything-everywhere-all-at-once": "movie/everything-everywhere-all-at-once",
+  "shogun": "tv-show/shogun-2024",
+  "the-bear": "tv-show/the-bear",
+  "fallout": "tv-show/fallout",
+  "succession": "tv-show/succession",
+  "severance": "tv-show/severance",
+  "breaking-bad": "tv-show/breaking-bad",
+  "better-call-saul": "tv-show/better-call-saul",
+};
+function jwTitleUrl(item) {
+  const path = JW_PATH[item.slug];
+  return path ? `https://www.justwatch.com/${JW_REGION[state.country] || "us"}/${path}` : null;
+}
+/* Always-works destination: JustWatch search (film/TV) or a web search (games/books). */
 function watchUrl(item) {
   const q = encodeURIComponent(item.title);
   if (item.category === "movie" || item.category === "tv") {
@@ -886,7 +910,8 @@ function watchUrl(item) {
 function renderWatch(item) {
   const data = item.watch[state.country];
   const ctas = watchCtas(item.category);
-  const dest = watchUrl(item);
+  const dest = watchUrl(item);                 // always-works search destination
+  const titleDest = jwTitleUrl(item) || dest;  // direct title page when known, else search
   const isFilm = item.category === "movie" || item.category === "tv";
   const countrySelect = `
     <div class="country-row">
@@ -906,7 +931,7 @@ function renderWatch(item) {
   const restStreams = hasStream ? data.stream.slice(1) : [];
   const optChips = [...restStreams.map((s) => s.name), ...(data.rentbuy || [])];
 
-  const href = (primary.url && primary.url !== "#") ? primary.url : dest;
+  const href = (primary.url && primary.url !== "#") ? primary.url : titleDest;
   return `
     ${countrySelect}
     <div class="watch-grid">
@@ -914,14 +939,14 @@ function renderWatch(item) {
         <span class="svc">${primary.name}</span>
         <span class="cta">${ctas.primary}</span>
       </a>
-      <a class="watch-opts" href="${dest}" target="_blank" rel="noopener">
+      <a class="watch-opts" href="${titleDest}" target="_blank" rel="noopener">
         <div class="svc-icons">
           ${optChips.length ? optChips.map((n) => `<span class="svc-chip">${n}</span>`).join("") : `<span class="svc-chip">—</span>`}
         </div>
         <span class="cta">${ctas.opts}</span>
       </a>
     </div>
-    <a class="watch-credit" href="${dest}" target="_blank" rel="noopener">${isFilm ? "Find where to watch · powered by JustWatch ↗" : "Find where to get it ↗"}</a>`;
+    <a class="watch-credit" href="${dest}" target="_blank" rel="noopener">${isFilm ? "See all ways to watch · JustWatch ↗" : "Find where to get it ↗"}</a>`;
 }
 
 function ratingColumn(kind, value, rows) {
